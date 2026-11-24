@@ -17,7 +17,7 @@ export default test({
 				<button>add</button>
 				<button>shift</button>
 				<button>pop</button>
-				<p>pending=2 map.size=1 map=[1]</p>
+				<p>pending=2 map.size=1 map=[1,10]</p>
 				<hr>
 				<p>1: true 10</p>
 				<p>2: false ...</p>
@@ -37,7 +37,7 @@ export default test({
 				<button>add</button>
 				<button>shift</button>
 				<button>pop</button>
-				<p>pending=1 map.size=2 map=[1,2]</p>
+				<p>pending=1 map.size=2 map=[1,10,2,20]</p>
 				<hr>
 				<p>1: true 10</p>
 				<p>2: true 20</p>
@@ -58,7 +58,7 @@ export default test({
 				<button>add</button>
 				<button>shift</button>
 				<button>pop</button>
-				<p>pending=0 map.size=3 map=[1,2,3]</p>
+				<p>pending=0 map.size=3 map=[1,10,2,20,3,30]</p>
 				<hr>
 				<p>1: true 10</p>
 				<p>2: true 20</p>
@@ -82,7 +82,7 @@ export default test({
 				<button>add</button>
 				<button>shift</button>
 				<button>pop</button>
-				<p>pending=2 map.size=3 map=[1,2,3]</p>
+				<p>pending=2 map.size=3 map=[1,10,2,20,3,30]</p>
 				<hr>
 				<p>1: true 10</p>
 				<p>2: true 20</p>
@@ -104,7 +104,7 @@ export default test({
 				<button>add</button>
 				<button>shift</button>
 				<button>pop</button>
-				<p>pending=1 map.size=3 map=[1,2,3]</p>
+				<p>pending=1 map.size=3 map=[1,10,2,20,3,30]</p>
 				<hr>
 				<p>1: true 10</p>
 				<p>2: true 20</p>
@@ -126,7 +126,7 @@ export default test({
 				<button>add</button>
 				<button>shift</button>
 				<button>pop</button>
-				<p>pending=0 map.size=5 map=[1,2,3,4,5]</p>
+				<p>pending=0 map.size=5 map=[1,10,2,20,3,30,4,40,5,50]</p>
 				<hr>
 				<p>1: true 10</p>
 				<p>2: true 20</p>

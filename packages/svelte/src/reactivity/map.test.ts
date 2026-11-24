@@ -52,7 +52,7 @@ test('map.values()', () => {
 		false,
 		[1, 2, 4, 5],
 		0,
-		false,
+		// has(3) doesn't re-run on clear, since 3 was already missing
 		[],
 		1,
 		true,
@@ -378,7 +378,8 @@ test('not invoking reactivity when value is not in the map after changes', () =>
 		});
 	});
 
-	assert.deepEqual(log, [1, undefined, undefined, undefined, 1, undefined]);
+	// get(2) re-runs when a key is added, but not when one is deleted
+	assert.deepEqual(log, [1, undefined, undefined, 1, undefined]);
 
 	cleanup();
 });

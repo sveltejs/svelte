@@ -2,7 +2,13 @@
 import { DEV } from 'esm-env';
 import { set, source, state, increment } from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
-import { get, update_version } from '../internal/client/runtime.js';
+import {
+	active_reaction,
+	get,
+	untrack,
+	untracking,
+	update_version
+} from '../internal/client/runtime.js';
 import { async_mode_flag } from '../internal/flags/index.js';
 
 const MISSING = Symbol('missing');
@@ -58,6 +64,12 @@ export class SvelteMap extends Map {
 	#sources = new Map();
 	/** @type {Source<Map<K, V>>} */
 	#items;
+	/**
+	 * Outside async mode, readers of missing keys depend on this
+	 * rather than on a per-key source, so that we don't create
+	 * (and retain) a source for every key that is ever looked up
+	 */
+	#missing = state(0);
 	#update_version = update_version || -1;
 
 	/**
@@ -76,6 +88,7 @@ export class SvelteMap extends Map {
 
 		if (DEV) {
 			tag(this.#items, 'SvelteMap items');
+			tag(this.#missing, 'SvelteMap missing');
 		}
 	}
 
@@ -92,33 +105,51 @@ export class SvelteMap extends Map {
 		return update_version === this.#update_version ? state(value) : source(value);
 	}
 
-	/** @param {K} key */
-	has(key) {
+	/**
+	 * Read the value for `key`, or `MISSING` if it doesn't exist
+	 * @param {K} key
+	 * @returns {V | typeof MISSING}
+	 */
+	#read(key) {
 		var sources = this.#sources;
 		var s = sources.get(key);
 
 		if (s === undefined) {
 			if (!async_mode_flag) {
-				// If the value doesn't exist, track the version in case it's added later
-				// but don't create sources willy-nilly to track all possible values
-				get(this.#items);
-				return false;
+				// Every existing key has a source, so this key is missing. Track
+				// `#missing` in case it's added later, but don't create sources
+				// willy-nilly to track all possible keys
+				get(this.#missing);
+				return MISSING;
 			}
 
-			var items = get(this.#items);
-			var value = /** @type {V} */ (items.has(key) ? items.get(key) : (MISSING));
+			// In async mode, we need a per-key source so that this reader isn't
+			// affected by changes to other keys (which could belong to other batches).
+			// Subsequent changes to this key go through `s`, so no need to track `#items`
+			var items = this.#peek();
+			var value = items.has(key) ? /** @type {V} */ (items.get(key)) : MISSING;
 
-			s = this.#source(value);
+			// Untracked reads don't need to be notified of changes, so don't
+			// create (and retain) a source for them
+			if (active_reaction === null || untracking) {
+				return value;
+			}
+
+			s = this.#source(/** @type {V} */ (value));
 
 			if (DEV) {
-				tag(s, `SvelteSet has(${label(value)})`);
+				tag(s, `SvelteMap get(${label(key)})`);
 			}
 
 			sources.set(key, s);
 		}
 
-		var value = get(s);
-		return value !== MISSING;
+		return get(s);
+	}
+
+	/** @param {K} key */
+	has(key) {
+		return this.#read(key) !== MISSING;
 	}
 
 	/**
@@ -126,25 +157,14 @@ export class SvelteMap extends Map {
 	 * @param {any} [this_arg]
 	 */
 	forEach(callbackfn, this_arg) {
-		for (const [key, value] of this.entries()) {
-			callbackfn(value, key, this);
+		for (const [key, value] of this.#read_all()) {
+			callbackfn.call(this_arg, value, key, this);
 		}
 	}
 
 	/** @param {K} key */
 	get(key) {
-		var sources = this.#sources;
-		var s = sources.get(key);
-
-		if (s === undefined) {
-			// We should always track the version in case
-			// the Set ever gets this value in the future.
-			var items = get(this.#items);
-			return items.get(key);
-		}
-
-		var value = get(s);
-
+		var value = this.#read(key);
 		return value === MISSING ? undefined : value;
 	}
 
@@ -153,7 +173,7 @@ export class SvelteMap extends Map {
 	 * @param {V} value
 	 * */
 	getOrInsert(key, value) {
-		if (!super.has(key)) {
+		if (!this.#peek().has(key)) {
 			this.set(key, value);
 		}
 		return /** @type {V} */ (this.get(key));
@@ -164,7 +184,7 @@ export class SvelteMap extends Map {
 	 * @param {(key: K) => V} callbackFn
 	 */
 	getOrInsertComputed(key, callbackFn) {
-		if (!super.has(key)) {
+		if (!this.#peek().has(key)) {
 			this.set(key, callbackFn(key));
 		}
 		return /** @type {V} */ (this.get(key));
@@ -179,18 +199,37 @@ export class SvelteMap extends Map {
 		var s = sources.get(key);
 
 		if (s !== undefined) {
+			if (!async_mode_flag && !s.equals(value)) {
+				// A reader of this key may have subscribed to `#missing` before the key
+				// was added (e.g. if it added the key itself) and not re-run since.
+				// If not every such reader is a reader of `s`, notify them
+				var missing_reactions = this.#missing.reactions;
+				var s_reactions = s.reactions;
+
+				if (
+					missing_reactions !== null &&
+					(s_reactions === null || !missing_reactions.every((r) => s_reactions?.includes(r)))
+				) {
+					increment(this.#missing);
+				}
+			}
+
 			set(s, value);
 		} else {
 			sources.set(key, this.#source(value));
 		}
 
-		var items = get(this.#items);
+		var items = this.#peek();
 
 		if (!items.has(key)) {
 			const clone = new Map(items);
 			clone.set(key, value);
 
 			set(this.#items, clone);
+
+			if (!async_mode_flag) {
+				increment(this.#missing);
+			}
 		}
 
 		return this;
@@ -198,7 +237,7 @@ export class SvelteMap extends Map {
 
 	/** @param {K} key */
 	delete(key) {
-		var items = get(this.#items);
+		var items = this.#peek();
 		var has = items.has(key);
 		var sources = this.#sources;
 		var s = sources.get(key);
@@ -219,7 +258,7 @@ export class SvelteMap extends Map {
 	}
 
 	clear() {
-		if (get(this.#items).size === 0) {
+		if (this.#peek().size === 0) {
 			return;
 		}
 
@@ -235,28 +274,44 @@ export class SvelteMap extends Map {
 		sources.clear();
 	}
 
+	/**
+	 * Read the items as the current batch sees them, without
+	 * making them a dependency of the active reaction
+	 */
+	#peek() {
+		return untrack(() => get(this.#items));
+	}
+
+	/**
+	 * Read every key and value (making them all dependencies)
+	 * and return a snapshot of the map as the current batch sees it
+	 * @returns {Map<K, V>}
+	 */
+	#read_all() {
+		var result = new Map();
+		var sources = this.#sources;
+
+		for (var key of get(this.#items).keys()) {
+			var s = sources.get(key);
+			if (s === undefined) continue;
+
+			var value = get(s);
+			if (value !== MISSING) result.set(key, value);
+		}
+
+		return result;
+	}
+
 	keys() {
 		return get(this.#items).keys();
 	}
 
-	*values() {
-		for (const key of get(this.#items).keys()) {
-			const s = this.#sources.get(key);
-			if (s === undefined) continue;
-
-			const value = get(s);
-			if (value !== MISSING) yield value;
-		}
+	values() {
+		return this.#read_all().values();
 	}
 
-	*entries() {
-		for (const key of get(this.#items).keys()) {
-			const s = this.#sources.get(key);
-			if (s === undefined) continue;
-
-			const value = get(s);
-			if (value !== MISSING) yield [key, value];
-		}
+	entries() {
+		return this.#read_all().entries();
 	}
 
 	[Symbol.iterator]() {
