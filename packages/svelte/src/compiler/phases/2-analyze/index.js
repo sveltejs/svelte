@@ -1088,7 +1088,8 @@ function calculate_blockers(instance, analysis) {
 			}
 		}
 
-		const has_await = has_await_expression(node);
+		// the parser marks a top-level await wherever this walk would find one
+		const has_await = instance.has_await && has_await_expression(node);
 		awaited ||= has_await;
 
 		if (node.type === 'FunctionDeclaration') {
