@@ -7,8 +7,7 @@ import { is } from '../../../proxy.js';
 import { queue_micro_task } from '../../task.js';
 import { hydrating } from '../../hydration.js';
 import { tick, untrack } from '../../../runtime.js';
-import { current_batch, previous_batch } from '../../../reactivity/batch.js';
-import { async_mode_flag } from '../../../../flags/index.js';
+import { current_batch, view_batch } from '../../../reactivity/batch.js';
 
 /**
  * @param {HTMLInputElement} input
@@ -87,16 +86,12 @@ export function bind_value(input, get, set = get) {
 		var value = get();
 
 		if (input === document.activeElement) {
-			// In sync mode render effects are executed during tree traversal -> needs current_batch
-			// In async mode render effects are flushed once batch resolved, at which point current_batch is null -> needs previous_batch
-			var batch = /** @type {Batch} */ (async_mode_flag ? previous_batch : current_batch);
-
 			// Never rewrite the contents of a focused input. We can get here if, for example,
 			// an update is deferred because of async work depending on the input:
 			//
 			// <input bind:value={query}>
 			// <p>{await find(query)}</p>
-			if (batches.has(batch)) {
+			if (batches.has(/** @type {Batch} */ (view_batch))) {
 				return;
 			}
 		}
@@ -294,9 +289,23 @@ function to_number(value) {
  * @param {(value: FileList | null) => void} set
  */
 export function bind_files(input, get, set = get) {
-	listen_to_event_and_reset_event(input, 'change', () => {
-		set(input.files);
-	});
+	listen_to_event_and_reset_event(
+		input,
+		'change',
+		() => {
+			set(input.files);
+		},
+		() => {
+			// A form reset can empty the input's `FileList` in place, which is then the very
+			// object the binding already holds and would not be seen as a change: give the
+			// input a new, empty one instead
+			if (typeof DataTransfer === 'function') {
+				input.files = new DataTransfer().files;
+			}
+
+			set(input.files);
+		}
+	);
 
 	if (
 		// If we are hydrating and the value has since changed,

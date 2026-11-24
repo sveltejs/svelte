@@ -1,4 +1,5 @@
 /** @import { HydratableLookupEntry } from '#server' */
+/** @import { UnevalReplacer } from 'devalue' */
 import { async_mode_flag } from '../flags/index.js';
 import { get_render_context } from './render-context.js';
 import * as e from './errors.js';
@@ -54,14 +55,18 @@ function encode(key, value, unresolved) {
 
 	let uid = 1;
 
-	entry.serialized = devalue.uneval(entry.value, (value, uneval) => {
+	/** @type {UnevalReplacer} */
+	const replacer = (value, js) => {
 		if (is_promise(value)) {
-			// we serialize promises as `"${i}"`, because it's impossible for that string
-			// to occur 'naturally' (since the quote marks would have to be escaped)
+			// we serialize promises as `<${i}>`, because it's impossible for that string
+			// to occur 'naturally' — devalue escapes `<` as `\u003C` in every string, key,
+			// regex source and URL it outputs, and never emits it in generated code.
+			// (a quoted placeholder like `"1"` is not safe, since it's how the string '1' is serialized.)
 			// this placeholder is returned synchronously from `uneval`, which includes it in the
 			// serialized string. Later (at least one microtask from now), when `p.then` runs, it'll
 			// be replaced.
-			const placeholder = `"${uid++}"`;
+			const id = uid++;
+			const placeholder = `<${id}>`;
 			const p = value
 				.then((v) => {
 					entry.serialized = entry.serialized.replace(
@@ -69,7 +74,7 @@ function encode(key, value, unresolved) {
 						// use the function form here to prevent any string replacement characters from being interpreted
 						// in `v`, as it's potentially user-controlled and therefore potentially malicious.
 						// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#specifying_a_string_as_the_replacement
-						() => `r(${uneval(v)})`
+						() => `r(${devalue.uneval(v, replacer)})`
 					);
 				})
 				.catch((devalue_error) =>
@@ -84,9 +89,14 @@ function encode(key, value, unresolved) {
 			p.catch(() => {}).finally(() => unresolved?.delete(p));
 
 			(entry.promises ??= []).push(p);
-			return placeholder;
+
+			// the replacer must return a `js` fragment — interpolated values are serialized,
+			// so `<${id}>` renders as e.g. `<1>`, matching `placeholder`
+			return js`<${id}>`;
 		}
-	});
+	};
+
+	entry.serialized = devalue.uneval(entry.value, replacer);
 
 	return entry;
 }
