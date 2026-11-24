@@ -78,7 +78,7 @@ export function init_render_context() {
 	return als_import;
 }
 
-// this has to be a function because rollup won't treeshake it if it's a constant
+// this has to be a function because rolldown won't treeshake it if it's a constant
 function in_webcontainer() {
 	// @ts-ignore -- this will fail when we run typecheck because we exclude node types
 	// eslint-disable-next-line n/prefer-global/process
