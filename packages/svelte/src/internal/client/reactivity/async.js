@@ -10,7 +10,7 @@ import {
 	set_dev_stack
 } from '../context.js';
 import { current_renderer, set_renderer } from '../custom-renderer/state.js';
-import { custom_renderers_flag } from '../../flags/index.js';
+import { async_mode_flag, custom_renderers_flag } from '../../flags/index.js';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
 	active_effect,
@@ -50,6 +50,12 @@ export function flatten(blockers, sync, async, fn) {
 				.replaceAll('$.eager(() => ', '$state.eager(')
 				.replace(/\$\.get\((.+?)\)/g, (_, id) => id);
 		});
+	}
+
+	// The compiler only creates blockers and async expressions for `await`, which requires async mode
+	if (!async_mode_flag) {
+		fn(deriveds);
+		return;
 	}
 
 	// Filter out already-settled blockers - no need to wait for them

@@ -49,7 +49,7 @@ import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
 import { create_anchor, create_fragment, append_child, insert_before } from '../operations.js';
 import { set_signal_status } from '../../reactivity/status.js';
 import { push_renderer, pop_renderer } from '../../custom-renderer/state.js';
-import { custom_renderers_flag } from '../../../flags/index.js';
+import { async_mode_flag, custom_renderers_flag } from '../../../flags/index.js';
 
 /**
  * @typedef {{
@@ -137,17 +137,11 @@ export class Boundary {
 	 */
 	#effect_pending = null;
 
-	#effect_pending_subscriber = createSubscriber(() => {
-		this.#effect_pending = source(this.#local_pending_count);
-
-		if (DEV) {
-			tag(this.#effect_pending, '$effect.pending()');
-		}
-
-		return () => {
-			this.#effect_pending = null;
-		};
-	});
+	/**
+	 * Created on first use by `get_effect_pending` (which returns early without async mode)
+	 * @type {(() => void) | null}
+	 */
+	#effect_pending_subscriber = null;
 
 	/**
 	 * @param {TemplateNode} node
@@ -342,7 +336,8 @@ export class Boundary {
 				this.#children(this.#anchor);
 			});
 
-			if (this.#pending.size === 0) {
+			// (without async mode, nothing is ever added to `#pending`)
+			if (!async_mode_flag || this.#pending.size === 0) {
 				this.is_pending = false;
 			} else {
 				const pending = this.#props.pending;
@@ -401,6 +396,9 @@ export class Boundary {
 	 * @param {Batch} batch
 	 */
 	is_ready(batch) {
+		// without async mode there are no forks, and nothing is ever added to `#pending`
+		if (!async_mode_flag) return true;
+
 		if (batch.is_fork && this.#pending.size > 0) {
 			return false;
 		}
@@ -455,6 +453,9 @@ export class Boundary {
 	 * @param {Batch} batch
 	 */
 	increment(effect, batch) {
+		// only called via `increment_pending`, i.e. for async work
+		if (!async_mode_flag) return;
+
 		var pending = this.#pending.get(batch);
 
 		if (pending === undefined) {
@@ -470,6 +471,9 @@ export class Boundary {
 	 * @param {Batch} batch
 	 */
 	decrement(effect, batch) {
+		// only called via `increment_pending`, i.e. for async work
+		if (!async_mode_flag) return;
+
 		var pending = /** @type {Map<Effect, number>} */ (this.#pending.get(batch));
 		var count = /** @type {number} */ (pending.get(effect));
 
@@ -499,6 +503,9 @@ export class Boundary {
 	 * @param {1 | -1} d
 	 */
 	update_effect_pending(d) {
+		// only called via `increment_pending`, i.e. for async work
+		if (!async_mode_flag) return;
+
 		this.#local_pending_count += d;
 
 		if (!this.#effect_pending || this.#pending_count_update_queued) return;
@@ -513,6 +520,21 @@ export class Boundary {
 	}
 
 	get_effect_pending() {
+		// without async mode the count never leaves 0 (see `update_effect_pending`)
+		if (!async_mode_flag) return 0;
+
+		this.#effect_pending_subscriber ??= createSubscriber(() => {
+			this.#effect_pending = source(this.#local_pending_count);
+
+			if (DEV) {
+				tag(this.#effect_pending, '$effect.pending()');
+			}
+
+			return () => {
+				this.#effect_pending = null;
+			};
+		});
+
 		this.#effect_pending_subscriber();
 		return get(/** @type {Source<number>} */ (this.#effect_pending));
 	}
@@ -529,7 +551,8 @@ export class Boundary {
 			throw error;
 		}
 
-		if (current_batch?.is_fork) {
+		// (`fork` requires async mode)
+		if (async_mode_flag && current_batch?.is_fork) {
 			if (this.#main_effect) current_batch.skip_effect(this.#main_effect);
 			if (this.#pending_effect) current_batch.skip_effect(this.#pending_effect);
 			if (this.#failed_effect) current_batch.skip_effect(this.#failed_effect);
