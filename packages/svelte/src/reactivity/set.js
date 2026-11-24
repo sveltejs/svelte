@@ -1,6 +1,12 @@
 /** @import { Source } from '#client' */
 import { DEV } from 'esm-env';
-import { source, set, state, increment } from '../internal/client/reactivity/sources.js';
+import {
+	source,
+	state,
+	check_mutation,
+	unchecked_set,
+	unchecked_increment
+} from '../internal/client/reactivity/sources.js';
 import { label, tag } from '../internal/client/dev/tracing.js';
 import { get, update_version } from '../internal/client/runtime.js';
 
@@ -144,10 +150,12 @@ export class SvelteSet extends Set {
 
 	/** @param {T} value */
 	add(value) {
+		check_mutation(this.#version);
+
 		if (!super.has(value)) {
 			super.add(value);
-			set(this.#size, super.size);
-			increment(this.#version);
+			unchecked_set(this.#size, super.size);
+			unchecked_increment(this.#version);
 		}
 
 		return this;
@@ -155,24 +163,29 @@ export class SvelteSet extends Set {
 
 	/** @param {T} value */
 	delete(value) {
-		var deleted = super.delete(value);
 		var sources = this.#sources;
 		var s = sources.get(value);
 
+		check_mutation(this.#version);
+
+		var deleted = super.delete(value);
+
 		if (s !== undefined) {
 			sources.delete(value);
-			set(s, false);
+			unchecked_set(s, false);
 		}
 
 		if (deleted) {
-			set(this.#size, super.size);
-			increment(this.#version);
+			unchecked_set(this.#size, super.size);
+			unchecked_increment(this.#version);
 		}
 
 		return deleted;
 	}
 
 	clear() {
+		check_mutation(this.#version);
+
 		if (super.size === 0) {
 			return;
 		}
@@ -181,12 +194,12 @@ export class SvelteSet extends Set {
 		var sources = this.#sources;
 
 		for (var s of sources.values()) {
-			set(s, false);
+			unchecked_set(s, false);
 		}
 
 		sources.clear();
-		set(this.#size, 0);
-		increment(this.#version);
+		unchecked_set(this.#size, 0);
+		unchecked_increment(this.#version);
 	}
 
 	keys() {
