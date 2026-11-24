@@ -1,18 +1,28 @@
 import { describe, assert, it } from 'vitest';
-import { flushSync } from '../../src/index-client';
+import { flushSync, fork, tick } from '../../src/index-client';
 import * as $ from '../../src/internal/client/runtime';
 import { push, pop } from '../../src/internal/client/context';
 import {
+	block,
+	branch,
 	effect,
 	effect_root,
 	render_effect,
 	user_effect,
 	user_pre_effect
 } from '../../src/internal/client/reactivity/effects';
-import { state, set, update, update_pre } from '../../src/internal/client/reactivity/sources';
+import {
+	internal_set,
+	source,
+	state,
+	set,
+	update,
+	update_pre
+} from '../../src/internal/client/reactivity/sources';
 import type { Derived, Effect, Source, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
+import { source_stacks } from '../../src/internal/client/reactivity/batch';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
 import { CONNECTED, DESTROYED } from '../../src/internal/client/constants';
@@ -55,6 +65,70 @@ test.skip = (text: string, fn: (runes: boolean) => any) => {
 };
 
 describe('signals', () => {
+	test('nested commit retains latest block dependencies', () => {
+		const trigger = state(0);
+		const mode = state(0);
+		const a = state(0);
+		const b = state(0);
+		const log: number[] = [];
+
+		block(() => {
+			$.get(trigger);
+			log.push($.get(mode) === 2 ? $.get(b) : $.get(a));
+		});
+
+		effect(() => {
+			if ($.get(trigger) === 1) flushSync(() => set(mode, 2));
+		});
+
+		return () => {
+			flushSync();
+			flushSync(() => set(trigger, 1));
+			flushSync(() => set(b, 1));
+			assert.equal(log.at(-1), 1);
+		};
+	});
+
+	for (const render of [false, true]) {
+		test(`${render ? 'render' : 'user'} effects scheduled during traversal retain tree order`, () => {
+			if (render) enable_async_mode_flag();
+			const create = render ? render_effect : effect;
+			const value = state(0);
+			const item = source(0);
+			const log: string[] = [];
+			let first = true;
+
+			// Model an each block updating the source of an existing item.
+			block(() => {
+				internal_set(item, $.get(value));
+				if (first) {
+					first = false;
+					branch(() => {
+						create(() => {
+							log.push(`child:${$.get(item)}`);
+						});
+					});
+				}
+			});
+
+			create(() => {
+				log.push(`sibling:${$.get(value)}`);
+			});
+
+			return () => {
+				try {
+					flushSync();
+					assert.deepEqual(log, ['child:0', 'sibling:0']);
+					log.length = 0;
+					flushSync(() => set(value, 1));
+					assert.deepEqual(log, ['child:1', 'sibling:1']);
+				} finally {
+					if (render) disable_async_mode_flag();
+				}
+			};
+		});
+	}
+
 	test('effect with state and derived in it', () => {
 		const log: string[] = [];
 
@@ -548,6 +622,147 @@ describe('signals', () => {
 		};
 	});
 
+	it.each([false, true])(
+		'resets update counts for writes during traversal (tick: %s)',
+		async (use_tick) => {
+			const trigger = state(0);
+			const item = source(0);
+			const counts: number[] = [];
+
+			const destroy = effect_root(() => {
+				block(() => {
+					// Like each block item sources, this is first written during traversal,
+					// after the batch has already started processing.
+					internal_set(item, $.get(trigger));
+					counts.push(item.updated?.get('')?.count ?? 0);
+				});
+			});
+
+			try {
+				for (let i = 1; i <= 12; i++) {
+					set(trigger, i);
+					if (use_tick) {
+						await tick();
+					} else {
+						flushSync();
+					}
+
+					assert.equal(item.v, i);
+					assert.isNull(item.updated);
+				}
+				assert.deepEqual(counts, [0, ...Array(12).fill(1)]);
+			} finally {
+				destroy();
+			}
+		}
+	);
+
+	it('cleans up update stacks recorded before flushing', () => {
+		const value = source(0);
+		const destroy = effect_root(() => {
+			block(() => {
+				for (let i = 1; i <= 6; i++) {
+					internal_set(value, i);
+					assert.equal(value.updated?.get('')?.count, i);
+					assert.equal(value.updated?.size, i <= 5 ? 1 : 2);
+				}
+			});
+		});
+
+		try {
+			assert.equal(value.updated?.size, 2);
+			flushSync();
+			assert.isNull(value.updated);
+			assert.equal(source_stacks.size, 0);
+		} finally {
+			destroy();
+		}
+	});
+
+	it('retains update counts across batches within a flush', () => {
+		push({}, true);
+		const trigger = state(0);
+		const value = source(0);
+		const counts: number[] = [];
+		const stacks: number[] = [];
+		const destroy = effect_root(() => {
+			user_effect(() => {
+				const n = $.get(trigger) + 1;
+				internal_set(value, n);
+				counts.push(value.updated?.get('')?.count ?? 0);
+				stacks.push(value.updated?.size ?? 0);
+				if (n < 7) set(trigger, n);
+			});
+		});
+
+		try {
+			flushSync();
+			assert.deepEqual(counts, [1, 2, 3, 4, 5, 6, 7]);
+			assert.deepEqual(stacks, [1, 1, 1, 1, 1, 2, 2]);
+			assert.isNull(value.updated);
+			assert.equal(source_stacks.size, 0);
+		} finally {
+			destroy();
+			pop();
+		}
+	});
+
+	it('cleans up traversal update counts when an effect throws', () => {
+		const trigger = state(false);
+		const value = source(0);
+		const destroy = effect_root(() => {
+			block(() => {
+				if ($.get(trigger)) {
+					internal_set(value, 1);
+					throw new Error('boom');
+				}
+			});
+		});
+
+		try {
+			set(trigger, true);
+			assert.throws(() => flushSync(), 'boom');
+			assert.isNull(value.updated);
+			assert.equal(source_stacks.size, 0);
+		} finally {
+			destroy();
+		}
+	});
+
+	it.each([false, true])(
+		'processes successive batches without growing the stack (async: %s)',
+		(async_mode) => {
+			if (async_mode) enable_async_mode_flag();
+			push({}, true);
+			const value = state(0);
+			const depths: number[] = [];
+			const limit = Error.stackTraceLimit;
+			const destroy = effect_root(() => {
+				user_effect(() => {
+					const n = $.get(value);
+					if (n === 0 || n === 20) {
+						depths.push(new Error().stack!.split('\n').length);
+					}
+					if (n < 20) set(value, n + 1);
+				});
+			});
+
+			try {
+				// The default limit hides the recursive batch-processing frames.
+				Error.stackTraceLimit = Infinity;
+				flushSync();
+				assert.equal($.get(value), 20);
+				assert.lengthOf(depths, 2);
+				assert.equal(depths[1], depths[0]);
+			} finally {
+				Error.stackTraceLimit = limit;
+				destroy();
+				pop();
+				if (async_mode) disable_async_mode_flag();
+			}
+		}
+	);
+
 	test('schedules rerun when writing to signal before reading it', (runes) => {
 		if (!runes) return () => {};
 
@@ -572,7 +787,7 @@ describe('signals', () => {
 				console.error = error;
 			}
 		};
-	}, 60_000);
+	});
 
 	test('schedules rerun when updating deeply nested value', (runes) => {
 		if (!runes) return () => {};
@@ -1793,6 +2008,71 @@ describe('signals', () => {
 		} finally {
 			destroy();
 			pop();
+		}
+	});
+
+	it('prunes the edges of a block effect once the batches that ran it commit', () => {
+		enable_async_mode_flag();
+		push({}, true);
+
+		const index = state(0);
+		const items = [state(0), state(1), state(2), state(3)];
+
+		const destroy = effect_root(() => {
+			block(() => {
+				$.get(items[$.get(index)]);
+			});
+		});
+
+		pop();
+
+		try {
+			flushSync();
+			for (let i = 1; i < items.length; i++) flushSync(() => set(index, i));
+
+			assert.deepEqual(
+				items.map((item) => item.reactions !== null),
+				[false, false, false, true]
+			);
+			assert.notEqual(index.reactions, null);
+		} finally {
+			destroy();
+			flushSync();
+			disable_async_mode_flag();
+		}
+	});
+
+	it('prunes the edges of a block effect that only a discarded batch needed', () => {
+		enable_async_mode_flag();
+		push({}, true);
+
+		const index = state(0);
+		const items = [state(0), state(1)];
+
+		const destroy = effect_root(() => {
+			block(() => {
+				$.get(items[$.get(index)]);
+			});
+		});
+
+		pop();
+		flushSync();
+
+		const pending = fork(() => set(index, 1));
+
+		try {
+			// the fork's run of the block read `items[1]`
+			assert.notEqual(items[1].reactions, null);
+
+			pending.discard();
+			assert.equal(items[1].reactions, null);
+			assert.notEqual(items[0].reactions, null);
+			assert.notEqual(index.reactions, null);
+		} finally {
+			pending.discard();
+			destroy();
+			flushSync();
+			disable_async_mode_flag();
 		}
 	});
 });

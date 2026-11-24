@@ -3,6 +3,7 @@
 import * as esrap from 'esrap';
 import ts from 'esrap/languages/ts';
 import { is_void } from '../../utils.js';
+import { regex_ends_with_whitespaces, regex_starts_with_whitespaces } from '../phases/patterns.js';
 
 /** Threshold for when content should be formatted on separate lines */
 const LINE_BREAK_THRESHOLD = 50;
@@ -81,7 +82,9 @@ function escape_identifier(name) {
  */
 export function print(ast, options = undefined) {
 	const comments = (ast.type === 'Root' && ast.comments) || [];
-	const state = { preserve_whitespace: 0 };
+	const state = {
+		preserve_whitespace: ast.type === 'Root' && ast.options?.preserveWhitespace ? 1 : 0
+	};
 	const css_comments =
 		(ast.type === 'Root' ? ast.css?.comments : ast.type === 'StyleSheet' ? ast.comments : null) ||
 		[];
@@ -122,7 +125,8 @@ function block(context, node, preserve_whitespace = false, allow_inline = false)
 		return;
 	}
 
-	if (allow_inline && !child_context.multiline) {
+	// Wrapping at fragment edges is safe even when adjacent children must stay together.
+	if (allow_inline && !child_context.multiline && child_context.measure() <= LINE_BREAK_THRESHOLD) {
 		context.append(child_context);
 	} else {
 		context.indent();
@@ -260,7 +264,11 @@ function print_element(node, context, comments, state) {
 	const name = node.name.toLowerCase();
 	const preserve =
 		(node.type === 'RegularElement' || node.type === 'TitleElement') &&
-		(name === 'pre' || name === 'textarea' || name === 'title');
+		(name === 'pre' ||
+			name === 'textarea' ||
+			name === 'title' ||
+			name === 'script' ||
+			name === 'style');
 
 	if (preserve) state.preserve_whitespace += 1;
 	base_element(node, context, comments, state);
@@ -530,6 +538,17 @@ function css_visitors(comments, js_comments) {
 }
 
 /**
+ * Attribute values are printed inside double quotes, but the raw text is
+ * preserved as written — and can contain `"` if the source used single quotes.
+ * @param {AST.Text} node
+ * @returns {AST.Text}
+ */
+function escape_attribute_text(node) {
+	if (!node.raw.includes('"')) return node;
+	return { ...node, raw: node.raw.replaceAll('"', '&quot;') };
+}
+
+/**
  * @param {AST.JSComment[]} comments
  * @param {{ preserve_whitespace: number }} state
  * @returns {Visitors<AST.SvelteNode>}
@@ -552,12 +571,14 @@ const svelte_visitors = (comments, state) => ({
 		for (const item of [node.module, node.instance, node.fragment, node.css]) {
 			if (!item) continue;
 
-			if (started) {
+			if (started && state.preserve_whitespace === 0) {
 				context.margin();
 				context.newline();
 			}
 
-			context.visit(item);
+			const child_context = context.new();
+			child_context.visit(item);
+			context.append(child_context);
 			started = true;
 		}
 	},
@@ -566,7 +587,7 @@ const svelte_visitors = (comments, state) => ({
 		context.write('<script');
 		attributes(node, node.attributes, context, comments);
 		context.write('>');
-		block(context, node.content, state.preserve_whitespace > 0);
+		block(context, node.content);
 		context.write('</script>');
 	},
 
@@ -574,7 +595,6 @@ const svelte_visitors = (comments, state) => ({
 		if (state.preserve_whitespace > 0) {
 			for (const child of node.nodes) {
 				context.visit(child);
-				context.multiline ||= child.type === 'Text' && /[\r\n]/.test(child.data);
 			}
 			return;
 		}
@@ -583,9 +603,9 @@ const svelte_visitors = (comments, state) => ({
 		const last = node.nodes.at(-1);
 		const has_surrounding_whitespace =
 			first?.type === 'Text' &&
-			/^\s/.test(first.data) &&
+			regex_starts_with_whitespaces.test(first.raw) &&
 			last?.type === 'Text' &&
-			/\s$/.test(last.data);
+			regex_ends_with_whitespaces.test(last.raw);
 
 		/** @type {{ nodes: AST.SvelteNode[]; leading_whitespace: boolean }[]} */
 		const items = [];
@@ -603,62 +623,40 @@ const svelte_visitors = (comments, state) => ({
 		};
 
 		for (let i = 0; i < node.nodes.length; i += 1) {
-			let child_node = node.nodes[i];
-
+			const child_node = node.nodes[i];
 			const prev = node.nodes[i - 1];
 			const next = node.nodes[i + 1];
 
-			if (child_node.type === 'Text') {
-				child_node = { ...child_node }; // always clone, so we can safely mutate
-
-				child_node.data = child_node.data.replace(/[^\S]+/g, ' ');
-
-				// trim fragment
-				if (i === 0) {
-					child_node.data = child_node.data.trimStart();
-				}
-
-				if (i === node.nodes.length - 1) {
-					child_node.data = child_node.data.trimEnd();
-				}
-
-				if (child_node.data === '') {
-					continue;
-				}
-
-				if (child_node.data.startsWith(' ') && prev && prev.type !== 'ExpressionTag') {
-					flush();
-					leading_whitespace = true;
-					child_node.data = child_node.data.trimStart();
-				}
-
-				if (child_node.data !== '') {
-					sequence.push({ ...child_node, data: child_node.data });
-
-					if (child_node.data.endsWith(' ') && next && next.type !== 'ExpressionTag') {
-						flush();
-						child_node.data = child_node.data.trimStart();
-					}
-				}
-			} else {
-				const is_block_element =
-					child_node.type === 'RegularElement' ||
-					child_node.type === 'Component' ||
-					child_node.type === 'SvelteBody' ||
-					child_node.type === 'SvelteHead' ||
-					child_node.type === 'SvelteFragment' ||
-					child_node.type === 'SvelteBoundary' ||
-					child_node.type === 'SvelteDocument' ||
-					child_node.type === 'SvelteSelf' ||
-					child_node.type === 'SvelteWindow' ||
-					child_node.type === 'SvelteComponent' ||
-					child_node.type === 'SvelteElement' ||
-					child_node.type === 'SlotElement' ||
-					child_node.type === 'TitleElement';
-
-				if (is_block_element && sequence.length > 0) flush();
+			if (child_node.type !== 'Text') {
 				sequence.push(child_node);
-				if (is_block_element) flush();
+				continue;
+			}
+
+			let raw = child_node.raw;
+
+			// Like the compiler, trim fragment edges, but preserve whitespace inside
+			// text and next to expressions. In particular, do not trim non-breaking spaces.
+			if (i === 0) raw = raw.replace(regex_starts_with_whitespaces, '');
+			if (i === node.nodes.length - 1) raw = raw.replace(regex_ends_with_whitespaces, '');
+			if (raw === '') continue;
+
+			// Only split sequences where there was collapsible whitespace already.
+			// Inserting a newline between adjacent elements would introduce a space.
+			if (prev?.type !== 'ExpressionTag' && regex_starts_with_whitespaces.test(raw)) {
+				flush();
+				leading_whitespace = true;
+				raw = raw.replace(regex_starts_with_whitespaces, '');
+			}
+
+			const trailing_whitespace =
+				next?.type !== 'ExpressionTag' && regex_ends_with_whitespaces.test(raw);
+
+			if (trailing_whitespace) raw = raw.replace(regex_ends_with_whitespaces, '');
+			if (raw !== '') sequence.push({ ...child_node, raw });
+
+			if (trailing_whitespace) {
+				flush();
+				leading_whitespace = true;
 			}
 		}
 
@@ -707,10 +705,7 @@ const svelte_visitors = (comments, state) => ({
 
 	AnimateDirective(node, context) {
 		context.write(`animate:${node.name}`);
-		if (
-			node.expression !== null &&
-			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
-		) {
+		if (node.expression !== null) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');
@@ -736,7 +731,7 @@ const svelte_visitors = (comments, state) => ({
 			}
 
 			for (const chunk of node.value) {
-				context.visit(chunk);
+				context.visit(chunk.type === 'Text' ? escape_attribute_text(chunk) : chunk);
 			}
 
 			if (node.value.length > 1 || node.value[0].type === 'Text') {
@@ -994,10 +989,7 @@ const svelte_visitors = (comments, state) => ({
 		for (const modifier of node.modifiers) {
 			context.write(`|${modifier}`);
 		}
-		if (
-			node.expression !== null &&
-			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
-		) {
+		if (node.expression !== null) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');
@@ -1060,7 +1052,7 @@ const svelte_visitors = (comments, state) => ({
 			context.write('"');
 
 			for (const tag of node.value) {
-				context.visit(tag);
+				context.visit(tag.type === 'Text' ? escape_attribute_text(tag) : tag);
 			}
 
 			context.write('"');
@@ -1131,7 +1123,8 @@ const svelte_visitors = (comments, state) => ({
 	},
 
 	Text(node, context) {
-		context.write(node.data);
+		context.write(node.raw);
+		context.multiline ||= /[\r\n]/.test(node.raw);
 	},
 
 	TitleElement(node, context) {
@@ -1144,10 +1137,7 @@ const svelte_visitors = (comments, state) => ({
 		for (const modifier of node.modifiers) {
 			context.write(`|${modifier}`);
 		}
-		if (
-			node.expression !== null &&
-			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
-		) {
+		if (node.expression !== null) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');
@@ -1156,10 +1146,7 @@ const svelte_visitors = (comments, state) => ({
 
 	UseDirective(node, context) {
 		context.write(`use:${node.name}`);
-		if (
-			node.expression !== null &&
-			!(node.expression.type === 'Identifier' && node.expression.name === node.name)
-		) {
+		if (node.expression !== null) {
 			context.write('={');
 			context.visit(node.expression);
 			context.write('}');
