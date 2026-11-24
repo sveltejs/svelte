@@ -1,0 +1,194 @@
+[
+	{
+		"code": "a11y_role_supports_aria_props",
+		"end": {
+			"column": 43,
+			"line": 12
+		},
+		"message": "The attribute 'aria-checked' is not supported by the role 'button'",
+		"start": {
+			"column": 24,
+			"line": 12
+		}
+	},
+	{
+		"code": "a11y_unknown_role",
+		"end": {
+			"column": 28,
+			"line": 22
+		},
+		"message": "Unknown role 'button link'",
+		"start": {
+			"column": 5,
+			"line": 22
+		}
+	},
+	{
+		"code": "a11y_no_noninteractive_tabindex",
+		"end": {
+			"column": 86,
+			"line": 22
+		},
+		"message": "noninteractive element cannot have nonnegative tabIndex value",
+		"start": {
+			"column": 0,
+			"line": 22
+		}
+	},
+	{
+		"code": "a11y_no_static_element_interactions",
+		"end": {
+			"column": 86,
+			"line": 22
+		},
+		"message": "`<div>` with a click or keydown handler must have an ARIA role",
+		"start": {
+			"column": 0,
+			"line": 22
+		}
+	},
+	{
+		"code": "a11y_unknown_role",
+		"end": {
+			"column": 30,
+			"line": 23
+		},
+		"message": "Unknown role ' button '. Did you mean 'button'?",
+		"start": {
+			"column": 5,
+			"line": 23
+		}
+	},
+	{
+		"code": "a11y_no_noninteractive_tabindex",
+		"end": {
+			"column": 88,
+			"line": 23
+		},
+		"message": "noninteractive element cannot have nonnegative tabIndex value",
+		"start": {
+			"column": 0,
+			"line": 23
+		}
+	},
+	{
+		"code": "a11y_no_static_element_interactions",
+		"end": {
+			"column": 88,
+			"line": 23
+		},
+		"message": "`<div>` with a click or keydown handler must have an ARIA role",
+		"start": {
+			"column": 0,
+			"line": 23
+		}
+	},
+	{
+		"code": "a11y_no_abstract_role",
+		"end": {
+			"column": 24,
+			"line": 24
+		},
+		"message": "Abstract role 'widget' is forbidden",
+		"start": {
+			"column": 5,
+			"line": 24
+		}
+	},
+	{
+		"code": "a11y_unknown_role",
+		"end": {
+			"column": 24,
+			"line": 24
+		},
+		"message": "Unknown role 'bogus'",
+		"start": {
+			"column": 5,
+			"line": 24
+		}
+	},
+	{
+		"code": "a11y_no_static_element_interactions",
+		"end": {
+			"column": 71,
+			"line": 24
+		},
+		"message": "`<div>` with a keydown handler must have an ARIA role",
+		"start": {
+			"column": 0,
+			"line": 24
+		}
+	},
+	{
+		"code": "a11y_unknown_role",
+		"end": {
+			"column": 24,
+			"line": 25
+		},
+		"message": "Unknown role 'bogus'",
+		"start": {
+			"column": 5,
+			"line": 25
+		}
+	},
+	{
+		"code": "a11y_no_abstract_role",
+		"end": {
+			"column": 24,
+			"line": 25
+		},
+		"message": "Abstract role 'widget' is forbidden",
+		"start": {
+			"column": 5,
+			"line": 25
+		}
+	},
+	{
+		"code": "a11y_no_static_element_interactions",
+		"end": {
+			"column": 71,
+			"line": 25
+		},
+		"message": "`<div>` with a keydown handler must have an ARIA role",
+		"start": {
+			"column": 0,
+			"line": 25
+		}
+	},
+	{
+		"code": "a11y_unknown_role",
+		"end": {
+			"column": 24,
+			"line": 26
+		},
+		"message": "Unknown role 'bogus'",
+		"start": {
+			"column": 5,
+			"line": 26
+		}
+	},
+	{
+		"code": "a11y_no_abstract_role",
+		"end": {
+			"column": 25,
+			"line": 27
+		},
+		"message": "Abstract role 'widget' is forbidden",
+		"start": {
+			"column": 5,
+			"line": 27
+		}
+	},
+	{
+		"code": "a11y_unknown_role",
+		"end": {
+			"column": 30,
+			"line": 28
+		},
+		"message": "Unknown role 'linK'. Did you mean 'link'?",
+		"start": {
+			"column": 5,
+			"line": 28
+		}
+	}
+]

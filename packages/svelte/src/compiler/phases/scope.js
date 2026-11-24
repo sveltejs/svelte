@@ -14,6 +14,7 @@ import {
 } from '../utils/ast.js';
 import { is_reserved, is_rune } from '../../utils.js';
 import { determine_slot } from '../utils/slot.js';
+import { regex_directive_name_separator } from './patterns.js';
 
 const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
@@ -1019,7 +1020,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	 * @type {Visitor<AST.AnimateDirective | AST.TransitionDirective | AST.UseDirective, State, AST.SvelteNode>}
 	 */
 	const SvelteDirective = (node, { state, path, visit }) => {
-		state.scope.reference(b.id(node.name.split('.')[0]), path);
+		state.scope.reference(b.id(node.name.split(regex_directive_name_separator)[0]), path);
 
 		if (node.expression) {
 			visit(node.expression);
@@ -1190,6 +1191,12 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		ClassDeclaration(node, { state, next }) {
 			if (node.id) state.scope.declare(node.id, 'normal', 'let', node);
 			next();
+		},
+
+		StaticBlock(node, { state, next }) {
+			const scope = state.scope.child();
+			scopes.set(node, scope);
+			next({ scope });
 		},
 
 		VariableDeclaration(node, { state, path, next }) {
