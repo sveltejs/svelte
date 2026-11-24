@@ -1,10 +1,12 @@
-/** @import { AST } from '#compiler' */
+/** @import { AST, CompileError } from '#compiler' */
 /** @import { Location } from 'locate-character' */
 /** @import * as ESTree from 'estree' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
 import * as e from '../../errors.js';
+import * as w from '../../warnings.js';
+import { walk } from 'zimmerframe';
 import { create_fragment, disallow_children } from '../nodes.js';
 import read_options from './read/options.js';
 import { is_reserved } from '../../../utils.js';
@@ -77,8 +79,9 @@ export class Parser {
 	/**
 	 * @param {string} template
 	 * @param {boolean} loose
+	 * @param {boolean} [ts] Force TypeScript parsing when checking for a missing `lang="ts"`
 	 */
-	constructor(template, loose) {
+	constructor(template, loose, ts = false) {
 		if (typeof template !== 'string') {
 			throw new TypeError('Template must be a string');
 		}
@@ -94,7 +97,7 @@ export class Parser {
 
 		regex_lang_attribute.lastIndex = 0; // reset matched index to pass tests - otherwise declare the regex inside the constructor
 
-		this.ts = match_lang?.[2] === 'ts';
+		this.ts = ts || match_lang?.[2] === 'ts';
 
 		this.root = {
 			css: null,
@@ -116,10 +119,45 @@ export class Parser {
 		this.fragments.push(this.root.fragment);
 
 		/** @type {ParserState} */
-		let state = fragment;
+		let next = fragment;
 
-		while (this.index < this.template.length) {
-			state = state(this) || fragment;
+		try {
+			while (this.index < this.template.length) {
+				next = next(this) || fragment;
+			}
+		} catch (error) {
+			const err = /** @type {CompileError} */ (error);
+
+			if (
+				!this.ts &&
+				!loose &&
+				(err?.code === 'js_parse_error' || err?.code === 'expected_token')
+			) {
+				// Only suggest `lang="ts"` if it would make the component parse successfully.
+				// Suppress warnings during the retry, including calls to the user's warningFilter.
+				state.ignore_stack.push(new Set(w.codes));
+				try {
+					walk(/** @type {any} */ (new Parser(template, false, true).root), null, {
+						TSTypeCastExpression() {
+							// Acorn also accepts Flow-style casts, which aren't valid TypeScript.
+							throw error;
+						}
+					});
+				} catch {
+					throw error;
+				} finally {
+					state.ignore_stack.pop();
+				}
+
+				const message =
+					err.code === 'js_parse_error' ? err.message.split('\n')[0] : 'Unexpected token';
+				e.js_parse_error(
+					err.position?.[0] ?? null,
+					`${message} (did you forget to add \`lang="ts"\`?)`
+				);
+			}
+
+			throw error;
 		}
 
 		if (this.stack.length > 1) {
@@ -136,7 +174,7 @@ export class Parser {
 			}
 		}
 
-		if (state !== fragment) {
+		if (next !== fragment) {
 			e.unexpected_eof(this.index);
 		}
 
