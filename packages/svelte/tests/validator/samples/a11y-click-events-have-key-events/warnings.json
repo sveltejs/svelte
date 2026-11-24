@@ -97,7 +97,7 @@
 	},
 	{
 		"code": "a11y_click_events_have_key_events",
-		"message": "Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type=\"button\">` or `<a>` might be more appropriate",
+		"message": "Visible, non-interactive element `<tr>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type=\"button\">` or `<a>` might be more appropriate",
 		"start": {
 			"line": 30,
 			"column": 0
@@ -109,7 +109,7 @@
 	},
 	{
 		"code": "a11y_click_events_have_key_events",
-		"message": "Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type=\"button\">` or `<a>` might be more appropriate",
+		"message": "Visible, non-interactive element `<td>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type=\"button\">` or `<a>` might be more appropriate",
 		"start": {
 			"line": 32,
 			"column": 0
@@ -121,7 +121,7 @@
 	},
 	{
 		"code": "a11y_click_events_have_key_events",
-		"message": "Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type=\"button\">` or `<a>` might be more appropriate",
+		"message": "Visible, non-interactive element `<th>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type=\"button\">` or `<a>` might be more appropriate",
 		"start": {
 			"line": 34,
 			"column": 0
