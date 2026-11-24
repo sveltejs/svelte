@@ -206,11 +206,10 @@ function processed_tag_to_code(
 	);
 
 	parse_attached_sourcemap(processed, tag_name);
-	const content_code = processed_content_to_code(
-		processed,
-		get_location(original_tag_open.length),
-		file_basename
-	);
+	const content_code =
+		!processed.map && processed.code === source.source
+			? build_mapped_code(processed.code, original_tag_open.length)
+			: processed_content_to_code(processed, get_location(original_tag_open.length), file_basename);
 
 	return tag_open_code.concat(content_code).concat(tag_close_code);
 }
@@ -288,12 +287,16 @@ async function process_tag(tag_name, preprocessor, source) {
 		});
 		if (!processed) return no_change();
 		if (processed.dependencies) dependencies.push(...processed.dependencies);
-		if (!processed.map && !processed.attributes && processed.code === content) return no_change();
+		const generated_attributes = stringify_tag_attributes(processed.attributes);
+		const attributes_changed =
+			generated_attributes !== undefined &&
+			generated_attributes !== stringify_tag_attributes(parse_tag_attributes(attributes));
+		if (!processed.map && !attributes_changed && processed.code === content) return no_change();
 		return processed_tag_to_code(
 			processed,
 			tag_name,
 			attributes,
-			stringify_tag_attributes(processed.attributes) ?? attributes,
+			generated_attributes ?? attributes,
 			slice_source(content, tag_offset, source)
 		);
 	}
