@@ -184,7 +184,7 @@ Inputs that work together can use `bind:group`:
 ```
 <!-- codeblock:end -->
 
-> [!NOTE] When a grouped checkbox changes, the bound array is rebuilt from the checkboxes in the same component instance, so values that belong to checkboxes in other components (or other instances of the same component) are removed from it. Grouped radio inputs can be in different components if each component declares the group value as a [`$bindable`]($bindable) prop that the parent binds to.
+> [!NOTE] The array for a checkbox group is built from the checked checkboxes in a single component instance. If each checkbox is in its own component, checking one replaces the array rather than adding to it. Radio groups work across components, as long as the value is bound through a [`$bindable`]($bindable) prop.
 
 ## `<input bind:files>`
 
