@@ -1,5 +1,131 @@
 import { proxy } from './proxy';
+import { fork } from './reactivity/batch';
+import { disable_async_mode_flag, enable_async_mode_flag } from '../flags';
 import { assert, test } from 'vitest';
+
+test('preserves ordinary object semantics for inherited property names', () => {
+	for (const prop of ['toString', 'valueOf', 'constructor', 'hasOwnProperty']) {
+		const state = proxy<any>({});
+		const inherited = state[prop];
+
+		delete state[prop];
+		assert.equal(state[prop], inherited);
+		assert.equal(prop in state, true);
+
+		state[prop] = 'own';
+		state.other = 'own';
+
+		assert.equal(state[prop], 'own');
+		assert.equal(Object.hasOwn(state, prop), true);
+		assert.deepEqual(Object.keys(state), [prop, 'other']);
+		assert.deepEqual({ ...state }, { [prop]: 'own', other: 'own' });
+
+		delete state[prop];
+
+		assert.equal(state[prop], inherited);
+		assert.equal(prop in state, true);
+		assert.equal(Object.hasOwn(state, prop), false);
+		assert.deepEqual(Object.keys(state), ['other']);
+	}
+});
+
+test('preserves ordinary object semantics for inherited array properties', () => {
+	const state = proxy<any>([]);
+	const inherited = state.map;
+
+	state.map = 'own';
+
+	assert.equal(state.map, 'own');
+	assert.equal(Object.hasOwn(state, 'map'), true);
+	assert.deepEqual(Object.keys(state), ['map']);
+
+	delete state.map;
+
+	assert.equal(state.map, inherited);
+	assert.equal('map' in state, true);
+	assert.equal(Object.hasOwn(state, 'map'), false);
+	assert.deepEqual(Object.keys(state), []);
+});
+
+test('restores added proxy properties when a fork is discarded', async () => {
+	enable_async_mode_flag();
+
+	try {
+		const state = proxy<any>({});
+		let forked_keys: string[] = [];
+
+		const discarded = fork(() => {
+			state.toString = 'own';
+			state.other = 'own';
+			forked_keys = Object.keys(state);
+		});
+
+		assert.deepEqual(forked_keys, ['toString', 'other']);
+		discarded.discard();
+		assert.equal(state.toString, Object.prototype.toString);
+		assert.equal(Object.hasOwn(state, 'toString'), false);
+		assert.deepEqual(Object.keys(state), []);
+
+		const committed = fork(() => {
+			state.toString = 'own';
+		});
+
+		await committed.commit();
+		assert.equal(state.toString, 'own');
+		assert.equal(Object.hasOwn(state, 'toString'), true);
+		assert.deepEqual(Object.keys(state), ['toString']);
+	} finally {
+		disable_async_mode_flag();
+	}
+});
+
+test('restores deleted proxy properties when a fork is discarded', async () => {
+	enable_async_mode_flag();
+
+	try {
+		const state = proxy<{ value?: string }>({ value: 'original' });
+		let forked_keys: string[] = [];
+
+		const discarded = fork(() => {
+			delete state.value;
+			forked_keys = Object.keys(state);
+		});
+
+		assert.deepEqual(forked_keys, []);
+		discarded.discard();
+		assert.equal(state.value, 'original');
+		assert.deepEqual(Object.keys(state), ['value']);
+
+		let count = 0;
+		const accessor = proxy<any>({
+			get value() {
+				return ++count;
+			},
+			set value(value) {
+				count = value;
+			}
+		});
+		const discarded_accessor = fork(() => {
+			delete accessor.value;
+		});
+
+		discarded_accessor.discard();
+		assert.equal(accessor.value, 1);
+		assert.equal(accessor.value, 2);
+		accessor.value = 10;
+		assert.equal(accessor.value, 11);
+
+		const committed = fork(() => {
+			delete state.value;
+		});
+
+		await committed.commit();
+		assert.equal(state.value, undefined);
+		assert.deepEqual(Object.keys(state), []);
+	} finally {
+		disable_async_mode_flag();
+	}
+});
 
 test('does not mutate the original object', () => {
 	const original = { x: 1 };
