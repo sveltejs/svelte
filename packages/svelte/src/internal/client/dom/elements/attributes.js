@@ -44,7 +44,8 @@ import {
 	set_element_value,
 	set_element_checked,
 	set_element_default_value,
-	set_element_default_checked
+	set_element_default_checked,
+	get_element_registry
 } from '../operations.js';
 import { current_renderer } from '../../custom-renderer/state.js';
 
@@ -249,16 +250,21 @@ export function set_custom_element_data(node, prop, value) {
 	set_active_effect(null);
 
 	try {
+		// the element might belong to a scoped custom element registry rather than the global one
+		var scoped_registry = get_element_registry(node);
+		var registry = scoped_registry ?? customElements;
+		var name = get_attribute(node, 'is') || node_name(node);
+
 		if (
 			// `style` should use `set_attribute` rather than the setter
 			prop !== 'style' &&
 			// Don't compute setters for custom elements while they aren't registered yet,
 			// because during their upgrade/instantiation they might add more setters.
 			// Instead, fall back to a simple "an object, then set as property" heuristic.
-			(setters_cache.has(get_attribute(node, 'is') || node_name(node)) ||
+			(get_setters_cache(scoped_registry).has(name) ||
 			// customElements may not be available in browser extension contexts
-			!customElements ||
-			customElements.get(get_attribute(node, 'is') || node_name(node).toLowerCase())
+			!registry ||
+			registry.get(name.toLowerCase())
 				? get_setters(node).has(prop)
 				: value && typeof value === 'object')
 		) {
@@ -649,16 +655,33 @@ function get_attributes(element) {
 
 /** @type {Map<string, Set<string>>} */
 var setters_cache = new Map();
+/** @type {WeakMap<CustomElementRegistry, Map<string, Set<string>>>} */
+var scoped_setters_caches = new WeakMap();
 var empty_setters = new Set();
+
+/**
+ * Setters are cached by tag name. With scoped custom element registries, the same tag name can refer
+ * to different classes, therefore each scoped registry gets its own cache
+ * @param {CustomElementRegistry | null} registry
+ */
+function get_setters_cache(registry) {
+	if (registry === null) return setters_cache;
+
+	var cache = scoped_setters_caches.get(registry);
+	if (cache === undefined) scoped_setters_caches.set(registry, (cache = new Map()));
+
+	return cache;
+}
 
 /** @param {Element} element */
 function get_setters(element) {
 	// if we have a custom renderer we just skip the check all together
 	if (current_renderer) return empty_setters;
+	var cache = get_setters_cache(get_element_registry(element));
 	var cache_key = get_attribute(element, 'is') || node_name(element);
-	var setters = setters_cache.get(cache_key);
+	var setters = cache.get(cache_key);
 	if (setters) return setters;
-	setters_cache.set(cache_key, (setters = new Set()));
+	cache.set(cache_key, (setters = new Set()));
 
 	var descriptors;
 	var proto = element; // In the case of custom elements there might be setters on the instance
