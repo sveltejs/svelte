@@ -288,7 +288,7 @@ async function process_tag(tag_name, preprocessor, source) {
 		});
 		if (!processed) return no_change();
 		if (processed.dependencies) dependencies.push(...processed.dependencies);
-		if (!processed.map && processed.code === content) return no_change();
+		if (!processed.map && !processed.attributes && processed.code === content) return no_change();
 		return processed_tag_to_code(
 			processed,
 			tag_name,
