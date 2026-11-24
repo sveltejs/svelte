@@ -30,6 +30,7 @@ import {
 	get_first_child,
 	get_last_child,
 	get_node_value,
+	get_active_registry,
 	import_node,
 	insert_before,
 	is_firefox,
@@ -258,8 +259,9 @@ export function from_tree(structure, flags) {
 		/** @type {TemplateNode} */
 		var clone;
 
-		if (current_renderer !== null) {
-			// for custom renderers we create new nodes every time rather than cloning a template.
+		if (current_renderer !== null || get_active_registry() !== null) {
+			// Scoped registries cannot override the registry of nodes in a cached tree template.
+			// For custom renderers we create new nodes every time rather than cloning a template.
 			// It's a bit less efficient, but saves renderer authors from having to implement
 			// `cloneNode`/`importNode`, which can be a pain. The nodes are not cached, since
 			// that would keep the most recent instance alive after it is destroyed

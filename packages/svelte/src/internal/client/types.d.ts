@@ -45,6 +45,11 @@ export type ComponentContext = {
 	 */
 	r: Effect;
 	/**
+	 * The scoped custom element registry that elements created by this component should be associated with,
+	 * or `null` if they should use the global registry. Inherited from the parent, and set from the target when mounting
+	 */
+	g: CustomElementRegistry | null;
+	/**
 	 * legacy stuff
 	 * @deprecated remove in 6.0
 	 */

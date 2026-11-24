@@ -12,7 +12,8 @@ import {
 	remove_child,
 	set_node_value,
 	get_node_value,
-	node_type
+	node_type,
+	get_target_registry
 } from './dom/operations.js';
 import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
 import { active_effect } from './runtime.js';
@@ -210,6 +211,9 @@ function _mount_inner(
 				push({});
 				var ctx = /** @type {ComponentContext} */ (component_context);
 				if (context) ctx.c = context;
+				// Elements created by this component tree should use the same custom element registry
+				// as the target (which may be a shadow root with a scoped registry)
+				ctx.g = renderer ? null : get_target_registry(/** @type {Node} */ (target));
 
 				if (events) {
 					// We can't spread the object or else we'd lose the state proxy stuff, if it is one

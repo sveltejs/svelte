@@ -18,7 +18,57 @@ import {
 import { eager_block_writes } from '../reactivity/batch.js';
 import { NAMESPACE_HTML } from '../../../constants.js';
 import { current_renderer } from '../custom-renderer/state.js';
+import { component_context } from '../context.js';
 import * as e from '../errors.js';
+
+/**
+ * `true` once a component was mounted into a target that is associated with a scoped custom element registry.
+ * Until then, we don't need to look for registries at all
+ */
+var uses_scoped_registries = false;
+
+/**
+ * Returns the scoped custom element registry the given element, shadow root or document is associated with,
+ * or `null` if it uses the global registry (or the browser doesn't support scoped custom element registries)
+ * @param {any} node
+ * @returns {CustomElementRegistry | null}
+ */
+function get_registry(node) {
+	var registry = node.customElementRegistry;
+	if (registry == null || registry === customElements) return null;
+
+	// the global registry of another window (e.g. when mounting into an iframe) isn't a scoped registry either
+	var doc = node.ownerDocument ?? node;
+	return registry === doc.defaultView?.customElements ? null : registry;
+}
+
+/**
+ * Returns the scoped custom element registry of a mount target, if any. Sets `uses_scoped_registries` to `true`
+ * if a custom element registry is used, which in turn makes other lookups take the slower path.
+ * @param {Node} target
+ */
+export function get_target_registry(target) {
+	var registry = get_registry(target);
+	if (registry !== null) uses_scoped_registries = true;
+	return registry;
+}
+
+/**
+ * Returns the scoped custom element registry the given element is associated with, if any
+ * @param {Element} element
+ */
+export function get_element_registry(element) {
+	return uses_scoped_registries ? get_registry(element) : null;
+}
+
+/**
+ * Returns the scoped custom element registry that elements created by the current component should be
+ * associated with, if any
+ * @returns {CustomElementRegistry | null}
+ */
+export function get_active_registry() {
+	return uses_scoped_registries ? component_context?.g ?? null : null;
+}
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
 /** @type {Window} */
@@ -313,6 +363,21 @@ export function should_defer_append() {
 export function create_element(tag, namespace, is) {
 	if (current_renderer) {
 		return current_renderer.createElement(tag);
+	}
+
+	var registry = get_active_registry();
+
+	if (registry !== null) {
+		/** @type {any} */
+		var options = is
+			? { is, customElementRegistry: registry }
+			: { customElementRegistry: registry };
+
+		return /** @type {T extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[T] : Element} */ (
+			namespace == null || namespace === NAMESPACE_HTML
+				? document.createElement(tag, options)
+				: document.createElementNS(namespace, tag, options)
+		);
 	}
 
 	if (namespace == null || namespace === NAMESPACE_HTML) {
@@ -675,6 +740,12 @@ export function clone_node(node, deep) {
 	if (current_renderer) {
 		e.custom_renderer_unsupported_operation('cloneNode');
 	}
+
+	// `cloneNode` can't associate the clones with a scoped custom element registry, `importNode` can
+	if (get_active_registry() !== null) {
+		return import_node(node, deep);
+	}
+
 	return node.cloneNode(deep);
 }
 
@@ -687,6 +758,17 @@ export function import_node(node, deep) {
 	if (current_renderer) {
 		e.custom_renderer_unsupported_operation('importNode');
 	}
+
+	var registry = get_active_registry();
+
+	if (registry !== null) {
+		// Separate call to below for backwards compat
+		return document.importNode(
+			node,
+			/** @type {any} */ ({ customElementRegistry: registry, selfOnly: !deep })
+		);
+	}
+
 	return document.importNode(node, deep);
 }
 

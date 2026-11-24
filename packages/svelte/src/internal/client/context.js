@@ -179,6 +179,7 @@ export function push(props, runes = false, fn) {
 		s: props,
 		x: null,
 		r: /** @type {Effect} */ (active_effect),
+		g: component_context === null ? null : component_context.g,
 		l: legacy_mode_flag && !runes ? { s: null, u: null, $: [] } : null
 	};
 

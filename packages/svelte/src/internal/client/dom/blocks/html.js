@@ -22,7 +22,8 @@ import {
 	set_inner_html,
 	insert_before,
 	node_type,
-	get_node_value
+	get_node_value,
+	get_active_registry
 } from '../operations.js';
 import { active_effect } from '../../runtime.js';
 import { COMMENT_NODE, ELEMENT_NODE } from '#client/constants';
@@ -181,6 +182,12 @@ export function html(
 
 		/** @type {DocumentFragment | Element} */
 		var node = svg || mathml ? wrapper : /** @type {HTMLTemplateElement} */ (wrapper).content;
+
+		if (!svg && !mathml) {
+			// The content of a `<template>` isn't associated with any custom element registry yet. If we're inside
+			// a scoped registry, associate it with that (which also upgrades the custom elements in it)
+			/** @type {any} */ (get_active_registry())?.initialize(node);
+		}
 
 		assign_nodes(
 			/** @type {TemplateNode} */ (get_first_child(node)),

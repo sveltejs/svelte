@@ -4,7 +4,7 @@ title: Custom elements
 
 <!-- - [basically what we have today](https://svelte.dev/docs/custom-elements-api) -->
 
-Svelte components can also be compiled to custom elements (aka web components) using the `customElement: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](svelte-options). Within the custom element you can access the host element via the [`$host`](https://svelte.dev/docs/svelte/$host) rune.
+Svelte components can also be compiled to custom elements (aka web components) using the `customElement: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](svelte-options). Within the custom element you can access the host element via the [`$host`]($host) rune.
 
 ```svelte
 <svelte:options customElement="my-element" />
@@ -65,7 +65,7 @@ The inner Svelte component is destroyed in the next tick after the `disconnected
 
 When constructing a custom element, you can tailor several aspects by defining `customElement` as an object within `<svelte:options>` since Svelte 4. This object may contain the following properties:
 
-- `tag: string`: an optional `tag` property for the custom element's name. If set, a custom element with this tag name will be defined with the document's `customElements` registry upon importing this component.
+- `tag: string`: an optional `tag` property for the custom element's name. If set, a custom element with this tag name will be defined with the document's `customElements` registry upon importing this component. Leave it out if you want to define the element yourself, for example in a [scoped custom element registry](#Scoped-custom-element-registries).
 - `shadow`: an optional property to modify shadow root properties. It accepts the following values:
   - `"none"`: No shadow root is created. Note that styles are then no longer encapsulated, and you can't use slots.
   - `"open"`: Shadow root is created with the `mode: "open"` option.
@@ -123,6 +123,84 @@ When constructing a custom element, you can tailor several aspects by defining `
 
 > [!NOTE] While Typescript is supported in the `extend` function, it is subject to limitations: you need to set `lang="ts"` on one of the scripts AND you can only use [erasable syntax](https://www.typescriptlang.org/tsconfig/#erasableSyntaxOnly) in it. They are not processed by script preprocessors.
 
+## Scoped custom element registries
+
+By default, custom elements are defined in the global `customElements` registry, which means that each tag name can only be used once per page. [Scoped custom element registries](https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/CustomElementRegistry) solve this by letting you create independent registries, which can then be attached to a shadow root, a document or an element.
+
+### Defining custom elements in a scoped registry
+
+Leave out the `tag` option, and define the custom element class — available through the static `element` property — in the registry of your choice:
+
+```svelte
+<!--- file: MyElement.svelte --->
+<script>
+	let { name } = $props();
+</script>
+
+<h1>Hello {name}!</h1>
+```
+
+```js
+/// file: registry.js
+// @noErrors
+import MyElement from './MyElement.svelte';
+
+export const registry = new CustomElementRegistry();
+registry.define('my-element', MyElement.element);
+```
+
+```js
+// @noErrors
+import { registry } from './registry.js';
+
+const shadow = host.attachShadow({ mode: 'open', customElementRegistry: registry });
+shadow.innerHTML = '<my-element name="world"></my-element>';
+```
+
+This way, whoever uses the element decides which registry it ends up in and under which name. If you publish custom elements as a library, consider exporting a function like `define(registry = customElements, name = 'my-element')` instead of defining them as a side effect of importing the component.
+
+If you prefer to keep the definition inside the component file, you can use the [`extend` option](#Component-options) to get hold of the class — the function can use imports and declarations from `<script module>`, but nothing from the instance `<script>`:
+
+```svelte
+<!--- file: MyElement.svelte --->
+<svelte:options
+	customElement={{
+		extend: (customElementConstructor) => {
+			registry.define('my-element', customElementConstructor);
+			return customElementConstructor;
+		}
+	}}
+/>
+
+<script module>
+	import { registry } from './registry.js';
+</script>
+```
+
+### Using elements from a scoped registry
+
+To use elements from a scoped registry inside a custom element written with Svelte, attach the registry to its shadow root:
+
+```svelte
+<svelte:options
+	customElement={{
+		tag: 'my-app',
+		shadow: { mode: 'open', customElementRegistry: registry }
+	}}
+/>
+
+<script module>
+	import { registry } from './registry.js';
+</script>
+
+<!-- defined by `registry`, not by the global `customElements` -->
+<my-element name="world"></my-element>
+```
+
+Elements that a Svelte component creates inside — through its markup, `<svelte:element>` or `{@html ...}` — are then associated with the same registry as the target they're rendered into, just like elements created with `target.innerHTML` would be. The same applies when you [`mount`](imperative-component-api#mount) or [`hydrate`](imperative-component-api#hydrate) a component: if the `target` is associated with a scoped registry, the elements of the component are, too.
+
+Note that, by default, a shadow root uses the global registry even if its host element was defined in a scoped registry. Also note that the scoped registry needs to contain the definitions of _all_ used custom elements within it, as browsers don't fall back to the global registry if they don't find a definition in the scoped registry.
+
 ## Caveats and limitations
 
 Custom elements can be a useful way to package components for consumption in a non-Svelte app, as they will work with vanilla HTML and JavaScript as well as [most frameworks](https://custom-elements-everywhere.com/). There are, however, some important differences to be aware of:
@@ -134,4 +212,4 @@ Custom elements can be a useful way to package components for consumption in a n
 - The deprecated `let:` directive has no effect, because custom elements do not have a way to pass data to the parent component that fills the slot
 - Polyfills are required to support older browsers
 - You can use Svelte's context feature between regular Svelte components within a custom element, but you can't use them across custom elements. In other words, you can't use `setContext` on a parent custom element and read that with `getContext` in a child custom element.
-- Don't declare properties or attributes starting with `on`, as their usage will be interpreted as an event listener. In other words, Svelte treats `<custom-element oneworld={true}></custom-element>` as `customElement.addEventListener('eworld', true)` (and not as `customElement.oneworld = true`)
+- Don't declare properties or attributes starting with `on`, as their usage will be interpreted as an event listener. In other words, Svelte treats `<custom-element oneworld={true}></custom-element>` as `customElement.addEventListener('eworld', true)` (and not as `customElement.oneworld = true`). If you want to dispatch events, use the [`$host`]($host) rune.
