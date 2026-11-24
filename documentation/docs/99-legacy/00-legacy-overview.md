@@ -11,9 +11,11 @@ The following pages document these features for
 
 Since Svelte 3/4 syntax still works in Svelte 5, we will distinguish between _legacy mode_ and _runes mode_. Once a component is in runes mode (which you can opt into by using runes, or by explicitly setting the `runes: true` compiler option), legacy mode features are no longer available.
 
-Components that are explicitly in legacy mode, because they use `<svelte:options runes={false} />`, `export let`, `$:`, `$$props` or `$$restProps`, update each template expression based on the variables it references, as in Svelte 3/4, rather than on the `$state` it reads. For example, `{counter.value}` does not update when `value` is a `$state` field of a class instance from a [`.svelte.js` module](svelte-js-files) and `counter.increment()` changes it. To use such state in a legacy mode component, convert it to a store with [`toStore`](svelte-store#toStore):
+Components that are explicitly in legacy mode, because of `<svelte:options runes={false} />`, the `runes: false` compiler option, `export let`, `$:`, `$$props` or `$$restProps`, re-run a template expression when a variable it references changes, as in Svelte 3/4. `$state` that the expression reads through a class field or inside a function call is not tracked, so `{counter.value}` is not re-run by `counter.increment()` if `value` is a `$state` field of a class instance from a [`.svelte.js` module](svelte-js-files). To use such state in a legacy mode component, convert it to a store with [`toStore`](svelte-store#toStore):
 
 ```svelte
+<svelte:options runes={false} />
+
 <script>
 	import { toStore } from 'svelte/store';
 	import { counter } from './counter.svelte.js';
