@@ -188,7 +188,7 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 				try {
 					fn(internal_set);
 				} catch (error) {
-					invoke_error_boundary(error, active_effect);
+					invoke_error_boundary(error, effect);
 				} finally {
 					unset_context(false);
 
