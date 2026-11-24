@@ -90,8 +90,10 @@ function encode(key, value, unresolved) {
 
 			const fragment = js`"${id}"`;
 
-			// A user may still be using SvelteKit 2/3 which may resolve to devalue 5 rather than 6
-			// on the server because of npm's node_modules structure
+			// the replacer must return a `js` fragment — interpolated values are serialized,
+			// so `"${id}"` renders as e.g. `"1"`, matching `placeholder`
+			// However, a user may still be using SvelteKit 2/3 which may resolve to devalue v5
+			//  rather than v6 on the server because of npm's node_modules structure
 			return typeof fragment === 'string' ? /** @type {any} */ (placeholder) : fragment;
 		}
 	};
