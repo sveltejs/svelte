@@ -136,11 +136,14 @@ export class Parser {
 				// Only suggest `lang="ts"` if it would make the component parse successfully.
 				// Suppress warnings during the retry, including calls to the user's warningFilter.
 				state.ignore_stack.push(new Set(w.codes));
+				let ts = false;
 				try {
 					walk(/** @type {any} */ (new Parser(template, false, true).root), null, {
-						TSTypeCastExpression() {
+						_(node, { next }) {
 							// Acorn also accepts Flow-style casts, which aren't valid TypeScript.
-							throw error;
+							if (node.type === 'TSTypeCastExpression') throw error;
+							if (node.type.startsWith('TS')) ts = true;
+							next();
 						}
 					});
 				} catch {
@@ -148,6 +151,8 @@ export class Parser {
 				} finally {
 					state.ignore_stack.pop();
 				}
+
+				if (!ts) throw error;
 
 				const message =
 					err.code === 'js_parse_error' ? err.message.split('\n')[0] : 'Unexpected token';
