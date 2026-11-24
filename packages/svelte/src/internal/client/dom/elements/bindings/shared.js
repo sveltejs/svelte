@@ -33,6 +33,16 @@ export function listen(target, events, handler, call_handler_immediately = true)
 }
 
 /**
+ * The name of the event that signals a change of a custom element property. `bind:foo` on a custom element
+ * listens to it, and Svelte custom elements dispatch it when a `$bindable` prop changes: `foo` -> `foochange`.
+ * The casing of the property is preserved: `fooBar` -> `fooBarchange`
+ * @param {string} property
+ */
+export function get_custom_element_change_event(property) {
+	return property + 'change';
+}
+
+/**
  * @template T
  * @param {() => T} fn
  */

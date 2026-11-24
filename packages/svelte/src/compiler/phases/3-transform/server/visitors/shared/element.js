@@ -3,7 +3,7 @@
 /** @import { ComponentContext, ComponentServerTransformState } from '../../types.js' */
 /** @import { ExpressionMetadata } from '../../../../nodes.js' */
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
-import { binding_properties } from '../../../../bindings.js';
+import { binding_properties, is_custom_element_binding } from '../../../../bindings.js';
 import { is_custom_element_node } from '../../../../nodes.js';
 import { regex_starts_with_newline } from '../../../../patterns.js';
 import * as b from '#compiler/builders';
@@ -111,6 +111,22 @@ export function build_element_attributes(node, context, transform) {
 				}
 			}
 		} else if (attribute.type === 'BindDirective') {
+			if (is_custom_element_binding(attribute.name, node)) {
+				// `bind:foo={x}` on a custom element is sugar for `foo={x} onfoochange={...}`
+				let expression = /** @type {Expression} */ (context.visit(attribute.expression));
+
+				if (expression.type === 'SequenceExpression') {
+					expression = b.call(expression.expressions[0]);
+				}
+
+				attributes.push({
+					type: 'transformed',
+					name: get_attribute_name(node, attribute),
+					expression: transform(expression, attribute.metadata.expression)
+				});
+				continue;
+			}
+
 			if (attribute.name === 'value' && node.name === 'select') continue;
 			if (
 				attribute.name === 'value' &&

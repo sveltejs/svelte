@@ -78,7 +78,9 @@ export { bind_this } from './dom/elements/bindings/this.js';
 export {
 	bind_content_editable,
 	bind_property,
-	bind_focused
+	bind_focused,
+	bind_custom_element_property,
+	dispatch_custom_event
 } from './dom/elements/bindings/universal.js';
 export { bind_window_scroll, bind_window_size } from './dom/elements/bindings/window.js';
 export { hydrate_template, next, reset } from './dom/hydration.js';
