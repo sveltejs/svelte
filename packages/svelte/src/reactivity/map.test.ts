@@ -1,4 +1,7 @@
 import { render_effect, effect_root } from '../internal/client/reactivity/effects.js';
+import { derived } from '../internal/client/reactivity/deriveds.js';
+import { get } from '../internal/client/runtime.js';
+import { enable_async_mode_flag, disable_async_mode_flag } from '../internal/flags/index.js';
 import { flushSync } from '../index-client.js';
 import { SvelteMap } from './map.js';
 import { assert, test } from 'vitest';
@@ -386,4 +389,84 @@ test('not invoking reactivity when value is not in the map after changes', () =>
 
 test('Map.instanceOf', () => {
 	assert.equal(new SvelteMap() instanceof Map, true);
+});
+
+test('async mode: pruned sources for missing keys do not break disconnected deriveds', async () => {
+	enable_async_mode_flag();
+
+	try {
+		const map = new SvelteMap<number, string>();
+
+		// a disconnected derived reading a missing key
+		const d = derived(() => map.get(1));
+		assert.equal(get(d), undefined);
+
+		// read lots of other missing keys inside a reaction, then stop, to trigger a sweep
+		const cleanup = effect_root(() => {
+			render_effect(() => {
+				for (let i = 2; i < 100; i++) map.get(i);
+			});
+		});
+		flushSync();
+		cleanup();
+		await Promise.resolve();
+
+		flushSync(() => {
+			map.set(1, 'one');
+		});
+
+		assert.equal(get(d), 'one');
+	} finally {
+		disable_async_mode_flag();
+	}
+});
+
+test('async mode: sources for missing keys that are still read are not pruned', async () => {
+	enable_async_mode_flag();
+
+	try {
+		const map = new SvelteMap<number, string>();
+		const log: any[] = [];
+
+		const cleanup = effect_root(() => {
+			render_effect(() => {
+				log.push(map.get(1), map.has(1));
+			});
+
+			render_effect(() => {
+				for (let i = 2; i < 100; i++) map.get(i);
+			});
+		});
+		flushSync();
+		await Promise.resolve();
+
+		flushSync(() => {
+			map.set(1, 'one');
+		});
+
+		assert.deepEqual(log, [undefined, false, 'one', true]);
+
+		cleanup();
+	} finally {
+		disable_async_mode_flag();
+	}
+});
+
+test('async mode: untracked reads of missing keys work', () => {
+	enable_async_mode_flag();
+
+	try {
+		const map = new SvelteMap<number, string>([[1, 'one']]);
+
+		assert.equal(map.get(1), 'one');
+		assert.equal(map.has(1), true);
+		assert.equal(map.get(2), undefined);
+		assert.equal(map.has(2), false);
+
+		map.set(2, 'two');
+		assert.equal(map.get(2), 'two');
+		assert.equal(map.has(2), true);
+	} finally {
+		disable_async_mode_flag();
+	}
 });
