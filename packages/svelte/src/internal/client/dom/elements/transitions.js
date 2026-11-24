@@ -367,8 +367,18 @@ function animate(element, options, counterpart, t2, on_begin, on_finish) {
 
 	counterpart?.deactivate();
 
+	const { delay = 0, css, tick, easing = linear } = options ?? {};
+
 	if (!options?.duration && !options?.delay) {
 		on_begin();
+
+		tick?.(t2, 1 - t2);
+
+		if (css) {
+			const keyframe = css_to_keyframe(css(t2, 1 - t2));
+			element.animate([keyframe], { duration: 0, fill: 'forwards' });
+		}
+
 		on_finish();
 
 		return {
@@ -378,8 +388,6 @@ function animate(element, options, counterpart, t2, on_begin, on_finish) {
 			t: () => t2
 		};
 	}
-
-	const { delay = 0, css, tick, easing = linear } = options;
 
 	/** @type {globalThis.Animation} */
 	var animation;
@@ -429,48 +437,46 @@ function animate(element, options, counterpart, t2, on_begin, on_finish) {
 			var duration = /** @type {number} */ (options.duration) * Math.abs(delta);
 			var keyframes = [];
 
-			if (duration > 0) {
-				/**
-				 * Whether or not the CSS includes `overflow: hidden`, in which case we need to
-				 * add it as an inline style to work around a Safari <18 bug
-				 * TODO 6.0 remove this, if possible
-				 */
-				var needs_overflow_hidden = false;
+			/**
+			 * Whether or not the CSS includes `overflow: hidden`, in which case we need to
+			 * add it as an inline style to work around a Safari <18 bug
+			 * TODO 6.0 remove this, if possible
+			 */
+			var needs_overflow_hidden = false;
 
-				if (css) {
-					var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
+			if (css) {
+				var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
 
-					for (var i = 0; i <= n; i += 1) {
-						var t = t1 + delta * easing(i / n);
-						var styles = css_to_keyframe(css(t, 1 - t));
-						keyframes.push(styles);
+				for (var i = 0; i <= n; i += 1) {
+					var t = duration === 0 ? t2 : t1 + delta * easing(i / n);
+					var styles = css_to_keyframe(css(t, 1 - t));
+					keyframes.push(styles);
 
-						needs_overflow_hidden ||= styles.overflow === 'hidden';
-					}
+					needs_overflow_hidden ||= styles.overflow === 'hidden';
 				}
+			}
 
-				if (needs_overflow_hidden) {
-					/** @type {HTMLElement} */ (element).style.overflow = 'hidden';
-				}
+			if (needs_overflow_hidden) {
+				/** @type {HTMLElement} */ (element).style.overflow = 'hidden';
+			}
 
-				get_t = () => {
-					var time = /** @type {number} */ (
-						/** @type {globalThis.Animation} */ (animation).currentTime
-					);
+			get_t = () => {
+				var time = /** @type {number} */ (
+					/** @type {globalThis.Animation} */ (animation).currentTime
+				);
 
-					return t1 + delta * easing(time / duration);
-				};
+				return t1 + delta * easing(time / duration);
+			};
 
-				if (tick) {
-					loop(() => {
-						if (animation.playState !== 'running') return false;
+			if (tick) {
+				loop(() => {
+					if (animation.playState !== 'running') return false;
 
-						var t = get_t();
-						tick(t, 1 - t);
+					var t = get_t();
+					tick(t, 1 - t);
 
-						return true;
-					});
-				}
+					return true;
+				});
 			}
 
 			animation = element.animate(keyframes, { duration, fill: 'forwards' });
