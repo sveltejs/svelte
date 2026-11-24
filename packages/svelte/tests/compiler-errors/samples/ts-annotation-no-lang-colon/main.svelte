@@ -1,1 +1,1 @@
-{x: number}
+{items.map((x: number) => x)}

@@ -1,7 +1,12 @@
 /** @import { Pattern } from 'estree' */
 /** @import { Parser } from '../index.js' */
 import { match_bracket } from '../utils/bracket.js';
-import { parse_expression_at, remove_parens } from '../acorn.js';
+import {
+	parse_expression_at,
+	remove_parens,
+	try_parse_expression_as_ts,
+	TS_HINT
+} from '../acorn.js';
 import * as e from '../../../errors.js';
 
 /**
@@ -61,6 +66,8 @@ function read_type_annotation(parser) {
 		return undefined;
 	}
 
+	const colon_pos = parser.index - 1;
+
 	// we need to trick Acorn into parsing the type annotation
 	const insert = '_ as ';
 	let a = parser.index - insert.length;
@@ -72,6 +79,16 @@ function read_type_annotation(parser) {
 		// parameters (`?:`). Therefore replace that sequence with something that will not error,
 		// keeping the length so that positions still line up with the template.
 		parser.template.slice(parser.index).replace(/\?(?=\s*:)/g, ' ');
+
+	if (!parser.ts) {
+		if (!parser.loose && try_parse_expression_as_ts(template, a) !== null) {
+			e.js_parse_error(colon_pos, `Unexpected token${TS_HINT}`);
+		}
+
+		parser.index = start;
+		return undefined;
+	}
+
 	let expression = remove_parens(parse_expression_at(parser, template, a));
 
 	// `foo: bar = baz` gets mangled — fix it

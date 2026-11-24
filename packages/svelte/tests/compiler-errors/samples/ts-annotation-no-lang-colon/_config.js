@@ -4,6 +4,6 @@ export default test({
 	error: {
 		code: 'js_parse_error',
 		message: 'Unexpected token (did you forget to add `lang="ts"`?)',
-		position: [2, 2]
+		position: [13, 13]
 	}
 });

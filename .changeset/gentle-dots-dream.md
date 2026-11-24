@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-Improve error message when TypeScript syntax is used in snippet parameters without `lang="ts"`
+fix: hint at missing `lang="ts"` when TypeScript syntax fails to parse

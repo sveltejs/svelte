@@ -4,7 +4,12 @@
 import { walk } from 'zimmerframe';
 import * as e from '../../../errors.js';
 import { create_fragment, ExpressionMetadata } from '../../nodes.js';
-import { parse_expression_at, parse_statement_at } from '../acorn.js';
+import {
+	parse_expression_at,
+	parse_statement_at,
+	try_parse_expression_as_ts,
+	TS_HINT
+} from '../acorn.js';
 import read_pattern from '../read/context.js';
 import read_expression, { get_loose_identifier } from '../read/expression.js';
 import { find_matching_bracket, match_bracket } from '../utils/bracket.js';
@@ -462,13 +467,24 @@ function open(parser) {
 		let type_params;
 
 		// if we match a generic opening
-		if (parser.ts && parser.match('<')) {
-			const start = parser.index;
-			const end = match_bracket(parser, start, pointy_bois);
+		if (parser.match('<')) {
+			if (parser.ts) {
+				const start = parser.index;
+				const end = match_bracket(parser, start, pointy_bois);
 
-			type_params = parser.template.slice(start + 1, end - 1);
+				type_params = parser.template.slice(start + 1, end - 1);
 
-			parser.index = end;
+				parser.index = end;
+			} else if (!parser.loose) {
+				const close = find_matching_bracket(parser.template, start + 1, '{');
+				if (
+					close !== undefined &&
+					try_parse_expression_as_ts(parser.template.slice(0, close) + ' => {}', params_start) !==
+						null
+				) {
+					e.js_parse_error(params_start, `Unexpected token${TS_HINT}`);
+				}
+			}
 		}
 
 		parser.allow_whitespace();

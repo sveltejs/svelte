@@ -2,8 +2,15 @@
 /** @import { Parser } from '../index.js' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
-import { parse_expression_at, remove_parens } from '../acorn.js';
+import {
+	parse_expression_at,
+	remove_parens,
+	try_parse_expression_as_ts,
+	TS_HINT
+} from '../acorn.js';
+import * as e from '../../../errors.js';
 import { find_matching_bracket } from '../utils/bracket.js';
+import { is_whitespace } from '../utils/whitespace.js';
 import { is_reserved } from '../../../../utils.js';
 import { locator } from '../../../state.js';
 
@@ -38,8 +45,10 @@ export default function read_expression(parser, opening_token, disallow_loose) {
 	const simple = read_simple_expression(parser);
 	if (simple) return simple;
 
+	const start = parser.index;
+
 	try {
-		const node = parse_expression_at(parser, parser.template, parser.index);
+		const node = parse_expression_at(parser, parser.template, start);
 
 		let index = /** @type {number} */ (node.end);
 
@@ -48,19 +57,21 @@ export default function read_expression(parser, opening_token, disallow_loose) {
 
 		parser.index = index;
 
-		if (!parser.ts) {
+		if (!parser.ts && !parser.loose) {
 			let j = parser.index;
-			while (j < parser.template.length && regex_whitespace.test(parser.template[j])) j++;
+			while (j < parser.template.length && is_whitespace(parser.template.charCodeAt(j))) j++;
 
-			const remaining = parser.template.slice(j);
+			const next = parser.template[j];
 
 			if (
-				remaining[0] === ':' ||
-				/^satisfies[\s(]/.test(remaining) ||
-				(remaining[0] === '!' && remaining[1] !== '=') ||
-				(/^as[\s(]/.test(remaining) && !disallow_loose)
+				(next === '!' && parser.template[j + 1] !== '=') ||
+				(next === 's' && parser.template.startsWith('satisfies', j)) ||
+				(next === 'a' && !disallow_loose && parser.template.startsWith('as', j))
 			) {
-				e.js_parse_error(j, `Unexpected token (did you forget to add \`lang="ts"\`?)`);
+				const ts_node = try_parse_expression_as_ts(parser.template, start);
+				if (ts_node && /** @type {number} */ (ts_node.end) > /** @type {number} */ (node.end)) {
+					e.js_parse_error(j, `Unexpected token${TS_HINT}`);
+				}
 			}
 		}
 

@@ -62,7 +62,10 @@ export function parse(source, comments, typescript, is_script) {
 	} catch (err) {
 		// TODO the `return` is necessary for TS<7 due to a bug; otherwise
 		// the `finally` block is regarded as unreachable
-		return handle_parse_error(err);
+		return handle_parse_error(
+			err,
+			is_script && !typescript && can_parse_program_as_ts(source, is_script)
+		);
 	} finally {
 		if (is_script) {
 			// @ts-expect-error
@@ -95,8 +98,11 @@ export function parse_expression_at(parser, source, index) {
 		add_comments(ast);
 
 		return ast;
-	} catch (e) {
-		handle_parse_error(e, source, parser.ts);
+	} catch (err) {
+		handle_parse_error(
+			err,
+			!parser.ts && !parser.loose && try_parse_expression_as_ts(source, index) !== null
+		);
 	}
 }
 
@@ -132,8 +138,108 @@ export function parse_statement_at(parser, source, index) {
 		// A statement that runs to the end of the source (e.g. an unterminated declaration tag)
 		// is an EOF, not a stray token; preserve the friendlier `unexpected_eof` diagnostic.
 		if (/** @type {any} */ (err).pos === source.length) e.unexpected_eof(source.length);
-		handle_parse_error(err);
+		handle_parse_error(
+			err,
+			!parser.ts && !parser.loose && can_parse_statement_as_ts(source, index)
+		);
 	}
+}
+
+/**
+ * Attempt to parse an expression as TypeScript without mutating parser state.
+ * Used on error paths to detect TypeScript syntax when `lang="ts"` is missing.
+ * @param {string} source
+ * @param {number} index
+ * @returns {acorn.Expression | null}
+ */
+export function try_parse_expression_as_ts(source, index) {
+	try {
+		const ast = TSParser.parseExpressionAt(source, index, {
+			sourceType: 'module',
+			ecmaVersion: 16,
+			locations: true,
+			preserveParens: true
+		});
+		return has_invalid_ts_nodes(ast) ? null : ast;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * @param {string} source
+ * @param {boolean} [is_script]
+ */
+function can_parse_program_as_ts(source, is_script) {
+	// @ts-expect-error
+	const parse_statement = TSParser.prototype.parseStatement;
+
+	if (is_script) {
+		// @ts-ignore
+		TSParser.prototype.parseStatement = function (...args) {
+			const v = parse_statement.call(this, ...args);
+			// @ts-ignore
+			this.undefinedExports = {};
+			return v;
+		};
+	}
+
+	try {
+		const ast = TSParser.parse(source, {
+			sourceType: 'module',
+			ecmaVersion: 16,
+			locations: true
+		});
+		return !has_invalid_ts_nodes(ast);
+	} catch {
+		return false;
+	} finally {
+		if (is_script) {
+			// @ts-expect-error
+			TSParser.prototype.parseStatement = parse_statement;
+		}
+	}
+}
+
+/**
+ * @param {string} source
+ * @param {number} index
+ */
+function can_parse_statement_as_ts(source, index) {
+	try {
+		const p = new /** @type {any} */ (TSParser)(
+			{
+				sourceType: 'module',
+				ecmaVersion: 16,
+				locations: true
+			},
+			source,
+			index
+		);
+		p.nextToken();
+		const statement = p.parseStatement(null, true, Object.create(null));
+		return statement.type === 'VariableDeclaration' && !has_invalid_ts_nodes(statement);
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * `@sveltejs/acorn-typescript` parses Flow-style `(a: 1)` into `TSTypeCastExpression`,
+ * which is not valid TypeScript — reject ASTs containing it to avoid false hints on
+ * invalid JS like `{(a: 1)}` or `{foo(a: 1)}`.
+ * @param {acorn.Node} ast
+ */
+function has_invalid_ts_nodes(ast) {
+	let invalid = false;
+
+	walk(ast, null, {
+		TSTypeCastExpression() {
+			invalid = true;
+		}
+	});
+
+	return invalid;
 }
 
 const regex_non_lf_line_break = /\r(?!\n)|[\u2028\u2029]/;
@@ -155,23 +261,23 @@ export function has_lf_line_breaks_only(template) {
 	return !regex_non_lf_line_break.test(template);
 }
 
+export const TS_HINT = ' (did you forget to add `lang="ts"`?)';
+
 const regex_position_indicator = / \(\d+:\d+\)$/;
 
 /**
  * @param {any} err
- * @param {string} [source]
- * @param {boolean} [typescript]
+ * @param {boolean} [is_ts]
  * @returns {never}
  */
-function handle_parse_error(err, source, typescript) {
+function handle_parse_error(err, is_ts) {
 	let message = /** @type {string} */ (err.message).replace(regex_position_indicator, '');
-	let pos = /** @type {number} */ (err.pos);
 
-	if (!typescript && source && source[pos] === ':') {
-		message += ` (did you forget to add \`lang="ts"\`?)`;
+	if (is_ts) {
+		message += TS_HINT;
 	}
 
-	e.js_parse_error(pos, message);
+	e.js_parse_error(err.pos, message);
 }
 
 /**
