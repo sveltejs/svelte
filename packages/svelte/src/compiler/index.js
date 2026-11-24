@@ -27,39 +27,33 @@ export function compile(source, options) {
 
 	const validated = validate_component_options(options, '');
 
-	let parsed = _parse(source);
+	/** @type {string | null | undefined} */
+	let custom_renderer;
+	let parsed = _parse(source, false, (component_options) => {
+		const override = component_options?.customRenderer;
 
-	const {
-		customElement: customElementOptions,
-		customRenderer: custom_renderer,
-		...parsed_options
-	} = parsed.options || {};
-
-	// resolve the per-component custom renderer, taking `<svelte:options customRenderer={...} />`
-	// into account. The normalized option is always a function returning `string | null | undefined`
-	// (see `validate-options.js`). A string opts in to a specific renderer module, `null`
-	// opts out to plain DOM (while keeping the feature enabled) and an absent option inherits whatever
-	// the global option resolves to.
-	let custom_renderer_option = validated.experimental.customRenderer;
-
-	if (custom_renderer !== undefined) {
-		// the feature is a global compiler option — a component can only override the renderer it uses
-		// (or opt out) when `experimental.customRenderer` is enabled. Otherwise nothing pushes a
-		// renderer, so allowing `<svelte:options customRenderer>` would silently do the wrong thing.
-		if (!options.experimental?.customRenderer && parsed.options?.attributes) {
-			for (const attribute of parsed.options.attributes) {
+		if (component_options && override !== undefined && !options.experimental?.customRenderer) {
+			for (const attribute of component_options.attributes) {
 				if (attribute.name === 'customRenderer') {
 					e.svelte_options_customrenderer_disabled(attribute);
 				}
 			}
 		}
 
-		if (typeof custom_renderer === 'string') {
-			custom_renderer_option = () => custom_renderer;
-		} else if (custom_renderer === null) {
-			custom_renderer_option = () => null;
-		}
-	}
+		// Resolve once, before choosing the parsing semantics. A component's string
+		// or null override takes precedence without invoking the global callback.
+		custom_renderer =
+			override !== undefined
+				? override
+				: validated.experimental.customRenderer({ filename: validated.filename });
+		return typeof custom_renderer === 'string';
+	});
+
+	const {
+		customElement: customElementOptions,
+		customRenderer: _,
+		...parsed_options
+	} = parsed.options || {};
 
 	/** @type {ValidatedCompileOptions} */
 	const combined_options = {
@@ -70,7 +64,7 @@ export function compile(source, options) {
 		runes: 'runes' in parsed_options ? () => parsed_options.runes : validated.runes,
 		experimental: {
 			...validated.experimental,
-			customRenderer: custom_renderer_option
+			customRenderer: () => custom_renderer
 		}
 	};
 

@@ -29,6 +29,12 @@ export class Parser {
 	 */
 	loose;
 
+	/** Whether element names belong to a custom renderer rather than HTML. */
+	custom_renderer;
+
+	/** @type {Array<() => void>} */
+	warnings = [];
+
 	/** */
 	index = 0;
 
@@ -77,13 +83,15 @@ export class Parser {
 	/**
 	 * @param {string} template
 	 * @param {boolean} loose
+	 * @param {boolean} custom_renderer
 	 */
-	constructor(template, loose) {
+	constructor(template, loose, custom_renderer) {
 		if (typeof template !== 'string') {
 			throw new TypeError('Template must be a string');
 		}
 
 		this.loose = loose;
+		this.custom_renderer = custom_renderer;
 		this.template = template.trimEnd();
 		this.lf_only = has_lf_line_breaks_only(this.template);
 
@@ -101,8 +109,7 @@ export class Parser {
 			js: [],
 			// @ts-ignore
 			start: null,
-			// @ts-ignore
-			end: null,
+			end: template.length,
 			type: 'Root',
 			fragment: create_fragment(),
 			options: null,
@@ -114,7 +121,9 @@ export class Parser {
 
 		this.stack.push(this.root);
 		this.fragments.push(this.root.fragment);
+	}
 
+	parse() {
 		/** @type {ParserState} */
 		let state = fragment;
 
@@ -141,7 +150,6 @@ export class Parser {
 		}
 
 		this.root.start = 0;
-		this.root.end = template.length;
 
 		const options_index = this.root.fragment.nodes.findIndex(
 			/** @param {any} thing */
@@ -150,16 +158,35 @@ export class Parser {
 		if (options_index !== -1) {
 			const options = /** @type {AST.SvelteOptionsRaw} */ (this.root.fragment.nodes[options_index]);
 			this.root.fragment.nodes.splice(options_index, 1);
-			this.root.options = read_options(options);
-
-			disallow_children(options);
-
-			// We need this for the old AST format
-			Object.defineProperty(this.root.options, '__raw__', {
-				value: options,
-				enumerable: false
-			});
+			if (!this.root.options) this.set_options(options);
 		}
+	}
+
+	/** @param {AST.SvelteOptionsRaw} options */
+	set_options(options) {
+		this.root.options = read_options(options);
+		disallow_children(options);
+
+		// We need this for the old AST format
+		Object.defineProperty(this.root.options, '__raw__', {
+			value: options,
+			enumerable: false
+		});
+	}
+
+	/**
+	 * Defer warnings until we know which parsing mode to use, so discarded passes
+	 * don't emit HTML warnings or call the user's warningFilter.
+	 * @template {(...args: any[]) => void} T
+	 * @param {T} warning
+	 * @param {Parameters<T>} args
+	 */
+	warn(warning, ...args) {
+		this.warnings.push(() => warning(...args));
+	}
+
+	flush_warnings() {
+		for (const warning of this.warnings) warning();
 	}
 
 	current() {
@@ -335,12 +362,58 @@ export class Parser {
 /**
  * @param {string} template
  * @param {boolean} [loose]
+ * @param {(options: AST.Root['options']) => boolean} [uses_custom_renderer]
  * @returns {AST.Root}
  */
-export function parse(template, loose = false) {
+export function parse(
+	template,
+	loose = false,
+	uses_custom_renderer = (options) => typeof options?.customRenderer === 'string'
+) {
 	state.set_source(template);
 
-	const parser = new Parser(template, loose);
+	// Options may follow the markup whose syntax they determine. Keep the usual
+	// HTML parse as the fast path, but don't let it reject or rewrite a custom
+	// renderer's tree before we have had a chance to read those options.
+	const html = new Parser(template, loose, false);
+	let html_error;
+	try {
+		html.parse();
+	} catch (error) {
+		html_error = error;
+	}
+
+	if (!html_error) {
+		if (!uses_custom_renderer(html.root.options)) {
+			html.flush_warnings();
+			return html.root;
+		}
+
+		const custom = new Parser(template, loose, true);
+		try {
+			custom.parse();
+		} finally {
+			custom.flush_warnings();
+		}
+		return custom.root;
+	}
+
+	const custom = new Parser(template, loose, true);
+	let custom_error;
+	try {
+		custom.parse();
+	} catch (error) {
+		custom_error = error;
+	}
+
+	const use_custom = uses_custom_renderer(
+		custom_error ? html.root.options ?? custom.root.options : custom.root.options
+	);
+	const parser = use_custom ? custom : html;
+	parser.flush_warnings();
+
+	const error = use_custom ? custom_error : html_error;
+	if (error) throw error;
 	return parser.root;
 }
 

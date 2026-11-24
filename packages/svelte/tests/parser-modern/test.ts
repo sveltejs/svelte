@@ -158,3 +158,54 @@ it('Strips BOM from the input', () => {
 		]
 	});
 });
+
+it.each(['p', 'li', 'td', 'input', 'img', 'textarea', 'script', 'style'])(
+	'parses and prints custom renderer elements named %s without HTML semantics',
+	(name) => {
+		const head = '<svelte:options customRenderer="some-renderer" />';
+		// script/style remain Svelte syntax at the top level, but not inside elements.
+		const body = `<group><${name}><label /></${name}></group>`;
+		for (const source of [head + body, body + head]) {
+			for (const loose of [false, true]) {
+				const ast = parse(source, { modern: true, loose });
+				const group = ast.fragment.nodes[0] as AST.RegularElement;
+				const element = group.fragment.nodes[0] as AST.RegularElement;
+				assert.equal(element.name, name);
+				assert.equal(element.fragment.nodes[0].type, 'RegularElement');
+
+				const printed = print(ast).code;
+				assert.deepEqual(clean(parse(printed, { modern: true }).fragment), clean(ast.fragment));
+
+				const legacy = parse(source, { loose });
+				assert.equal(
+					legacy.html.children.find((node: any) => node.name === 'group').children[0].children[0]
+						.name,
+					'label'
+				);
+			}
+		}
+	}
+);
+
+it.each(['!doctype', '!DOCTYPE'])(
+	'preserves %s declaration syntax with a custom renderer',
+	(name) => {
+		const head = '<svelte:options customRenderer="some-renderer" />';
+		const body = `<${name} html><group />`;
+		for (const source of [head + body, body + head]) {
+			for (const loose of [false, true]) {
+				const ast = parse(source, { modern: true, loose });
+				assert.equal(ast.fragment.nodes.length, 2);
+				assert.deepEqual((ast.fragment.nodes[0] as AST.RegularElement).fragment.nodes, []);
+				assert.deepEqual(
+					clean(parse(print(ast).code, { modern: true }).fragment),
+					clean(ast.fragment)
+				);
+			}
+		}
+		assert.throws(
+			() => parse(head + `<${name}><label /></${name}>`, { modern: true }),
+			/void_element_invalid_content/
+		);
+	}
+);

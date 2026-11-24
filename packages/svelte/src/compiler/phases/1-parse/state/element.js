@@ -87,7 +87,7 @@ export default function element(parser) {
 		parser.allow_whitespace();
 		parser.eat('>', true);
 
-		if (is_void(name)) {
+		if (is_void(name) && (!parser.custom_renderer || name.toLowerCase() === '!doctype')) {
 			e.void_element_invalid_content(start);
 		}
 
@@ -105,10 +105,11 @@ export default function element(parser) {
 				}
 			}
 
-			if (parent.type === 'RegularElement') {
+			if (parent.type === 'RegularElement' && !parser.custom_renderer) {
 				if (!parser.last_auto_closed_tag || parser.last_auto_closed_tag.tag !== name) {
 					const end = parent.fragment.nodes[0]?.start ?? start;
-					w.element_implicitly_closed(
+					parser.warn(
+						w.element_implicitly_closed,
 						{ start: parent.start, end },
 						`</${name}>`,
 						`</${parent.name}>`
@@ -129,6 +130,7 @@ export default function element(parser) {
 		}
 
 		parent.end = parser.index;
+		if (parent.type === 'SvelteOptions') parser.set_options(parent);
 		parser.pop();
 
 		if (parser.last_auto_closed_tag && parser.stack.length < parser.last_auto_closed_tag.depth) {
@@ -211,9 +213,18 @@ export default function element(parser) {
 
 	parser.allow_whitespace();
 
-	if (parent.type === 'RegularElement' && closing_tag_omitted(parent.name, tag.name)) {
+	if (
+		!parser.custom_renderer &&
+		parent.type === 'RegularElement' &&
+		closing_tag_omitted(parent.name, tag.name)
+	) {
 		const end = parent.fragment.nodes[0]?.start ?? start;
-		w.element_implicitly_closed({ start: parent.start, end }, `<${tag.name}>`, `</${parent.name}>`);
+		parser.warn(
+			w.element_implicitly_closed,
+			{ start: parent.start, end },
+			`<${tag.name}>`,
+			`</${parent.name}>`
+		);
 		parent.end = start;
 		parser.pop();
 		parser.last_auto_closed_tag = {
@@ -297,7 +308,7 @@ export default function element(parser) {
 		}
 
 		if (!is_expression_attribute(definition)) {
-			w.svelte_element_invalid_this(definition);
+			parser.warn(w.svelte_element_invalid_this, definition);
 
 			// note that this is wrong, in the case of e.g. `this="h{n}"` — it will result in `<h>`.
 			// it would be much better to just error here, but we are preserving the existing buggy
@@ -369,7 +380,10 @@ export default function element(parser) {
 
 	parser.append(element);
 
-	const self_closing = parser.eat('/') || is_void(tag.name);
+	// A doctype is a declaration, not a renderer element, and never has children.
+	const self_closing =
+		parser.eat('/') ||
+		(is_void(tag.name) && (!parser.custom_renderer || tag.name.toLowerCase() === '!doctype'));
 	const closed = parser.eat('>', true, false);
 
 	// Loose parsing mode
@@ -399,7 +413,8 @@ export default function element(parser) {
 	if (self_closing || !closed) {
 		// don't push self-closing elements onto the stack
 		element.end = parser.index;
-	} else if (tag.name === 'textarea') {
+		if (element.type === 'SvelteOptions') parser.set_options(element);
+	} else if (!parser.custom_renderer && tag.name === 'textarea') {
 		// special case
 		element.fragment.nodes = read_sequence(
 			parser,
@@ -411,7 +426,7 @@ export default function element(parser) {
 		);
 		parser.read(regex_closing_textarea_tag);
 		element.end = parser.index;
-	} else if (tag.name === 'script' || tag.name === 'style') {
+	} else if (!parser.custom_renderer && (tag.name === 'script' || tag.name === 'style')) {
 		// special case
 		const start = parser.index;
 		const close_tag = `</${tag.name}>`;

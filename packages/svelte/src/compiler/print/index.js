@@ -240,7 +240,7 @@ function base_element(node, context, comments, state) {
 	const multiline_attributes = attributes(node, node.attributes, child_context, comments);
 	const is_doctype_node = node.name.toLowerCase() === '!doctype';
 	const is_self_closing =
-		is_void(node.name) || (node.type === 'Component' && node.fragment.nodes.length === 0);
+		(is_void(node.name) || node.type === 'Component') && node.fragment.nodes.length === 0;
 
 	if (is_doctype_node) child_context.write(`>`);
 	else if (is_self_closing) {

@@ -51,7 +51,7 @@ export function read_script(parser, start, attributes) {
 		}
 
 		if (!ALLOWED_ATTRIBUTES.includes(attribute.name)) {
-			w.script_unknown_attribute(attribute);
+			parser.warn(w.script_unknown_attribute, attribute);
 		}
 
 		if (attribute.name === 'module') {
