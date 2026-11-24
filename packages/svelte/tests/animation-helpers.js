@@ -1,6 +1,6 @@
 import { flushSync } from 'svelte';
 import { raf as svelte_raf } from 'svelte/internal/client';
-import { flush_tasks, queue_micro_task } from '../src/internal/client/dom/task.js';
+import { queue_micro_task } from '../src/internal/client/dom/task.js';
 
 export const raf = {
 	/** @type {Set<Animation>} */
@@ -31,7 +31,6 @@ function tick(time) {
 	for (const animation of raf.animations) {
 		animation._update();
 	}
-	flush_tasks();
 	for (const tick of raf.ticks) {
 		tick(raf.time);
 	}
