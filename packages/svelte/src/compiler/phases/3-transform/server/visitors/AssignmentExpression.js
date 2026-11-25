@@ -102,9 +102,9 @@ function build_assignment(operator, left, right, context) {
 
 	const binding = context.state.scope.get(object.name);
 
-	// TODO 6.0 this won't work perfectly: once a derived is written to, it will
-	// no longer recompute. It might be better to disallow writing to deriveds
-	// on the server, to prevent this bug occurring
+	// Derived reassignment on the server is permanent (no reactive graph).
+	// We now warn in DEV via `derived_reassignment` in `src/internal/server/index.js`
+	// See sveltejs/svelte#18681. TODO 6.0: consider disallowing writes to deriveds on server.
 	if (binding?.kind === 'derived' && object === left) {
 		let value = /** @type {Expression} */ (
 			context.visit(build_assignment_value(operator, left, right))

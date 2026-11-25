@@ -24,6 +24,8 @@ As with `$state`, you can mark class fields as `$derived`.
 
 > [!NOTE] Code in Svelte components is only executed once at creation. Without the `$derived` rune, `doubled` would maintain its original value even when `count` changes.
 
+> [!NOTE] There is no reactivity on the server — `$derived` and `$derived.by` values do not recompute when their dependencies change, including overridden values (see [Overriding derived values](#Overriding-derived-values)).
+
 ## `$derived.by`
 
 Sometimes you need to create complex derivations that don't fit inside a short expression. In these cases, you can use `$derived.by` which accepts a function as its argument.
@@ -92,6 +94,8 @@ Derived expressions are recalculated when their dependencies change, but you can
 ```
 
 > [!NOTE] Prior to Svelte 5.25, deriveds were read-only.
+
+> [!WARNING] There is no reactivity on the server — when a `$derived` or `$derived.by` value's dependencies change, it will not recompute. This includes overridden values, which on the client are temporary and discarded when dependencies change, but on the server are permanent.
 
 ## Deriveds and reactivity
 
