@@ -1,11 +1,6 @@
 {
-	"$schema": "https://unpkg.com/@changesets/config@2.3.0/schema.json",
+	"$schema": "https://unpkg.com/@changesets/config@4.0.1/schema.json",
 	"changelog": ["@changesets/changelog-github", { "repo": "sveltejs/svelte", "template": "\n- {summary} {ref}" }],
-	"commit": false,
-	"fixed": [],
-	"linked": [],
 	"access": "public",
-	"baseBranch": "main",
-	"bumpVersionsWithWorkspaceProtocolOnly": true,
-	"ignore": ["!(@sveltejs/*|svelte)"]
+	"bumpVersionsWithWorkspaceProtocolOnly": true
 }
