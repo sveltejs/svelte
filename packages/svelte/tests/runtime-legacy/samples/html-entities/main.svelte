@@ -9,6 +9,9 @@
 <span>&#65;</span>
 <span>&#128;</span>
 <span>&#128</span>
+<span>&#x30EDD;</span>
+<span>&#xF0001;</span>
+<span title="&#x30EDD;&#x10FFFD;">x</span>
 
 <span>&stringnotanentity;</span>
 
