@@ -57,6 +57,9 @@
 	import StoredCallback from './StoredCallback.svelte';
 	import ImportedRegistry from './ImportedRegistry.svelte';
 	import ClassStaticBlock from './ClassStaticBlock.svelte';
+	import SubObjectMutation from './SubObjectMutation.svelte';
+	import IndirectAliasMutation from './IndirectAliasMutation.svelte';
+	import ThisMethodCall from './ThisMethodCall.svelte';
 </script>
 
 <!-- Keep each dependency graph in its own component so one conservative barrier cannot mask another case. -->
@@ -118,3 +121,6 @@
 <section data-case="stored-callback"><StoredCallback /></section>
 <section data-case="imported-registry"><ImportedRegistry /></section>
 <section data-case="class-static-block"><ClassStaticBlock /></section>
+<section data-case="sub-object-mutation"><SubObjectMutation /></section>
+<section data-case="indirect-alias-mutation"><IndirectAliasMutation /></section>
+<section data-case="this-method-call"><ThisMethodCall /></section>

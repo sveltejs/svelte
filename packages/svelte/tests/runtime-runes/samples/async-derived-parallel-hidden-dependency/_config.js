@@ -59,7 +59,10 @@ const expected_cases = [
 	['destructured-getter', '<output>42/42</output>'],
 	['stored-callback', '<output>42</output>'],
 	['imported-registry', '<output>42</output>'],
-	['class-static-block', '<output>42</output>']
+	['class-static-block', '<output>42</output>'],
+	['sub-object-mutation', '<output>mine</output>'],
+	['indirect-alias-mutation', '<output>dark</output>'],
+	['this-method-call', '<output>42</output>']
 ];
 
 const expected_logs = {
