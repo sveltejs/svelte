@@ -46,5 +46,173 @@
 			"column": 0,
 			"line": 16
 		}
+	},
+	{
+		"code": "a11y_no_noninteractive_tabindex",
+		"end": {
+			"column": 56,
+			"line": 43
+		},
+		"message": "noninteractive element cannot have nonnegative tabIndex value",
+		"start": {
+			"column": 0,
+			"line": 43
+		}
+	},
+	{
+		"code": "a11y_no_noninteractive_tabindex",
+		"end": {
+			"column": 78,
+			"line": 44
+		},
+		"message": "noninteractive element cannot have nonnegative tabIndex value",
+		"start": {
+			"column": 0,
+			"line": 44
+		}
+	},
+	{
+		"code": "a11y_no_noninteractive_tabindex",
+		"end": {
+			"column": 76,
+			"line": 45
+		},
+		"message": "noninteractive element cannot have nonnegative tabIndex value",
+		"start": {
+			"column": 0,
+			"line": 45
+		}
+	},
+	{
+		"code": "a11y_no_noninteractive_tabindex",
+		"end": {
+			"column": 76,
+			"line": 46
+		},
+		"message": "noninteractive element cannot have nonnegative tabIndex value",
+		"start": {
+			"column": 0,
+			"line": 46
+		}
+	},
+	{
+		"code": "a11y_no_noninteractive_tabindex",
+		"end": {
+			"column": 77,
+			"line": 47
+		},
+		"message": "noninteractive element cannot have nonnegative tabIndex value",
+		"start": {
+			"column": 0,
+			"line": 47
+		}
+	},
+	{
+		"code": "a11y_no_noninteractive_tabindex",
+		"end": {
+			"column": 80,
+			"line": 48
+		},
+		"message": "noninteractive element cannot have nonnegative tabIndex value",
+		"start": {
+			"column": 0,
+			"line": 48
+		}
+	},
+	{
+		"code": "a11y_no_noninteractive_tabindex",
+		"end": {
+			"column": 92,
+			"line": 49
+		},
+		"message": "noninteractive element cannot have nonnegative tabIndex value",
+		"start": {
+			"column": 0,
+			"line": 49
+		}
+	},
+	{
+		"code": "a11y_no_noninteractive_tabindex",
+		"end": {
+			"column": 88,
+			"line": 50
+		},
+		"message": "noninteractive element cannot have nonnegative tabIndex value",
+		"start": {
+			"column": 0,
+			"line": 50
+		}
+	},
+	{
+		"code": "a11y_no_noninteractive_tabindex",
+		"end": {
+			"column": 88,
+			"line": 51
+		},
+		"message": "noninteractive element cannot have nonnegative tabIndex value",
+		"start": {
+			"column": 0,
+			"line": 51
+		}
+	},
+	{
+		"code": "a11y_no_noninteractive_tabindex",
+		"end": {
+			"column": 93,
+			"line": 52
+		},
+		"message": "noninteractive element cannot have nonnegative tabIndex value",
+		"start": {
+			"column": 0,
+			"line": 52
+		}
+	},
+	{
+		"code": "a11y_no_noninteractive_tabindex",
+		"end": {
+			"column": 77,
+			"line": 54
+		},
+		"message": "noninteractive element cannot have nonnegative tabIndex value",
+		"start": {
+			"column": 1,
+			"line": 54
+		}
+	},
+	{
+		"code": "a11y_no_noninteractive_tabindex",
+		"end": {
+			"column": 92,
+			"line": 58
+		},
+		"message": "noninteractive element cannot have nonnegative tabIndex value",
+		"start": {
+			"column": 0,
+			"line": 58
+		}
+	},
+	{
+		"code": "a11y_no_noninteractive_tabindex",
+		"end": {
+			"column": 106,
+			"line": 59
+		},
+		"message": "noninteractive element cannot have nonnegative tabIndex value",
+		"start": {
+			"column": 0,
+			"line": 59
+		}
+	},
+	{
+		"code": "a11y_no_noninteractive_tabindex",
+		"end": {
+			"column": 102,
+			"line": 60
+		},
+		"message": "noninteractive element cannot have nonnegative tabIndex value",
+		"start": {
+			"column": 0,
+			"line": 60
+		}
 	}
 ]
