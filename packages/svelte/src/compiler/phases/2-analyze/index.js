@@ -7,15 +7,11 @@ import { walk } from 'zimmerframe';
 import { parse } from '../1-parse/acorn.js';
 import * as e from '../../errors.js';
 import * as w from '../../warnings.js';
-import {
-	extract_identifiers,
-	has_await_expression,
-	object,
-	unwrap_pattern
-} from '../../utils/ast.js';
+import { extract_identifiers, has_await_expression, unwrap_pattern } from '../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import check_graph_for_cycles from '../../utils/check_graph_for_cycles.js';
+import { hoist_async_deriveds } from './hoist.js';
 import { create_attribute, is_custom_element_node } from '../nodes.js';
 import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
@@ -1043,7 +1039,7 @@ function calculate_blockers(instance, analysis) {
 				CallExpression(node, context) {
 					// special case — no need to peek inside effects as they only run once async work has completed
 					const rune = get_rune(node, context.state.scope);
-					if (rune === '$effect' || rune === '$effect.pre') return;
+					if (rune === '$effect') return;
 
 					touch(node, context.state.scope, references, seen);
 				},
@@ -1071,304 +1067,6 @@ function calculate_blockers(instance, analysis) {
 			}
 		);
 	};
-
-	let awaited = false;
-
-	/** @type {Array<ESTree.Statement | ESTree.VariableDeclarator>} */
-	let sync_group = [];
-
-	// TODO this should probably be attached to the scope?
-	const promises = b.id('$$promises');
-
-	/**
-	 * @param {ESTree.Identifier} id
-	 * @param {NonNullable<Binding['blocker']>} blocker
-	 */
-	function push_declaration(id, blocker) {
-		analysis.instance_body.declarations.push(id);
-
-		const binding = /** @type {Binding} */ (instance.scope.get(id.name));
-		binding.blocker = blocker;
-	}
-
-	function flush_sync_group() {
-		if (sync_group.length === 0) return;
-
-		const entry = { nodes: sync_group, has_await: false };
-		analysis.instance_body.async.push(entry);
-		infos.set(entry, sync_info);
-
-		sync_group = [];
-		sync_info = create_entry_info();
-	}
-
-	/**
-	 * What we know about each entry of `analysis.instance_body.async`, so that we can decide
-	 * how far up the `run(...)` chain each async derived can be created (see `hoist_async_deriveds`)
-	 * @type {Map<ComponentAnalysis['instance_body']['async'][number], EntryInfo>}
-	 */
-	const infos = new Map();
-
-	/** @type {EntryInfo} */
-	let sync_info = create_entry_info();
-
-	/** @type {Map<ESTree.Node, number>} */
-	const statement_indexes = new Map(instance.ast.body.map((node, index) => [node, index]));
-
-	/**
-	 * Bindings that can be read from outside the component at any time
-	 * @type {Set<Binding | null>}
-	 */
-	const exported = new Set();
-
-	for (const node of instance.ast.body) {
-		if (node.type !== 'ExportNamedDeclaration') continue;
-
-		if (node.declaration?.type === 'VariableDeclaration') {
-			for (const declarator of node.declaration.declarations) {
-				for (const binding of instance.scope.get_bindings(declarator)) exported.add(binding);
-			}
-		} else if (node.declaration) {
-			exported.add(instance.scope.get(/** @type {ESTree.Identifier} */ (node.declaration.id).name));
-		} else {
-			for (const specifier of node.specifiers) {
-				if (specifier.local.type === 'Identifier') {
-					exported.add(instance.scope.get(specifier.local.name));
-				}
-			}
-		}
-	}
-
-	/**
-	 * Everything an expression references, including via function calls and assignments,
-	 * and the store behind any `$store` subscription it reads
-	 * @param {ESTree.Expression} expression
-	 */
-	function touch_with_stores(expression) {
-		/** @type {Set<Binding>} */
-		const touched = new Set();
-
-		/** @type {Set<ESTree.Node>} */
-		const seen = new Set();
-
-		touch(expression, instance.scope, touched, seen);
-
-		// a `Set` visits values that are added during iteration, so this also handles stores
-		// that are only reached via the assignments of another store
-		for (const binding of touched) {
-			if (binding.kind !== 'store_sub') continue;
-
-			const store = instance.scope.get(binding.node.name.slice(1));
-			if (store === null || touched.has(store)) continue;
-
-			touched.add(store);
-
-			for (const assignment of store.assignments) {
-				touch(assignment.value, assignment.scope, touched, seen);
-			}
-		}
-
-		return touched;
-	}
-
-	/**
-	 * @param {AST.SvelteNode[]} path
-	 * @param {number} index
-	 */
-	function scope_at(path, index) {
-		for (let i = index; i >= 0; i -= 1) {
-			const scope = instance.scopes.get(path[i]);
-			if (scope) return scope;
-		}
-
-		return instance.scope;
-	}
-
-	/**
-	 * Whether code at the given path can run before the instance statement at index `end` has finished.
-	 * Function declarations and function-valued declarations are hoisted, so they can always run
-	 * @param {AST.SvelteNode[]} path
-	 * @param {number} end
-	 */
-	function is_early(path, end) {
-		const statement = /** @type {ESTree.Statement | ESTree.ModuleDeclaration} */ (path[1]);
-		const index = statement_indexes.get(statement);
-		if (index === undefined || index <= end) return true;
-
-		const node =
-			statement.type === 'ExportNamedDeclaration' && statement.declaration
-				? statement.declaration
-				: statement;
-
-		if (node.type === 'FunctionDeclaration') return true;
-
-		if (node.type === 'VariableDeclaration') {
-			const declarator = path[path.indexOf(node) + 1];
-
-			return (
-				declarator?.type === 'VariableDeclarator' &&
-				(declarator.init?.type === 'ArrowFunctionExpression' ||
-					declarator.init?.type === 'FunctionExpression')
-			);
-		}
-
-		return false;
-	}
-
-	/**
-	 * Finds the closest function or lazily evaluated `$derived(...)` that contains the node at the given path,
-	 * and through which bindings the code in it can be invoked. Returns `null` for code that runs directly as part of
-	 * a top-level statement, `'deferred'` for code that only runs once all async work has completed, and `'escaped'`
-	 * if it isn't only held by a binding (but e.g. assigned to a property, passed to a function, or part of a class),
-	 * i.e. could be invoked by anything. When in doubt, this errs on the side of `'escaped'`
-	 * @param {AST.SvelteNode[]} path
-	 * @returns {null | 'deferred' | 'escaped' | { bindings: Binding[]; is_function: boolean }}
-	 */
-	function get_closure(path) {
-		// effects only run once async work has completed, so nothing inside them is relevant
-		for (let i = 1; i < path.length - 1; i += 1) {
-			const parent = path[i];
-
-			if (
-				parent.type === 'CallExpression' &&
-				parent.arguments[0] === path[i + 1] &&
-				(path[i + 1].type === 'ArrowFunctionExpression' ||
-					path[i + 1].type === 'FunctionExpression')
-			) {
-				const rune = get_rune(parent, scope_at(path, i));
-				if (rune === '$effect' || rune === '$effect.pre') return 'deferred';
-			}
-		}
-
-		for (let i = path.length - 1; i > 0; i -= 1) {
-			const node = path[i];
-			const parent = path[i - 1];
-
-			// instances can end up anywhere
-			if (node.type === 'ClassExpression' || node.type === 'ClassDeclaration') return 'escaped';
-
-			if (
-				node.type === 'ArrowFunctionExpression' ||
-				node.type === 'FunctionExpression' ||
-				node.type === 'FunctionDeclaration'
-			) {
-				// the function could pass itself elsewhere via its own name
-				if (node.type === 'FunctionExpression' && node.id) return 'escaped';
-
-				// immediately invoked, so it runs as part of the surrounding code
-				if (parent.type === 'CallExpression' && parent.callee === node) continue;
-
-				// this computes the derived's value, handled below. In contrast, a function
-				// inside `$derived(...)` is (part of) the value, and could end up anywhere
-				if (
-					parent.type === 'CallExpression' &&
-					get_rune(parent, scope_at(path, i - 1)) === '$derived.by'
-				) {
-					continue;
-				}
-
-				const id =
-					node.type === 'FunctionDeclaration'
-						? node.id
-						: parent.type === 'VariableDeclarator' && parent.init === node
-							? parent.id
-							: null;
-
-				if (id?.type !== 'Identifier') return 'escaped';
-
-				const binding = scope_at(path, i - 1).get(id.name);
-				if (binding === null) return 'escaped';
-
-				return { bindings: [binding], is_function: true };
-			}
-
-			if (
-				node.type === 'CallExpression' &&
-				parent.type === 'VariableDeclarator' &&
-				parent.init === node
-			) {
-				const rune = get_rune(node, scope_at(path, i));
-
-				if (rune === '$derived' || rune === '$derived.by') {
-					// evaluated (lazily) whenever the derived is read
-					return { bindings: scope_at(path, i - 1).get_bindings(parent), is_function: false };
-				}
-			}
-		}
-
-		return null;
-	}
-
-	/**
-	 * Whether code reading any of the given bindings could run while a `$derived(await ...)` that is created
-	 * before them is evaluated, without that derived referencing it in a way `touch` can follow.
-	 * That's the case if a closure that (directly or indirectly) reads them is created before the derived's
-	 * declaration, and stored somewhere other than in a binding — e.g. assigned to an object property, used as
-	 * a destructuring default or passed to a function. Unlike bindings, these places can't be traced back
-	 * @param {Iterable<Binding>} bindings
-	 * @param {number} end index of the instance statement that declares the derived
-	 */
-	function escapes(bindings, end) {
-		/** @type {Map<Binding, boolean>} binding -> whether it holds a function (as opposed to a signal) */
-		const tainted = new Map();
-
-		for (const binding of bindings) {
-			tainted.set(binding, false);
-
-			// reading `$store` reads `store`
-			const store_sub = instance.scope.declarations.get('$' + binding.node.name);
-			if (store_sub?.kind === 'store_sub') tainted.set(store_sub, false);
-		}
-
-		const queue = [...tainted.keys()];
-		let binding;
-
-		while ((binding = queue.pop())) {
-			if (exported.has(binding)) return true;
-
-			for (const { node, path } of binding.references) {
-				// the declaration itself
-				if (node === binding.node) continue;
-
-				// references in the template only run once the group has finished
-				if (path[0] !== instance.ast || !is_early(path, end)) continue;
-
-				const closure = get_closure(path);
-				if (closure === 'deferred') continue;
-				if (closure === 'escaped') return true;
-
-				if (tainted.get(binding)) {
-					// a function that is used other than by calling it could end up anywhere
-					const parent = /** @type {ESTree.Node} */ (path.at(-1));
-					const is_called =
-						(parent.type === 'CallExpression' || parent.type === 'NewExpression') &&
-						parent.callee === node;
-
-					if (!is_called) return true;
-				}
-
-				if (closure !== null) {
-					for (const binding of closure.bindings) {
-						if (tainted.has(binding)) continue;
-						tainted.set(binding, closure.is_function);
-						queue.push(binding);
-					}
-				}
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * @param {ESTree.VariableDeclarator} declarator
-	 */
-	function is_async_derived(declarator) {
-		return (
-			get_rune(declarator.init, instance.scope) === '$derived' &&
-			has_await_expression(/** @type {ESTree.CallExpression} */ (declarator.init))
-		);
-	}
 
 	/**
 	 * Summaries of local functions for `collect_writes`, `null` while one is being computed
@@ -1480,6 +1178,13 @@ function calculate_blockers(instance, analysis) {
 							value.type === 'FunctionExpression' ||
 							value.type === 'FunctionDeclaration'
 						) {
+							// Module functions are opaque, just like imports and props. Their scopes
+							// aren't part of the instance, but explicit arguments can still be written.
+							if (!instance.scopes.has(value)) {
+								writes_arguments = true;
+								continue;
+							}
+
 							const summary = summarize(value, assignment.scope);
 							for (const binding of summary.writes) writes.add(binding);
 							writes_arguments ||= summary.params;
@@ -1565,78 +1270,30 @@ function calculate_blockers(instance, analysis) {
 		return writes;
 	}
 
-	/**
-	 * Records what a statement (or declarator) declares or might write,
-	 * so that we know whether an async derived can be created before it
-	 * @param {EntryInfo} info
-	 * @param {ESTree.Statement | ESTree.VariableDeclarator} node
-	 * @param {Set<Binding>} writes
-	 */
-	function record(info, node, writes) {
-		if (node.type === 'VariableDeclarator') {
-			for (const binding of instance.scope.get_bindings(node)) info.out.add(binding);
-		} else if (node.type === 'ClassDeclaration') {
-			const binding = instance.scope.get(node.id.name);
-			if (binding) info.out.add(binding);
-		}
+	let awaited = false;
 
-		for (const binding of writes) info.out.add(binding);
+	/** @type {Array<ESTree.Statement | ESTree.VariableDeclarator>} */
+	let sync_group = [];
+
+	// TODO this should probably be attached to the scope?
+	const promises = b.id('$$promises');
+
+	/**
+	 * @param {ESTree.Identifier} id
+	 * @param {NonNullable<Binding['blocker']>} blocker
+	 */
+	function push_declaration(id, blocker) {
+		analysis.instance_body.declarations.push(id);
+
+		const binding = /** @type {Binding} */ (instance.scope.get(id.name));
+		binding.blocker = blocker;
 	}
 
-	/**
-	 * Moves the creation of each `$derived(await ...)` as far up the `run(...)` chain as possible, so that it runs in
-	 * parallel with the entries in between. It is still awaited (and assigned) in its own entry, so nothing else has
-	 * to wait any longer than before. Since async deriveds must be pure, the only thing that matters is whether
-	 * they depend on an entry, i.e. an async derived can be created before an entry if
-	 * - it doesn't (directly or indirectly) read anything the entry declares or writes
-	 * - nothing the entry declares or writes can be read in ways we can't trace (see `escapes`)
-	 *
-	 * This includes entries with other top-level `await` expressions — an async derived that relies on their
-	 * side effects without referencing them (e.g. `await connect(); let user = $derived(await get_user())`)
-	 * breaks the contract
-	 */
-	function hoist_async_deriveds() {
-		const entries = analysis.instance_body.async;
+	function flush_sync_group() {
+		if (sync_group.length === 0) return;
 
-		/** @type {Map<EntryInfo, Map<number, boolean>>} */
-		const escape_cache = new Map();
-
-		/**
-		 * @param {EntryInfo} info
-		 * @param {number} end
-		 */
-		function cached_escapes(info, end) {
-			let cache = escape_cache.get(info);
-			if (!cache) escape_cache.set(info, (cache = new Map()));
-
-			let result = cache.get(end);
-
-			if (result === undefined) {
-				result = escapes(info.out, end);
-				cache.set(end, result);
-			}
-
-			return result;
-		}
-
-		for (let j = 1; j < entries.length; j += 1) {
-			const derived = infos.get(entries[j])?.derived;
-			if (!derived) continue;
-
-			let target = j;
-
-			while (target > 0) {
-				const info = /** @type {EntryInfo} */ (infos.get(entries[target - 1]));
-
-				if (intersects(derived.touched, info.out) || cached_escapes(info, derived.index)) {
-					break;
-				}
-
-				target -= 1;
-			}
-
-			if (target < j) entries[j].hoisted_to = target;
-		}
+		analysis.instance_body.async.push({ nodes: sync_group, has_await: false });
+		sync_group = [];
 	}
 
 	/**
@@ -1645,7 +1302,7 @@ function calculate_blockers(instance, analysis) {
 	 */
 	const functions = [];
 
-	for (const [index, statement] of instance.ast.body.entries()) {
+	for (const statement of instance.ast.body) {
 		let node = statement;
 
 		if (node.type === 'ImportDeclaration') {
@@ -1713,22 +1370,9 @@ function calculate_blockers(instance, analysis) {
 
 					if (has_await) {
 						// one declarator per declaration, makes things simpler
-						const entry = { nodes: [declarator], has_await: true };
-						analysis.instance_body.async.push(entry);
-
-						const info = create_entry_info();
-						record(info, declarator, writes);
-						infos.set(entry, info);
-
-						if (is_async_derived(declarator)) {
-							info.derived = {
-								touched: touch_with_stores(/** @type {ESTree.Expression} */ (declarator.init)),
-								index
-							};
-						}
+						analysis.instance_body.async.push({ nodes: [declarator], has_await: true });
 					} else {
 						sync_group.push(declarator);
-						record(sync_info, declarator, writes);
 					}
 				}
 			}
@@ -1751,14 +1395,9 @@ function calculate_blockers(instance, analysis) {
 			}
 
 			if (has_await) {
-				const entry = { nodes: [node], has_await: true };
-				analysis.instance_body.async.push(entry);
-				const info = create_entry_info();
-				record(info, node, writes);
-				infos.set(entry, info);
+				analysis.instance_body.async.push({ nodes: [node], has_await: true });
 			} else {
 				sync_group.push(node);
-				record(sync_info, node, writes);
 			}
 		} else {
 			analysis.instance_body.sync.push(node);
@@ -1770,7 +1409,7 @@ function calculate_blockers(instance, analysis) {
 	if (!awaited) return;
 
 	flush_sync_group();
-	hoist_async_deriveds();
+	hoist_async_deriveds(analysis.module, instance, analysis.instance_body.async);
 
 	// a store subscription must wait on whatever blocks the store itself; this must happen
 	// before function tracing so that functions reading `$store` inherit the blocker
@@ -1830,35 +1469,6 @@ function calculate_blockers(instance, analysis) {
 
 		binding.blocker = /** @type {typeof binding['blocker']} */ (blocker);
 	}
-}
-
-/**
- * What is known about an entry of `instance_body.async`, for hoisting async deriveds:
- * - `out`: bindings it declares or writes
- * - `derived`: for a `$derived(await ...)` entry, everything its expression touches,
- *   and the index of its instance statement
- * @typedef {{
- *   out: Set<Binding>;
- *   derived: null | { touched: Set<Binding>; index: number };
- * }} EntryInfo
- */
-
-/** @returns {EntryInfo} */
-function create_entry_info() {
-	return { out: new Set(), derived: null };
-}
-
-/**
- * @template T
- * @param {Set<T>} a
- * @param {Set<T>} b
- */
-function intersects(a, b) {
-	for (const value of a) {
-		if (b.has(value)) return true;
-	}
-
-	return false;
 }
 
 /**
