@@ -113,6 +113,14 @@ export default defineConfig({
 			}),
 			{
 				extends: true,
+				resolve: { alias: svelte_alias() },
+				test: {
+					name: 'tree-renderer',
+					include: ['packages/tree-renderer/**/*.test.ts']
+				}
+			},
+			{
+				extends: true,
 				// resolve `svelte` as if no `custom-renderer`/`browser` condition was set
 				resolve: { alias: svelte_alias(true) },
 				test: {

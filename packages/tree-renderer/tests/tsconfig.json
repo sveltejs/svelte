@@ -1,0 +1,13 @@
+{
+	// the tests import svelte's test harness and sources, so they're checked the way those are
+	"extends": "../../svelte/tsconfig.json",
+	"include": [
+		"../src/",
+		"./",
+		// svelte's sources use `estree`'s `Decorator`, which comes from rollup's types (svelte's
+		// own check gets them from `rollup.config.js`)
+		"../../svelte/node_modules/rollup/dist/rollup.d.ts"
+	],
+	// the compiled components
+	"exclude": ["**/_output/"]
+}

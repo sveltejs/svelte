@@ -1,0 +1,39 @@
+{
+  "name": "@sveltejs/tree-renderer",
+  "description": "A Svelte custom renderer that maintains the node tree for you",
+  "license": "MIT",
+  "version": "0.0.1",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sveltejs/svelte.git",
+    "directory": "packages/tree-renderer"
+  },
+  "homepage": "https://svelte.dev",
+  "bugs": {
+    "url": "https://github.com/sveltejs/svelte/issues"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "types": "./src/public.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/public.d.ts",
+      "default": "./src/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "check": "tsc && tsc -p tests/tsconfig.json"
+  },
+  "peerDependencies": {
+    "svelte": "^5.59.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "svelte": "workspace:^",
+    "typescript": "^5.5.4"
+  }
+}

@@ -166,6 +166,18 @@ importers:
         specifier: ^3.29.0
         version: 3.29.0
 
+  packages/tree-renderer:
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.5
+        version: 20.19.17
+      svelte:
+        specifier: workspace:^
+        version: link:../svelte
+      typescript:
+        specifier: ^5.5.4
+        version: 5.5.4
+
   playgrounds/sandbox:
     devDependencies:
       '@sveltejs/vite-plugin-svelte':

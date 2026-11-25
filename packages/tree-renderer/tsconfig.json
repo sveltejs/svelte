@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"module": "esnext",
+		"lib": ["esnext", "dom", "dom.iterable"],
+		"target": "esnext",
+		"noEmit": true,
+		"moduleResolution": "bundler",
+		"noErrorTruncation": true,
+		"verbatimModuleSyntax": true,
+		"types": ["node"],
+		"strict": true,
+		"allowJs": true,
+		"checkJs": true
+	},
+	"include": ["./src/"]
+}
