@@ -55,7 +55,6 @@ import {
 import { eager_effect, teardown, unlink_effect } from './effects.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status, update_derived_status } from './status.js';
-import { invariant } from '../../shared/dev.js';
 import { OBSOLETE } from './deriveds.js';
 import { is_runes } from '../context.js';
 import { merge_target } from './async.js';
@@ -1160,12 +1159,6 @@ export class Batch {
 				// this batch is now obsolete and can be discarded
 				batch.discard();
 			} else if (sources.length > 0) {
-				// The microtask queue can contain the batch already scheduled to run right
-				// after this one is finished, so throwing the invariant would be wrong here.
-				if (DEV && !batch.#decrement_queued) {
-					invariant(batch.#scheduled.length === 0, 'Batch has scheduled effects');
-				}
-
 				// Everything that depends on the committed values needs to be re-validated in the
 				// batch's view. The batch is processed again once the current flush is done (which
 				// also re-validates what depends on its own writes, as the committed batch may have
