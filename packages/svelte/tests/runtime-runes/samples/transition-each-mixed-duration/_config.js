@@ -16,7 +16,7 @@ export default test({
 		await tick();
 		raf.tick(200);
 
-		// Even the synchronous outro stays in the DOM until the whole group finishes.
+		// Even the instantaneous outro stays in the DOM until the whole group finishes.
 		assert.equal(target.querySelectorAll('p').length, 3);
 
 		raf.tick(400);
@@ -38,7 +38,7 @@ export default test({
 		assert.htmlEqual(target.innerHTML, buttons + '<p>2</p>');
 		assert.equal(target.querySelector('p'), restored);
 
-		// An all-synchronous group still gets destroyed immediately.
+		// An all-instantaneous group is destroyed by tick(), without waiting for a frame.
 		remove_all.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, buttons);
