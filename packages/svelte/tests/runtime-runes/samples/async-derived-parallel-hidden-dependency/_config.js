@@ -58,7 +58,8 @@ const expected_cases = [
 	['imported-method-barrier', '<output>1/2/3/4</output>'],
 	['destructured-getter', '<output>42/42</output>'],
 	['stored-callback', '<output>42</output>'],
-	['imported-registry', '<output>42</output>']
+	['imported-registry', '<output>42</output>'],
+	['class-static-block', '<output>42</output>']
 ];
 
 const expected_logs = {

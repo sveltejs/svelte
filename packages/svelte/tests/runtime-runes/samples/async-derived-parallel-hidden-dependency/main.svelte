@@ -56,6 +56,7 @@
 	import DestructuredGetter from './DestructuredGetter.svelte';
 	import StoredCallback from './StoredCallback.svelte';
 	import ImportedRegistry from './ImportedRegistry.svelte';
+	import ClassStaticBlock from './ClassStaticBlock.svelte';
 </script>
 
 <!-- Keep each dependency graph in its own component so one conservative barrier cannot mask another case. -->
@@ -116,3 +117,4 @@
 <section data-case="destructured-getter"><DestructuredGetter /></section>
 <section data-case="stored-callback"><StoredCallback /></section>
 <section data-case="imported-registry"><ImportedRegistry /></section>
+<section data-case="class-static-block"><ClassStaticBlock /></section>

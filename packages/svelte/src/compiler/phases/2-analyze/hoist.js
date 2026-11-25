@@ -810,17 +810,41 @@ function analyze(module, instance) {
 			}
 		};
 
+		/**
+		 * Methods and instance fields only run once the class is used, which is covered when it is
+		 * @param {ESTree.ClassDeclaration | ESTree.ClassExpression} node
+		 * @param {{ visit: (node: ESTree.Node) => void }} context
+		 */
+		const create_class = (node, { visit }) => {
+			if (node.superClass) visit(node.superClass);
+
+			for (const element of node.body.body) {
+				if (element.type === 'StaticBlock') {
+					visit(element);
+					continue;
+				}
+
+				if (element.computed) visit(element.key);
+
+				if (element.type === 'PropertyDefinition' && element.static && element.value) {
+					visit(element.value);
+				}
+			}
+		};
+
 		walk(node, scope, {
 			_(node, { state, next }) {
 				next(scope_of(node) ?? state);
 			},
 
-			// creating functions and classes doesn't run their code
+			// creating a function doesn't run its code...
 			ArrowFunctionExpression() {},
 			FunctionExpression() {},
 			FunctionDeclaration() {},
-			ClassDeclaration() {},
-			ClassExpression() {},
+
+			// ...while creating a class runs its heritage, computed keys and static members
+			ClassDeclaration: create_class,
+			ClassExpression: create_class,
 
 			VariableDeclarator(node, { state, next }) {
 				const rune = get_rune(node.init, state);
