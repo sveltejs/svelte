@@ -1,4 +1,5 @@
 import { render_effect, teardown } from '../../../reactivity/effects.js';
+import { hydrating } from '../../hydration.js';
 import { listen } from './shared.js';
 
 /**
@@ -14,10 +15,12 @@ export function bind_content_editable(property, element, get, set = get) {
 		set(element[property]);
 	});
 
+	var first_run = true;
 	render_effect(() => {
 		var value = get();
 
-		if (element[property] !== value) {
+		if (element[property] !== value || (first_run && !hydrating)) {
+			first_run = false;
 			if (value == null) {
 				// @ts-ignore
 				var non_null_value = element[property];
