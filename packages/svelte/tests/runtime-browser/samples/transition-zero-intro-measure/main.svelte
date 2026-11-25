@@ -7,9 +7,15 @@
 		return { duration: 400 };
 	}
 
-	function child_intro() {
+	function child_intro(node: HTMLElement) {
 		log.push('child options');
-		return { duration: 0 };
+		return {
+			duration: 0,
+			tick: (t: number) => {
+				node.style.height = '100px';
+				log.push(`child tick: ${t}`);
+			}
+		};
 	}
 </script>
 
@@ -20,10 +26,7 @@
 		<div
 			style="height: 20px"
 			in:child_intro|global
-			onintrostart={(event) => {
-				event.currentTarget.style.height = '100px';
-				log.push('child start');
-			}}
+			onintrostart={() => log.push('child start')}
 			onintroend={() => log.push('child end')}
 		>child</div>
 	</div>

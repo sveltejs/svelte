@@ -38,7 +38,7 @@ export default test({
 		assert.htmlEqual(target.innerHTML, buttons + '<p>2</p>');
 		assert.equal(target.querySelector('p'), restored);
 
-		// An all-instantaneous group is destroyed by tick(), without waiting for a frame.
+		// An all-instantaneous group also finishes (the mock completes it during tick()).
 		remove_all.click();
 		await tick();
 		assert.htmlEqual(target.innerHTML, buttons);

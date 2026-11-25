@@ -367,28 +367,7 @@ function animate(element, options, counterpart, t2, on_begin, on_finish) {
 
 	counterpart?.deactivate();
 
-	if (!options?.duration && !options?.delay) {
-		// Even an instantaneous transition can change layout through its events or teardown.
-		// Let the other transitions measure first, but don't wait for a WAAPI animation frame.
-		queue_micro_task(() => {
-			if (aborted) return;
-			on_begin();
-			on_finish();
-		});
-
-		return {
-			abort: () => {
-				aborted = true;
-			},
-			deactivate: () => {
-				on_finish = noop;
-			},
-			reset: noop,
-			t: () => t2
-		};
-	}
-
-	const { delay = 0, css, tick, easing = linear } = options;
+	const { delay = 0, css, tick, easing = linear } = options ?? {};
 
 	/** @type {globalThis.Animation} */
 	var animation;
@@ -435,7 +414,7 @@ function animate(element, options, counterpart, t2, on_begin, on_finish) {
 			counterpart?.abort();
 
 			var delta = t2 - t1;
-			var duration = /** @type {number} */ (options.duration) * Math.abs(delta);
+			var duration = (options?.duration ?? 0) * Math.abs(delta);
 			var keyframes = [];
 
 			if (duration > 0) {

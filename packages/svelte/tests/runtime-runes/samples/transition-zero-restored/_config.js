@@ -11,7 +11,7 @@ export default test({
 		await tick();
 
 		// Abort the out-only completion, and deactivate the bidirectional outro's
-		// completion, before either queued callback can destroy the restored branch.
+		// completion, before either outro can destroy the restored branch.
 		assert.deepEqual(Array.from(target.querySelectorAll('p')), paragraphs);
 		assert.htmlEqual(output.innerHTML, 'outro start, intro start, intro end');
 	}
