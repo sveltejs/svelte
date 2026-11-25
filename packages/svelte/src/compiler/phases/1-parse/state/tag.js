@@ -710,6 +710,33 @@ function close(parser) {
 	parser.pop();
 }
 
+/**
+ * The parser is past the parens wrapping `init`, but `init.end` is not. The parser
+ * is also past any comments after them, which are not part of the declarator.
+ * @param {Parser} parser
+ * @param {Expression} init
+ */
+function get_declarator_end(parser, init) {
+	const init_end = /** @type {number} */ (init.end);
+	const comments = parser.root.comments;
+	let end = parser.index;
+	let i = comments.length - 1;
+
+	while (end > init_end) {
+		while (i >= 0 && comments[i].end > end) i -= 1;
+
+		if (i >= 0 && comments[i].end === end && comments[i].start >= init_end) {
+			end = comments[i].start;
+		} else if (/\s/.test(parser.template[end - 1])) {
+			end -= 1;
+		} else {
+			break;
+		}
+	}
+
+	return end;
+}
+
 /** @param {Parser} parser */
 function special(parser) {
 	let start = parser.index;
@@ -785,8 +812,7 @@ function special(parser) {
 
 		const expression_start = parser.index;
 		const init = read_expression(parser);
-		// parser is past wrapping parens, but `init.end` is not — use the parser position
-		const declarator_end = parser.index;
+		const declarator_end = get_declarator_end(parser, init);
 		if (
 			init.type === 'SequenceExpression' &&
 			!parser.template.substring(expression_start, init.start).includes('(')

@@ -14,6 +14,8 @@ export const regex_only_whitespaces = /^[ \t\n\r\f]+$/;
 export const regex_not_newline_characters = /[^\n]/g;
 
 export const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
+/** Splits a directive name like `a?.b.c` into its parts, keeping each `.` or `?.` */
+export const regex_directive_name_separator = /(\?\.|\.)/;
 // used in replace all to remove all invalid chars from a literal identifier
 export const regex_invalid_identifier_chars = /(^[^a-zA-Z_$]|[^a-zA-Z0-9_$])/g;
 

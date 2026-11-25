@@ -67,7 +67,9 @@ await createBundle({
 
 fs.appendFileSync(`${dir}/types/index.d.ts`, '\n');
 
-const types = fs.readFileSync(`${dir}/types/index.d.ts`, 'utf-8');
+// dts-buddy leaves stray whitespace when stripping JSDoc tags/comments — remove it to keep type regeneration stable
+const types = fs.readFileSync(`${dir}/types/index.d.ts`, 'utf-8').replace(/[ \t]+$/gm, '');
+fs.writeFileSync(`${dir}/types/index.d.ts`, types);
 
 const bad_links = [...types.matchAll(/\]\((\/[^)]+)\)/g)];
 if (bad_links.length > 0) {

@@ -17,8 +17,9 @@ import {
 } from '../shared/utils.js';
 import {
 	state as source,
-	set,
-	increment,
+	check_mutation,
+	unchecked_set,
+	unchecked_increment,
 	flush_eager_effects,
 	set_eager_effects_deferred
 } from './reactivity/sources.js';
@@ -164,6 +165,9 @@ export function proxy(value) {
 				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy/Proxy/getOwnPropertyDescriptor#invariants
 				e.state_descriptors_fixed();
 			}
+
+			check_mutation(version);
+
 			var s = sources.get(prop);
 			if (s === undefined) {
 				with_parent(() => {
@@ -175,7 +179,7 @@ export function proxy(value) {
 					return s;
 				});
 			} else {
-				set(s, descriptor.value, true);
+				unchecked_set(s, descriptor.value, true);
 			}
 
 			return true;
@@ -186,21 +190,23 @@ export function proxy(value) {
 				devtools_state_write();
 			}
 
+			check_mutation(version);
+
 			var s = sources.get(prop);
 
 			if (s === undefined) {
 				if (prop in target) {
 					const s = with_parent(() => source(UNINITIALIZED, stack));
 					sources.set(prop, s);
-					increment(version);
+					unchecked_increment(version);
 
 					if (DEV) {
 						tag_child(s, prop);
 					}
 				}
 			} else {
-				set(s, UNINITIALIZED);
-				increment(version);
+				unchecked_set(s, UNINITIALIZED);
+				unchecked_increment(version);
 			}
 
 			return true;
@@ -316,6 +322,8 @@ export function proxy(value) {
 				devtools_state_write();
 			}
 
+			check_mutation(version);
+
 			var s = sources.get(prop);
 			var has = prop in target;
 
@@ -324,7 +332,7 @@ export function proxy(value) {
 				for (var i = value; i < /** @type {Source<number>} */ (s).v; i += 1) {
 					var other_s = sources.get(i + '');
 					if (other_s !== undefined) {
-						set(other_s, UNINITIALIZED);
+						unchecked_set(other_s, UNINITIALIZED);
 					} else if (i in target) {
 						// If the item exists in the original, we need to create an uninitialized source,
 						// else a later read of the property would result in a source being created with
@@ -350,7 +358,7 @@ export function proxy(value) {
 					if (DEV) {
 						tag_child(s, prop);
 					}
-					set(s, proxy(value));
+					unchecked_set(s, proxy(value));
 
 					sources.set(prop, s);
 				}
@@ -358,7 +366,7 @@ export function proxy(value) {
 				has = s.v !== UNINITIALIZED;
 
 				var p = with_parent(() => proxy(value));
-				set(s, p);
+				unchecked_set(s, p);
 			}
 
 			var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
@@ -378,11 +386,11 @@ export function proxy(value) {
 					var n = Number(prop);
 
 					if (Number.isInteger(n) && n >= ls.v) {
-						set(ls, n + 1);
+						unchecked_set(ls, n + 1);
 					}
 				}
 
-				increment(version);
+				unchecked_increment(version);
 			}
 
 			return true;

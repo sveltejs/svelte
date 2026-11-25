@@ -20,6 +20,7 @@ import { capture, merge_target, unset_context } from '../../reactivity/async.js'
 import { DEV } from 'esm-env';
 import { active_effect } from '../../runtime.js';
 import { label_source } from '../../dev/tracing.js';
+import { invoke_error_boundary } from '../../error-handling.js';
 
 const PENDING = 0;
 const THEN = 1;
@@ -162,6 +163,8 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 					try {
 						fn((source, v) => /** @type {Batch} */ (target).capture(source, v, source.equals(v)));
+					} catch (error) {
+						invoke_error_boundary(error, effect);
 					} finally {
 						unset_context(false);
 						target.flush();
@@ -187,6 +190,8 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 
 				try {
 					fn(internal_set);
+				} catch (error) {
+					invoke_error_boundary(error, effect);
 				} finally {
 					unset_context(false);
 

@@ -492,7 +492,8 @@ export function analyze_component(root, source, options) {
 	const custom_element = options.customElementOptions ?? custom_element_from_option;
 	const is_custom_element = !!options.customElementOptions || custom_element_from_option;
 
-	const name = module.scope.generate(options.name ?? component_name);
+	// `$`-prefixed names are reserved for internal bindings like `$`, `$$props` and `$$css`
+	const name = module.scope.generate((options.name ?? component_name).replace(/^\$/, '_$'));
 
 	state.adjust({
 		component_name: name,

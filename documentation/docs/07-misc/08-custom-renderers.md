@@ -9,15 +9,21 @@ The renderer is a small object that tells Svelte how to create, arrange and upda
 This feature is currently experimental, and you must opt in by adding the `experimental.customRenderer` option wherever you [configure](/docs/kit/configuration) Svelte, usually `svelte.config.js` or `vite.config.js`:
 
 ```js
-// @noErrors
-/// file: svelte.config.js
-export default {
-	compilerOptions: {
-		experimental: {
-			customRenderer: true
-		}
-	}
-};
+/// file: vite.config.js
+import { defineConfig } from 'vite';
+import { svelte } from '@sveltejs/vite-plugin-svelte';
+
+export default defineConfig({
+	plugins: [
+		svelte({
+			compilerOptions: {
+				experimental: {
+					+++customRenderer: true+++
+				}
+			}
+		})
+	]
+});
 ```
 
 The API may change before the experimental flag is removed.
@@ -51,15 +57,21 @@ The module path is resolved like any other import in the component, so it can be
 If most of your components use the same renderer, you can make it the default by passing the module path instead of `true`:
 
 ```js
-// @noErrors
-/// file: svelte.config.js
-export default {
-	compilerOptions: {
-		experimental: {
-			customRenderer: 'three-renderer'
-		}
-	}
-};
+/// file: vite.config.js
+import { defineConfig } from 'vite';
+import { svelte } from '@sveltejs/vite-plugin-svelte';
+
+export default defineConfig({
+	plugins: [
+		svelte({
+			compilerOptions: {
+				experimental: {
+					+++customRenderer: 'three-renderer'+++
+				}
+			}
+		})
+	]
+});
 ```
 
 Individual components can still choose a different renderer, or no custom renderer at all with `<svelte:options customRenderer={null} />`.
@@ -71,17 +83,23 @@ Every component imports the default renderer module, so a globally configured pa
 For more control, pass a function. It receives the filename of each component, and returns the renderer module for that component, or `null` for the DOM:
 
 ```js
-// @noErrors
-/// file: svelte.config.js
-export default {
-	compilerOptions: {
-		experimental: {
-			customRenderer: ({ filename }) => {
-				return filename.includes('/src/scene/') ? 'three-renderer' : null;
+/// file: vite.config.js
+import { defineConfig } from 'vite';
+import { svelte } from '@sveltejs/vite-plugin-svelte';
+
+export default defineConfig({
+	plugins: [
+		svelte({
+			compilerOptions: {
+				experimental: {
++++					customRenderer: ({ filename }) => {
+						return filename.includes('/src/scene/') ? 'three-renderer' : null;
+					}+++
+				}
 			}
-		}
-	}
-};
+		})
+	]
+});
 ```
 
 Since the function knows which file it's choosing for, it can also return a path relative to that file. A `<svelte:options customRenderer={...}>` in a component takes precedence over the function.
@@ -118,7 +136,27 @@ To start it, pass the renderer to [`mount`](svelte#mount), along with a target c
 
 ```js
 /// file: main.js
-// @noErrors
+// @filename: ambient.d.ts
+declare module 'terminal-renderer' {
+	interface TerminalRendererFragment {}
+	interface TerminalRendererElement {}
+	interface TerminalRendererText {}
+	interface TerminalRendererComment {}
+
+	type TerminalNodes = {
+		fragment: TerminalRendererFragment;
+		element: TerminalRendererElement;
+		text: TerminalRendererText;
+		comment: TerminalRendererComment;
+	}
+
+	const renderer: import('svelte/renderer').Renderer<TerminalNodes>;
+	export default renderer;
+
+	export function draw(fragment: TerminalRendererFragment): void;
+}
+// @filename: index.js
+// ---cut---
 import { mount } from 'svelte';
 import renderer, { draw } from 'terminal-renderer';
 import Clock from './Clock.svelte';
@@ -160,7 +198,28 @@ In the browser, you can use a custom renderer component inside a regular Svelte 
 You can also render an app entirely with a custom renderer, by passing the renderer to [`mount`](svelte#mount) along with a target created by that renderer, as in the [terminal example](#Running-outside-the-browser) above:
 
 ```js
-// @noErrors
+/// file: main.js
+// @filename: ambient.d.ts
+declare module 'three-renderer' {
+	interface ThreeRendererFragment {}
+	interface ThreeRendererElement {}
+	interface ThreeRendererText {}
+	interface ThreeRendererComment {}
+
+	type ThreeNodes = {
+		fragment: ThreeRendererFragment;
+		element: ThreeRendererElement;
+		text: ThreeRendererText;
+		comment: ThreeRendererComment;
+	}
+
+	const renderer: import('svelte/renderer').Renderer<ThreeNodes>;
+	export default renderer;
+
+	export function draw(fragment: ThreeRendererFragment): void;
+}
+// @filename: index.js
+// ---cut---
 import { mount } from 'svelte';
 import renderer from 'three-renderer';
 import Scene from './Scene.svelte';
@@ -344,7 +403,7 @@ If you're writing a renderer in TypeScript, pass the types of your nodes to `cre
 // @noErrors
 import { createRenderer } from 'svelte/renderer';
 
-const renderer = createRenderer<{
+export default createRenderer<{
 	fragment: SceneFragment;
 	element: SceneObject;
 	text: SceneText;
@@ -390,23 +449,27 @@ In other words: implement `embed` if your renderer will be used inside DOM apps,
 
 ```js
 // @noErrors
-embed({ host, parent }) {
-	if (host !== null) {
-		throw new Error('The canvas renderer can only be used inside the DOM');
+export default createRenderer({
+	// ...
+
+	embed({ host, parent }) {
+		if (host !== null) {
+			throw new Error('The canvas renderer can only be used inside the DOM');
+		}
+
+		const canvas = parent instanceof HTMLCanvasElement ? parent : document.createElement('canvas');
+		const scene = create_scene(canvas);
+
+		return {
+			// only insert a canvas if we created one
+			node: canvas === parent ? undefined : canvas,
+			// the scene's root node, which the content is rendered into
+			container: scene.root,
+			// called once the content has been removed
+			destroy: () => scene.dispose()
+		};
 	}
-
-	const canvas = parent instanceof HTMLCanvasElement ? parent : document.createElement('canvas');
-	const scene = create_scene(canvas);
-
-	return {
-		// only insert a canvas if we created one
-		node: canvas === parent ? undefined : canvas,
-		// the scene's root node, which the content is rendered into
-		container: scene.root,
-		// called once the content has been removed
-		destroy: () => scene.dispose()
-	};
-}
+});
 ```
 
 As in this example, throwing an error is the best way to reject a position your renderer doesn't support. It's also how you can express requirements like "only inside a `<canvas>`".
@@ -417,20 +480,24 @@ As in this example, throwing an error is the best way to reject a position your 
 
 ```js
 // @noErrors
-host({ guest }) {
-	if (guest !== null) {
-		throw new Error('Only DOM content can be rendered inside a scene');
+export default createRenderer({
+	// ...
+
+	host({ guest }) {
+		if (guest !== null) {
+			throw new Error('Only DOM content can be rendered inside a scene');
+		}
+
+		// a scene object that displays a DOM element as an overlay
+		const overlay = create_overlay();
+
+		return {
+			node: overlay,
+			container: overlay.element,
+			destroy: () => overlay.dispose()
+		};
 	}
-
-	// a scene object that displays a DOM element as an overlay
-	const overlay = create_overlay();
-
-	return {
-		node: overlay,
-		container: overlay.element,
-		destroy: () => overlay.dispose()
-	};
-}
+});
 ```
 
 ### Rules for crossings

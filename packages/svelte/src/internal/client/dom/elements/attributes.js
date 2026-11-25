@@ -405,6 +405,9 @@ function set_attributes(
 			var prefix = key[0] + key[1]; // this is faster than key.slice(0, 2)
 			if (prefix === '$$') continue;
 
+			// omit event handler attributes regardless of casing, matching SSR
+			if (prefix !== 'on' && key.length > 2 && prefix.toLowerCase() === 'on') continue;
+
 			if (prefix === 'on') {
 				/** @type {{ capture?: true }} */
 				const opts = {};
@@ -655,10 +658,20 @@ var empty_setters = new Set();
 function get_setters(element) {
 	// if we have a custom renderer we just skip the check all together
 	if (current_renderer) return empty_setters;
-	var cache_key = get_attribute(element, 'is') || node_name(element);
+	var is = get_attribute(element, 'is');
+	var cache_key = is || node_name(element);
 	var setters = setters_cache.get(cache_key);
 	if (setters) return setters;
-	setters_cache.set(cache_key, (setters = new Set()));
+	setters = new Set();
+
+	// an unregistered custom element can gain setters when it upgrades
+	if (
+		!customElements ||
+		!(is || cache_key.includes('-')) ||
+		customElements.get(is || cache_key.toLowerCase())
+	) {
+		setters_cache.set(cache_key, setters);
+	}
 
 	var descriptors;
 	var proto = element; // In the case of custom elements there might be setters on the instance

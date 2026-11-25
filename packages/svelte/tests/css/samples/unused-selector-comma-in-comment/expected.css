@@ -1,0 +1,11 @@
+	/* (unused) .unused,*/ /* a, b */ .used.svelte-xyz {
+		color: red;
+	}
+
+	.used.svelte-xyz /* (unused) .unused*/, /* a, b */ .used.svelte-xyz {
+		color: green;
+	}
+
+	/* (unused) .unused, .unused2,*/ /* a, b */ .used.svelte-xyz {
+		color: blue;
+	}

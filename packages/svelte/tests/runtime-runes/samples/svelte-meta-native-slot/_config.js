@@ -34,6 +34,7 @@ export default test({
 			const component = /** @type {any} */ (output).__svelte_meta.component;
 			assert.ok(component);
 			for (const slot of slots) {
+				assert.notInclude(Object.keys(slot), '__svelte_meta');
 				assert.equal(/** @type {any} */ (slot).__svelte_meta.component, component);
 			}
 			assert.equal(slots[0].name, '');

@@ -1,4 +1,4 @@
-/** @import { EachItem, EachOutroGroup, EachState, Effect, EffectNodes, MaybeSource, TemplateNode, TransitionManager } from '#client' */
+/** @import { EachItem, EachOutroGroup, EachState, Effect, EffectNodes, MaybeSource, TemplateNode } from '#client' */
 /** @import { Batch } from '../../reactivity/batch.js'; */
 import {
 	EACH_INDEX_REACTIVE,
@@ -20,7 +20,7 @@ import {
 } from '../hydration.js';
 import {
 	clear_text_content,
-	create_text,
+	create_anchor,
 	get_first_child,
 	get_next_sibling,
 	should_defer_append,
@@ -73,13 +73,12 @@ export function index(_, i) {
  * @param {null | Node} controlled_anchor
  */
 function pause_effects(state, to_destroy, controlled_anchor) {
-	/** @type {TransitionManager[]} */
-	var transitions = [];
+	/** @type {Effect[]} */
+	var done = [];
 	var length = to_destroy.length;
 
 	/** @type {EachOutroGroup} */
 	var group;
-	var remaining = to_destroy.length;
 
 	for (var i = 0; i < length; i++) {
 		let effect = to_destroy[i];
@@ -102,22 +101,21 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 						}
 					}
 				} else {
-					remaining -= 1;
+					done.push(effect);
 				}
 			},
 			false
 		);
 	}
 
-	if (remaining === 0) {
+	if (done.length === length) {
 		// If we're in a controlled each block (i.e. the block is the only child of an
-		// element), and we are removing all items, _and_ there are no out transitions,
+		// element), and we are removing all items, _and_ all outros finished synchronously,
 		// we can use the fast path — emptying the element and replacing the anchor.
 		// Skip the fast path when another batch is still pending on this each block:
 		// that batch's keys still reference EachItems in `state.items`, which
 		// `destroy_effects` needs to preserve offscreen (see #18610).
-		var fast_path =
-			transitions.length === 0 && controlled_anchor !== null && state.pending.size === 0;
+		var fast_path = controlled_anchor !== null && state.pending.size === 0;
 
 		if (fast_path) {
 			var anchor = /** @type {Element} */ (controlled_anchor);
@@ -133,8 +131,13 @@ function pause_effects(state, to_destroy, controlled_anchor) {
 	} else {
 		group = {
 			pending: new Set(to_destroy),
-			done: new Set()
+			done: new Set(done)
 		};
+
+		// Synchronous outros finished before the group existed.
+		for (const effect of done) {
+			group.pending.delete(effect);
+		}
 
 		(state.outrogroups ??= new Set()).add(group);
 	}
@@ -217,7 +220,7 @@ function get_offscreen_anchor() {
 	var cached = offscreen_anchors.get(current_renderer ?? dom_weak_key);
 	if (cached) return cached;
 
-	var offscreen_anchor = create_text();
+	var offscreen_anchor = create_anchor();
 
 	if (current_renderer) {
 		var fragment = create_fragment();
@@ -256,7 +259,7 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 
 		anchor = hydrating
 			? set_hydrate_node(get_first_child(parent_node))
-			: /** @type {Text} */ (append_child(parent_node, create_text()));
+			: /** @type {Text} */ (append_child(parent_node, create_anchor()));
 	}
 
 	if (hydrating) {

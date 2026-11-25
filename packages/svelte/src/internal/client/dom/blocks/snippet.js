@@ -5,7 +5,6 @@
 import { EFFECT_TRANSPARENT, ELEMENT_NODE } from '#client/constants';
 import { block, teardown } from '../../reactivity/effects.js';
 import {
-	component_context,
 	dev_current_component_function,
 	dev_stack,
 	set_dev_current_component_function
@@ -19,6 +18,7 @@ import { DEV } from 'esm-env';
 import { get_first_child, get_next_sibling, insert_before, node_type } from '../operations.js';
 import { prevent_snippet_stringification } from '../../../shared/validate.js';
 import { BranchManager } from './branches.js';
+import { set_dev_metadata } from '../../dev/elements.js';
 import { current_renderer } from '../../custom-renderer/state.js';
 import { cross, is_crossing } from '../../custom-renderer/cross.js';
 import { has_own_property } from '../../../shared/utils.js';
@@ -147,12 +147,11 @@ export function createRawSnippet(fn) {
 		if (DEV && dev_stack !== null) {
 			// Raw snippets have no template locations, so use the render callsite.
 			// This also keeps the surrounding template from claiming their root.
-			// @ts-expect-error
-			element.__svelte_meta = {
-				parent: dev_stack,
-				loc: { file: dev_stack.file, line: dev_stack.line, column: dev_stack.column },
-				component: component_context
-			};
+			set_dev_metadata(element, {
+				file: dev_stack.file,
+				line: dev_stack.line,
+				column: dev_stack.column
+			});
 		}
 
 		const result = snippet.setup?.(element);

@@ -9,7 +9,7 @@ const events = [];
 const contexts = new Map();
 
 /** @param {any} ctx */
-const name = (ctx) => (componentFunction(ctx) === undefined ? 'root' : filename(ctx) ?? '?');
+const name = (ctx) => (componentFunction(ctx) === undefined ? 'root' : (filename(ctx) ?? '?'));
 
 /** @type {() => void} */
 let unlisten;

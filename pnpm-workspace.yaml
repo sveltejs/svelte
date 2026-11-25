@@ -5,7 +5,7 @@ minimumReleaseAgeExclude:
   - esrap
   - devalue
   - zimmerframe
-  - prettier-plugin-svelte
+  - '@rsvelte/*'
   - svelte-check
   - esm-env
 blockExoticSubdeps: true
