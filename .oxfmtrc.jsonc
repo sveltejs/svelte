@@ -9,9 +9,9 @@
 			"files": ["README.md", "packages/*/README.md", "**/package.json"],
 			"options": {
 				"useTabs": false,
-				"tabWidth": 2,
-			},
-		},
+				"tabWidth": 2
+			}
+		}
 	],
 	"ignorePatterns": [
 		"documentation/docs/",
@@ -57,6 +57,6 @@
 		".github/CODEOWNERS",
 		".changeset",
 		"pnpm-lock.yaml",
-		"pnpm-workspace.yaml",
-	],
+		"pnpm-workspace.yaml"
+	]
 }
