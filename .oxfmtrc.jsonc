@@ -9,9 +9,9 @@
 			"files": ["README.md", "packages/*/README.md", "**/package.json"],
 			"options": {
 				"useTabs": false,
-				"tabWidth": 2
-			}
-		}
+				"tabWidth": 2,
+			},
+		},
 	],
 	"ignorePatterns": [
 		"documentation/docs/",
@@ -53,9 +53,10 @@
 		"**/node_modules",
 		"**/.svelte-kit",
 		"**/.vercel",
+		"**/CHANGELOG.md",
 		".github/CODEOWNERS",
 		".changeset",
 		"pnpm-lock.yaml",
-		"pnpm-workspace.yaml"
-	]
+		"pnpm-workspace.yaml",
+	],
 }
