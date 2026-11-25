@@ -1360,9 +1360,11 @@ export class Batch {
 	 */
 	get_record(reaction) {
 		var record = this.records?.get(reaction);
+		if (!async_mode_flag) return record;
+
 		var i = this.folded.length;
 
-		while (async_mode_flag && record === undefined && i--) {
+		while (record === undefined && i--) {
 			record = this.folded[i].records?.get(reaction);
 		}
 

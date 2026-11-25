@@ -162,6 +162,8 @@ check_bundle(
 	'function increment_pending',
 	'batch.get_record(derived)',
 	'deferred.reject(OBSOLETE)',
+	'deferred.promise.then(d.resolve, d.reject)',
+	'rebases.delete(batch)',
 	'forks.set(batch, run)',
 	'rebases.add(',
 	'#decrement_queued = true',
