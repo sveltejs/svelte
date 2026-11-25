@@ -27,11 +27,8 @@ import {
 //   but when we can't see the object, we assume that any getter (or setter) with the key we access might run —
 //   any at all if we don't know the key, as with spreads, rest patterns and computed keys. Destructuring
 //   accesses each of its keys
-// - mutating an object writes the bindings that might hold it, following what they're assigned (`b` in
-//   `const a = b ?? c`). A sub-object (as in `a.b.c = value`), or a part of what a binding is assigned (via
-//   destructuring or a loop), could be anything the expression it comes from reaches
-// - `this` inside a method or getter writes the receiver when a property is assigned (`this.key = value`), and
-//   anything the receiver reaches when it's used in any other way (as in `this.method()`)
+// - mutating `a.b` (or `a.b.c`) writes everything `a` reaches, since any of it might be the same object.
+//   So does using `this` in a method or getter for anything but reading (`this.key = value`, `this.method()`)
 // - `$effect`s only run once all async work is done, while `$effect.pre` and `$effect.root` run right away
 //
 // `<script module>` is analyzed like the instance script. The template is ignored, as it only runs
@@ -81,9 +78,9 @@ import {
 
 /**
  * What calling a function might do: write `writes`, and what is passed to the parameters flagged in `params`
- * (to any of them if `args`, because it uses `arguments`). `self` is what it does with `this`: assign its
- * properties (`'mutate'`), or anything at all, like calling its methods (`'any'`)
- * @typedef {{ writes: Set<Binding>; params: boolean[]; args: boolean; self: 'none' | 'mutate' | 'any' }} Summary
+ * (to any of them if `args`, because it uses `arguments`), and everything its receiver reaches if `self`
+ * (because it uses `this` for anything other than reading it, like `this.key = value` or `this.method()`)
+ * @typedef {{ writes: Set<Binding>; params: boolean[]; args: boolean; self: boolean }} Summary
  */
 
 /**
@@ -161,9 +158,6 @@ function analyze(module, instance) {
 	/** @type {Set<Binding>} */
 	const catch_params = new Set();
 
-	/** Bindings that hold a part of what they're assigned, via destructuring or a loop @type {Set<Binding>} */
-	const parts = new Set();
-
 	/** Functions by their scope @type {Map<Scope, Fn>} */
 	const functions = new Map();
 
@@ -183,19 +177,6 @@ function analyze(module, instance) {
 	 */
 	const add = (map, binding, node, scope) => {
 		if (binding) map.set(binding, [...(map.get(binding) ?? []), { node, scope }]);
-	};
-
-	/**
-	 * @param {ESTree.Pattern} pattern
-	 * @param {Scope} scope
-	 */
-	const add_parts = (pattern, scope) => {
-		if (pattern.type === 'Identifier') return;
-
-		for (const id of extract_identifiers(pattern)) {
-			const binding = scope.get(id.name);
-			if (binding) parts.add(binding);
-		}
 	};
 
 	/**
@@ -231,8 +212,6 @@ function analyze(module, instance) {
 						break;
 
 					case 'VariableDeclarator':
-						add_parts(node.id, state);
-
 						// `var`s can be redeclared, and lose their initial value when declared in a nested block
 						for (const id of node.init ? extract_identifiers(node.id) : []) {
 							const binding = state.get(id.name);
@@ -258,7 +237,6 @@ function analyze(module, instance) {
 
 							if (target.type === 'Identifier') {
 								add(sources, binding, node.right, scope);
-								if (binding) parts.add(binding);
 							} else {
 								add(contents, binding, node.right, scope);
 								if (binding) assigned.add(binding);
@@ -272,7 +250,6 @@ function analyze(module, instance) {
 							const binding = scope.get(id.name);
 							if (binding) catch_params.add(binding);
 						}
-						if (node.param) add_parts(node.param, scope);
 						break;
 
 					case 'ThrowStatement':
@@ -280,8 +257,6 @@ function analyze(module, instance) {
 						break;
 
 					case 'AssignmentExpression':
-						add_parts(node.left, scope);
-
 						for (const target of unwrap_pattern(node.left)) {
 							if (target.type !== 'MemberExpression') continue;
 
@@ -420,112 +395,6 @@ function analyze(module, instance) {
 	}
 
 	/**
-	 * The bindings that might hold the object `node` evaluates to, so that mutating it writes them
-	 * @param {ESTree.Node} node
-	 * @param {Scope} scope
-	 * @param {Fn | null} [inside] see `touch`
-	 * @param {Set<Binding>} [result]
-	 * @returns {Set<Binding>}
-	 */
-	function holders(node, scope, inside = null, result = new Set()) {
-		/**
-		 * @param {ESTree.Node} node
-		 * @param {Scope} [s]
-		 */
-		const hold = (node, s = scope) => holders(node, s, inside, result);
-
-		/**
-		 * Something that might be part of what `node` reaches, which could be anything it reaches
-		 * @param {ESTree.Node} node
-		 * @param {Scope} [s]
-		 */
-		const reach = (node, s = scope) => {
-			for (const binding of touch(node, s, inside)) result.add(binding);
-			return result;
-		};
-
-		switch (node.type) {
-			case 'Identifier': {
-				const binding = scope.get(node.name);
-				if (!binding || result.has(binding)) return result;
-
-				result.add(binding);
-
-				const store = get_store(binding);
-				if (store) result.add(store);
-
-				// the object might also be held by what the binding was assigned from
-				const from = parts.has(binding) ? reach : hold;
-				for (const { value, scope } of binding.assignments) from(value, scope);
-				for (const { node, scope } of sources.get(binding) ?? []) from(node, scope);
-				if (catch_params.has(binding)) throws.forEach(({ node, scope }) => from(node, scope));
-
-				return result;
-			}
-
-			// new objects and primitives, which nothing else holds, and imports, which hold nothing of ours
-			case 'ArrayExpression':
-			case 'ObjectExpression':
-			case 'FunctionExpression':
-			case 'ArrowFunctionExpression':
-			case 'FunctionDeclaration':
-			case 'ClassExpression':
-			case 'ClassDeclaration':
-			case 'ImportDeclaration':
-			case 'Literal':
-			case 'TemplateLiteral':
-			case 'BinaryExpression':
-			case 'UnaryExpression':
-			case 'UpdateExpression':
-			case 'ThisExpression':
-				return result;
-
-			case 'ConditionalExpression':
-				hold(node.consequent);
-				return hold(node.alternate);
-
-			case 'LogicalExpression':
-				hold(node.left);
-				return hold(node.right);
-
-			case 'SequenceExpression':
-				return hold(/** @type {ESTree.Expression} */ (node.expressions.at(-1)));
-
-			case 'AssignmentExpression':
-				if (node.operator !== '=') hold(node.left);
-				return hold(node.right);
-
-			case 'AwaitExpression':
-				return hold(node.argument);
-
-			case 'ChainExpression':
-				return hold(node.expression);
-
-			case 'CallExpression':
-			case 'NewExpression': {
-				const rune = get_rune(node, scope);
-				if (rune === '$state' || rune === '$state.raw' || rune === '$derived') {
-					return node.arguments[0] ? hold(node.arguments[0]) : result;
-				}
-				if (rune) return result;
-
-				// what something we can't see returns might be part of what it was given
-				if (resolve(node.callee, scope)?.every((fn) => fn === 'opaque')) {
-					if (node.callee.type === 'MemberExpression') reach(node.callee.object);
-					node.arguments.forEach((arg) => reach(arg));
-					return result;
-				}
-
-				return reach(node);
-			}
-
-			// e.g. `a.b`, which might be anything `a` reaches
-			default:
-				return reach(node);
-		}
-	}
-
-	/**
 	 * The property `key` of the object literal held by `node`, if we can tell (`property` is `null` if there's
 	 * none). `assigned` is whether properties are assigned to the object, which might replace this one
 	 * @param {ESTree.Node} node
@@ -643,7 +512,7 @@ function analyze(module, instance) {
 		if (summary === null) {
 			// recursion: assume the worst
 			const writes = touch(fn, /** @type {Scope} */ (scope.parent), fn);
-			return { writes, params: fn.params.map(() => true), args: true, self: 'any' };
+			return { writes, params: fn.params.map(() => true), args: true, self: true };
 		}
 
 		summaries.set(fn, null);
@@ -671,8 +540,7 @@ function analyze(module, instance) {
 			return written;
 		});
 
-		/** @type {Summary['self']} */
-		let self = 'none';
+		let self = false;
 
 		if (fn.type !== 'ArrowFunctionExpression') {
 			walk(/** @type {ESTree.Node} */ (fn.body), null, {
@@ -680,19 +548,7 @@ function analyze(module, instance) {
 					if (node.type !== 'FunctionDeclaration' && node.type !== 'FunctionExpression') next();
 				},
 				ThisExpression(node, { path }) {
-					if (is_read(node, path)) return;
-
-					const member = path.at(-1);
-					const parent = path.at(-2);
-
-					const mutates =
-						member?.type === 'MemberExpression' &&
-						member.object === node &&
-						((parent?.type === 'AssignmentExpression' && parent.left === member) ||
-							parent?.type === 'UpdateExpression' ||
-							(parent?.type === 'UnaryExpression' && parent.operator === 'delete'));
-
-					self = mutates && self !== 'any' ? 'mutate' : 'any';
+					self ||= !is_read(node, path);
 				}
 			});
 		}
@@ -796,9 +652,7 @@ function analyze(module, instance) {
 					fallback([arg], scope);
 			});
 
-			// `this.method()` might do anything that any method of the receiver does
-			if (receiver && summary.self === 'mutate') write(holders(receiver, scope, fn));
-			if (receiver && summary.self === 'any') write(touch(receiver, scope, fn));
+			if (summary.self && receiver) fallback([receiver], scope);
 		};
 
 		/**
@@ -883,7 +737,7 @@ function analyze(module, instance) {
 					continue;
 				}
 
-				write(holders(target.object, scope, fn));
+				write(touch(target.object, scope, fn));
 				access(target.object, static_key(target), 'set', value ? [value] : [], scope);
 			}
 		};
@@ -963,7 +817,7 @@ function analyze(module, instance) {
 				next();
 
 				if (node.operator === 'delete' && node.argument.type === 'MemberExpression') {
-					write(holders(node.argument.object, state, fn));
+					write(touch(node.argument.object, state, fn));
 				} else if (coercible && ['+', '-', '~'].includes(node.operator)) {
 					fallback([node.argument], state);
 				}
