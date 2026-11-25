@@ -53,6 +53,7 @@
 		"**/node_modules",
 		"**/.svelte-kit",
 		"**/.vercel",
+		"**/CHANGELOG.md",
 		".github/CODEOWNERS",
 		".changeset",
 		"pnpm-lock.yaml",
