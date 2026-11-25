@@ -33,8 +33,11 @@ export class Memoizer {
 	add(expression, metadata, memoize_if_state = false) {
 		this.check_blockers(metadata);
 
+		// Stateful assignments must also run in a derived, so that unsafe mutations are rejected.
 		const should_memoize =
-			metadata.has_call || metadata.has_await || (memoize_if_state && metadata.has_state);
+			metadata.has_call ||
+			metadata.has_await ||
+			((memoize_if_state || metadata.has_assignment) && metadata.has_state);
 
 		if (!should_memoize) {
 			// no memoization required
