@@ -52,7 +52,7 @@ import {
 	source,
 	update
 } from './sources.js';
-import { eager_effect, teardown, unlink_effect } from './effects.js';
+import { eager_effect, eager_effects_used, teardown, unlink_effect } from './effects.js';
 import { UNINITIALIZED } from '../../../constants.js';
 import { set_signal_status, update_derived_status } from './status.js';
 import { invariant } from '../../shared/dev.js';
@@ -1054,7 +1054,7 @@ export class Batch {
 			this.mark(source, DIRTY, updated_during_traversal);
 			seen = null;
 
-			if (eager_effects.size > 0 && !eager_effects_deferred) {
+			if (eager_effects_used && eager_effects.size > 0 && !eager_effects_deferred) {
 				flush_eager_effects();
 			}
 		}
@@ -1399,7 +1399,7 @@ export class Batch {
 
 			var not_dirty = (flags & DIRTY) === 0;
 
-			if ((flags & EAGER_EFFECT) !== 0) {
+			if (eager_effects_used && (flags & EAGER_EFFECT) !== 0) {
 				if (!this.is_fork) {
 					// don't set a DIRTY reaction to MAYBE_DIRTY
 					if (not_dirty) {

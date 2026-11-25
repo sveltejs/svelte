@@ -24,7 +24,7 @@ import * as w from './warnings.js';
 import * as e from './errors.js';
 import { assign_nodes } from './dom/template.js';
 import { COMMENT_NODE, TEXT_CACHE } from './constants.js';
-import { boundary } from './dom/blocks/boundary.js';
+import { Boundary } from './dom/blocks/boundary.js';
 import { push_renderer, pop_renderer } from './custom-renderer/state.js';
 import { async_mode_flag, custom_renderers_flag } from '../flags/index.js';
 import { current_batch } from './reactivity/batch.js';
@@ -201,7 +201,8 @@ function _mount_inner(
 		var anchor_node =
 			anchor ?? /** @type {Text} */ (append_child(/** @type {Node} */ (target), create_anchor()));
 
-		boundary(
+		// Deliberately not `boundary()`, which would set `boundaries_used`, see its docs in boundary.js
+		new Boundary(
 			/** @type {TemplateNode} */ (anchor_node),
 			{
 				pending: () => {}
