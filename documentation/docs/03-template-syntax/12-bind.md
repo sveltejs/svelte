@@ -184,7 +184,7 @@ Inputs that work together can use `bind:group`:
 ```
 <!-- codeblock:end -->
 
-> [!NOTE] `bind:group` only works if the inputs are in the same Svelte component.
+> [!NOTE] The array for a checkbox group is built from the checked checkboxes in a single component instance. If each checkbox is in its own component, checking one replaces the array rather than adding to it. Radio groups work across components, as long as the value is bound through a [`$bindable`]($bindable) prop.
 
 ## `<input bind:files>`
 

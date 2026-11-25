@@ -56,7 +56,7 @@ function read_type_annotation(parser) {
 	const start = parser.index;
 	parser.allow_whitespace();
 
-	if (!parser.eat(':')) {
+	if (!parser.ts || !parser.eat(':')) {
 		parser.index = start;
 		return undefined;
 	}

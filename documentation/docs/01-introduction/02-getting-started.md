@@ -21,6 +21,8 @@ You can also use Svelte directly with Vite via [vite-plugin-svelte](https://gith
 
 There are also [plugins for other bundlers](/packages#bundler-plugins), but we recommend Vite.
 
+To add Svelte to pages served by a backend that isn't written in JavaScript, such as Rails or Laravel, follow Vite's [backend integration guide](https://vite.dev/guide/backend-integration) and render components into the page with [`mount`](imperative-component-api#mount).
+
 ## Editor tooling
 
 The Svelte team maintains a [VS Code extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode), and there are integrations with various other [editors](https://sveltesociety.dev/collection/editor-support-c85c080efc292a34) and tools as well.

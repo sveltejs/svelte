@@ -53,7 +53,7 @@ function apply_default_select_value(select, preserve) {
 	// @ts-expect-error
 	var value = select.__defaultValue;
 	var multiple = select.multiple;
-	var values = multiple ? value ?? [] : null;
+	var values = multiple ? (value ?? []) : null;
 
 	if (multiple && !is_array(values)) return;
 
