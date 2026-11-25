@@ -149,12 +149,19 @@ export function visit_component(node, context) {
 	const component_slots = new Set();
 
 	for (const slot_name in nodes) {
+		const slot_scope = node.metadata.scopes[slot_name];
+
 		/** @type {AnalysisState} */
 		const state = {
 			...context.state,
-			scope: node.metadata.scopes[slot_name],
+			scope: slot_scope,
 			parent_element: null,
-			component_slots
+			component_slots,
+			// slot content compiles to a snippet (an implicit `children` snippet for the default
+			// slot) - a real closure boundary, invoked separately and possibly many times - so
+			// state_referenced_locally shouldn't treat reads inside it as non-closure captures
+			function_depth: Math.max(slot_scope.function_depth, context.state.function_depth) + 1,
+			outer_function_depth: undefined
 		};
 
 		context.visit({ ...node.fragment, nodes: nodes[slot_name] }, state);

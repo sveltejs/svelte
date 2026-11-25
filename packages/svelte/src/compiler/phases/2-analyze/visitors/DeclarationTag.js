@@ -30,6 +30,7 @@ export function DeclarationTag(node, context) {
 		// `function_depth` we're tracking here (`set_scope` doesn't update `function_depth`).
 		// align them so that `state_referenced_locally` warnings are calculated correctly
 		function_depth: context.state.scope.function_depth,
+		outer_function_depth: context.state.function_depth - 1,
 		expression: node.metadata.expression
 	});
 
