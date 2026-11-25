@@ -52,8 +52,8 @@ export default async function (target) {
 			assert.htmlEqual(target.innerHTML, config.html);
 		}
 
-		if (config.test) {
-			await config.test({
+		if (config.test || config.test_browser) {
+			await config.test?.({
 				assert,
 				get component() {
 					if (!component) {
@@ -66,6 +66,11 @@ export default async function (target) {
 				window,
 				waitUntil: wait_until
 			});
+
+			if (config.test_browser) {
+				// @ts-expect-error exposed by the Playwright runner
+				await window.test_browser();
+			}
 
 			component?.$destroy();
 

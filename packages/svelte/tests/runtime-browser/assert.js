@@ -129,6 +129,10 @@ function normalize_children(node) {
  *	props?: Props;
  *	compileOptions?: Partial<CompileOptions>;
  *	before_test?: () => void;
+ *	test_browser?: (args: {
+ *		assert: typeof assert;
+ *		page: import('@playwright/test').Page;
+ *	}) => Promise<void>;
  *	test?: (args: {
  *		assert: typeof assert & {
  *			htmlEqual(a: string, b: string, description?: string): void;
