@@ -61,7 +61,9 @@
       "default": "./src/internal/disclose-version.js"
     },
     "./internal/init-operations": {
-      "default": "./src/internal/init-operations.js"
+      "svelte-custom-renderer": "./src/internal/init-operations.js",
+      "browser": "./src/internal/init-operations.js",
+      "default": "./src/internal/server/init-operations.js"
     },
     "./internal/flags/async": {
       "default": "./src/internal/flags/async.js"
