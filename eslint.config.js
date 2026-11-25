@@ -39,7 +39,9 @@ export default [
 	{
 		languageOptions: {
 			parserOptions: {
-				projectService: true,
+				projectService: {
+					allowDefaultProject: ['vitest-reporter.js']
+				},
 				tsconfigRootDir: import.meta.dirname
 			}
 		},
@@ -82,6 +84,21 @@ export default [
 		rules: {
 			'custom/no_compiler_imports': 'error',
 			'svelte/no-svelte-internal': 'off'
+		}
+	},
+	{
+		files: ['packages/svelte/src/internal/client/**/*'],
+		rules: {
+			'no-restricted-syntax': [
+				'error',
+				{
+					// with a custom renderer, anchors must be comments so that every text node is content
+					selector:
+						"CallExpression[callee.name='create_text'][arguments.length=0], CallExpression[callee.name='create_text'][arguments.0.value='']",
+					message:
+						'Use `create_anchor()` to mark a position, or `create_hydration_text()` for an empty text node while hydrating'
+				}
+			]
 		}
 	},
 	{

@@ -1,5 +1,5 @@
 import { describe, assert, it } from 'vitest';
-import { flushSync, tick } from '../../src/index-client';
+import { flushSync, fork, tick } from '../../src/index-client';
 import * as $ from '../../src/internal/client/runtime';
 import { push, pop } from '../../src/internal/client/context';
 import {
@@ -22,7 +22,7 @@ import {
 import type { Derived, Effect, Source, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
-import { source_stacks } from '../../src/internal/client/reactivity/batch';
+import { Batch, source_stacks } from '../../src/internal/client/reactivity/batch';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
 import { CONNECTED, DESTROYED } from '../../src/internal/client/constants';
@@ -65,6 +65,141 @@ test.skip = (text: string, fn: (runes: boolean) => any) => {
 };
 
 describe('signals', () => {
+	for (const [async, render] of [
+		[false, false],
+		[true, false],
+		[true, true]
+	]) {
+		test(`flushing writing ${render ? 'render' : 'user'} effects does linear work (async: ${async})`, () => {
+			if (async) enable_async_mode_flag();
+			const count = 100;
+			const trigger = state(0);
+			const create = render ? render_effect : effect;
+			const values = Array.from({ length: count }, () => state(0));
+			let visited = 0;
+
+			for (const [i, value] of values.entries()) {
+				create(() => {
+					if ($.get(trigger) === 0) return;
+					set(value, 1);
+					if (i === 0) {
+						// Count visits to batch writes, rather than asserting wall-clock timings.
+						const writes = Batch.ensure().current;
+						const iterate = writes[Symbol.iterator].bind(writes);
+						Object.defineProperty(writes, Symbol.iterator, {
+							value: function* () {
+								for (const entry of iterate()) {
+									visited++;
+									yield entry;
+								}
+							}
+						});
+					}
+				});
+			}
+
+			return () => {
+				try {
+					flushSync();
+					flushSync(() => set(trigger, 1));
+					assert.deepEqual(
+						values.map((value) => $.get(value)),
+						Array(count).fill(1)
+					);
+					assert.isAtMost(visited, count * 4);
+				} finally {
+					if (async) disable_async_mode_flag();
+				}
+			};
+		});
+	}
+
+	test('eager block teardowns retain the last write of an earlier effect', () => {
+		const trigger = state(0);
+		const earlier = state(0);
+		const show = state(true);
+		const log: string[] = [];
+
+		block(() => {
+			$.get(show);
+			return () => log.push(`${$.get(earlier)}:${$.get(show)}`);
+		});
+
+		effect(() => {
+			if ($.get(trigger) === 1) {
+				set(earlier, 1);
+				set(earlier, 2);
+			}
+		});
+
+		effect(() => {
+			if ($.get(trigger) === 1) set(show, false);
+		});
+
+		return () => {
+			flushSync();
+			flushSync(() => set(trigger, 1));
+			assert.deepEqual(log, ['2:true']);
+		};
+	});
+
+	it('invalidates batch view entries after their derived disconnects', () => {
+		enable_async_mode_flag();
+		try {
+			const input = source(0);
+			const value = derived(() => $.get(input) + 1);
+			const f = fork(() => {
+				const destroy = effect_root(() => {
+					render_effect(() => {
+						$.get(value);
+					});
+				});
+				assert.equal($.get(value), 1);
+				destroy();
+				assert.equal(input.reactions, null);
+
+				// The old cache entry relied on subscriptions. Subsequent reads must not.
+				assert.equal($.get(value), 1);
+				set(input, 1);
+				assert.equal($.get(value), 2);
+				set(input, 2);
+				assert.equal($.get(value), 3);
+
+				set(value, 10);
+				assert.equal($.get(value), 10);
+				set(input, 3);
+				assert.equal($.get(value), 4);
+			});
+			f.discard();
+		} finally {
+			disable_async_mode_flag();
+		}
+	});
+
+	test('nested commit retains latest block dependencies', () => {
+		const trigger = state(0);
+		const mode = state(0);
+		const a = state(0);
+		const b = state(0);
+		const log: number[] = [];
+
+		block(() => {
+			$.get(trigger);
+			log.push($.get(mode) === 2 ? $.get(b) : $.get(a));
+		});
+
+		effect(() => {
+			if ($.get(trigger) === 1) flushSync(() => set(mode, 2));
+		});
+
+		return () => {
+			flushSync();
+			flushSync(() => set(trigger, 1));
+			flushSync(() => set(b, 1));
+			assert.equal(log.at(-1), 1);
+		};
+	});
+
 	for (const render of [false, true]) {
 		test(`${render ? 'render' : 'user'} effects scheduled during traversal retain tree order`, () => {
 			if (render) enable_async_mode_flag();
@@ -705,6 +840,40 @@ describe('signals', () => {
 		}
 	});
 
+	it.each([false, true])(
+		'processes successive batches without growing the stack (async: %s)',
+		(async_mode) => {
+			if (async_mode) enable_async_mode_flag();
+			push({}, true);
+			const value = state(0);
+			const depths: number[] = [];
+			const limit = Error.stackTraceLimit;
+			const destroy = effect_root(() => {
+				user_effect(() => {
+					const n = $.get(value);
+					if (n === 0 || n === 20) {
+						depths.push(new Error().stack!.split('\n').length);
+					}
+					if (n < 20) set(value, n + 1);
+				});
+			});
+
+			try {
+				// The default limit hides the recursive batch-processing frames.
+				Error.stackTraceLimit = Infinity;
+				flushSync();
+				assert.equal($.get(value), 20);
+				assert.lengthOf(depths, 2);
+				assert.equal(depths[1], depths[0]);
+			} finally {
+				Error.stackTraceLimit = limit;
+				destroy();
+				pop();
+				if (async_mode) disable_async_mode_flag();
+			}
+		}
+	);
+
 	test('schedules rerun when writing to signal before reading it', (runes) => {
 		if (!runes) return () => {};
 
@@ -729,7 +898,7 @@ describe('signals', () => {
 				console.error = error;
 			}
 		};
-	}, 60_000);
+	});
 
 	test('schedules rerun when updating deeply nested value', (runes) => {
 		if (!runes) return () => {};
@@ -1950,6 +2119,71 @@ describe('signals', () => {
 		} finally {
 			destroy();
 			pop();
+		}
+	});
+
+	it('prunes the edges of a block effect once the batches that ran it commit', () => {
+		enable_async_mode_flag();
+		push({}, true);
+
+		const index = state(0);
+		const items = [state(0), state(1), state(2), state(3)];
+
+		const destroy = effect_root(() => {
+			block(() => {
+				$.get(items[$.get(index)]);
+			});
+		});
+
+		pop();
+
+		try {
+			flushSync();
+			for (let i = 1; i < items.length; i++) flushSync(() => set(index, i));
+
+			assert.deepEqual(
+				items.map((item) => item.reactions !== null),
+				[false, false, false, true]
+			);
+			assert.notEqual(index.reactions, null);
+		} finally {
+			destroy();
+			flushSync();
+			disable_async_mode_flag();
+		}
+	});
+
+	it('prunes the edges of a block effect that only a discarded batch needed', () => {
+		enable_async_mode_flag();
+		push({}, true);
+
+		const index = state(0);
+		const items = [state(0), state(1)];
+
+		const destroy = effect_root(() => {
+			block(() => {
+				$.get(items[$.get(index)]);
+			});
+		});
+
+		pop();
+		flushSync();
+
+		const pending = fork(() => set(index, 1));
+
+		try {
+			// the fork's run of the block read `items[1]`
+			assert.notEqual(items[1].reactions, null);
+
+			pending.discard();
+			assert.equal(items[1].reactions, null);
+			assert.notEqual(items[0].reactions, null);
+			assert.notEqual(index.reactions, null);
+		} finally {
+			pending.discard();
+			destroy();
+			flushSync();
+			disable_async_mode_flag();
 		}
 	});
 });

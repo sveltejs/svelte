@@ -170,7 +170,7 @@ export function tweened(value, defaults = {}) {
  * </script>
  *
  * <input type="range" bind:value={tween.target} />
- * <input type="range" bind:value={tween.current} disabled />
+ * <input type="range" value={tween.current} disabled />
  * ```
  * @template T
  * @since 5.8.0

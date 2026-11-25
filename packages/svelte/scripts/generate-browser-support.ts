@@ -863,10 +863,13 @@ function generate(file: string, content: string): void {
 	const filename = path.join(docs_dir, file);
 
 	try {
-		fs.mkdirSync(path.dirname(file), { recursive: true });
+		fs.mkdirSync(path.dirname(filename), { recursive: true });
 	} catch {}
 
-	const backlink = path.relative(filename, fileURLToPath(import.meta.url));
+	const backlink = path
+		.relative(filename, fileURLToPath(import.meta.url))
+		.split(path.sep)
+		.join('/');
 
 	fs.writeFileSync(filename, `<!-- generated in ${backlink}. do not edit -->\n\n${content}`);
 }
