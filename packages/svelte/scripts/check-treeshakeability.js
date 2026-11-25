@@ -156,6 +156,14 @@ check_bundle(
 	'renderer_cannot_cross',
 	'sync_shared_containers'
 );
+check_bundle(
+	'Async-only code',
+	'function async_expression',
+	'function increment_pending',
+	'rebases.add(',
+	'#decrement_queued = true',
+	'this.#local_pending_count += d'
+);
 
 if (failed) {
 	// eslint-disable-next-line no-console
