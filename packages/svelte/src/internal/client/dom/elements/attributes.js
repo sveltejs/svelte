@@ -532,7 +532,10 @@ function set_attributes(
 					element[name] = value;
 					// remove it from attributes's cache
 					if (name in attributes) attributes[name] = UNINITIALIZED;
-				} else if (typeof value !== 'function') {
+				} else if (current_renderer != null || typeof value !== 'function') {
+					// function values are DOM properties, not attributes, unless a custom
+					// renderer is active, in which case they are passed through like any
+					// other value
 					set_attribute(element, name, value, skip_warning);
 				}
 			}
