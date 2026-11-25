@@ -367,121 +367,126 @@ function animate(element, options, counterpart, t2, on_begin, on_finish) {
 
 	counterpart?.deactivate();
 
-	if (!options?.duration && !options?.delay) {
-		on_begin();
-		on_finish();
-
-		return {
-			abort: noop,
-			deactivate: noop,
-			reset: noop,
-			t: () => t2
-		};
-	}
-
-	const { delay = 0, css, tick, easing = linear } = options;
+	const { delay = 0, duration = 0, css, tick, easing = linear } = options ?? {};
 
 	/** @type {globalThis.Animation} */
 	var animation;
 
 	var get_t = () => 1 - t2;
 
-	// wait a microtask before applying the initial styles and creating the dummy animation,
-	// so that transitions created in the same batch (e.g. on nested elements) all measure
-	// the DOM first (#18421). this still happens before the next paint, so the element
-	// won't be rendered without styles applied (#14732)
-	queue_micro_task(() => {
-		if (aborted) return;
+	function finish() {
+		get_t = () => t2;
+		tick?.(t2, 1 - t2);
+		on_finish();
+	}
+
+	function start() {
+		on_begin();
+
+		// for bidirectional transitions, we start from the current position,
+		// rather than doing a full intro/outro
+		var t1 = counterpart?.t() ?? 1 - t2;
+		counterpart?.abort();
+
+		var delta = t2 - t1;
+		var d = duration * Math.abs(delta);
+
+		if (d === 0) {
+			if (css && !is_intro) {
+				var keyframe = css_to_keyframe(css(t2, 1 - t2));
+				animation = element.animate([keyframe], { duration: 0, fill: 'forwards' });
+			}
+
+			finish();
+			return;
+		}
 
 		var keyframes = [];
 
-		if (is_intro && counterpart === undefined) {
-			if (tick) {
-				tick(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
-			}
+		/**
+		 * Whether or not the CSS includes `overflow: hidden`, in which case we need to
+		 * add it as an inline style to work around a Safari <18 bug
+		 * TODO 6.0 remove this, if possible
+		 */
+		var needs_overflow_hidden = false;
 
-			if (css) {
-				var styles = css_to_keyframe(css(0, 1));
-				keyframes.push(styles, styles);
+		if (css) {
+			var n = Math.ceil(d / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
+
+			for (var i = 0; i <= n; i += 1) {
+				var t = t1 + delta * easing(i / n);
+				var styles = css_to_keyframe(css(t, 1 - t));
+				keyframes.push(styles);
+
+				needs_overflow_hidden ||= styles.overflow === 'hidden';
 			}
 		}
 
-		// create a dummy animation that lasts as long as the delay (but with whatever devtools
-		// multiplier is in effect). in the common case that it is `0`, we keep it anyway so that
-		// the CSS keyframes aren't created until the DOM is updated
-		//
-		// fill forwards to prevent the element from rendering without styles applied
-		// see https://github.com/sveltejs/svelte/issues/14732
-		animation = element.animate(keyframes, { duration: delay, fill: 'forwards' });
+		if (needs_overflow_hidden) {
+			/** @type {HTMLElement} */ (element).style.overflow = 'hidden';
+		}
 
-		animation.onfinish = () => {
-			// remove dummy animation from the stack to prevent conflict with main animation
-			animation.cancel();
+		get_t = () => {
+			var time = /** @type {number} */ (
+				/** @type {globalThis.Animation} */ (animation).currentTime
+			);
 
-			on_begin();
+			return t1 + delta * easing(time / d);
+		};
 
-			// for bidirectional transitions, we start from the current position,
-			// rather than doing a full intro/outro
-			var t1 = counterpart?.t() ?? 1 - t2;
-			counterpart?.abort();
+		if (tick) {
+			loop(() => {
+				if (animation.playState !== 'running') return false;
 
-			var delta = t2 - t1;
-			var duration = /** @type {number} */ (options.duration) * Math.abs(delta);
+				var t = get_t();
+				tick(t, 1 - t);
+
+				return true;
+			});
+		}
+
+		animation = element.animate(keyframes, { duration: d, fill: 'forwards' });
+		animation.onfinish = finish;
+	}
+
+	if (!duration && !delay) {
+		start();
+	} else {
+		// wait a microtask before applying the initial styles and creating the dummy animation,
+		// so that transitions created in the same batch (e.g. on nested elements) all measure
+		// the DOM first (#18421). this still happens before the next paint, so the element
+		// won't be rendered without styles applied (#14732)
+		queue_micro_task(() => {
+			if (aborted) return;
+
 			var keyframes = [];
 
-			if (duration > 0) {
-				/**
-				 * Whether or not the CSS includes `overflow: hidden`, in which case we need to
-				 * add it as an inline style to work around a Safari <18 bug
-				 * TODO 6.0 remove this, if possible
-				 */
-				var needs_overflow_hidden = false;
+			if (is_intro && counterpart === undefined) {
+				if (tick) {
+					tick(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
+				}
 
 				if (css) {
-					var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
-
-					for (var i = 0; i <= n; i += 1) {
-						var t = t1 + delta * easing(i / n);
-						var styles = css_to_keyframe(css(t, 1 - t));
-						keyframes.push(styles);
-
-						needs_overflow_hidden ||= styles.overflow === 'hidden';
-					}
-				}
-
-				if (needs_overflow_hidden) {
-					/** @type {HTMLElement} */ (element).style.overflow = 'hidden';
-				}
-
-				get_t = () => {
-					var time = /** @type {number} */ (
-						/** @type {globalThis.Animation} */ (animation).currentTime
-					);
-
-					return t1 + delta * easing(time / duration);
-				};
-
-				if (tick) {
-					loop(() => {
-						if (animation.playState !== 'running') return false;
-
-						var t = get_t();
-						tick(t, 1 - t);
-
-						return true;
-					});
+					var styles = css_to_keyframe(css(0, 1));
+					keyframes.push(styles, styles);
 				}
 			}
 
-			animation = element.animate(keyframes, { duration, fill: 'forwards' });
+			// create a dummy animation that lasts as long as the delay (but with whatever devtools
+			// multiplier is in effect). in the common case that it is `0`, we keep it anyway so that
+			// the CSS keyframes aren't created until the DOM is updated
+			//
+			// fill forwards to prevent the element from rendering without styles applied
+			// see https://github.com/sveltejs/svelte/issues/14732
+			animation = element.animate(keyframes, { duration: delay, fill: 'forwards' });
 
 			animation.onfinish = () => {
-				get_t = () => t2;
-				tick?.(t2, 1 - t2);
-				on_finish();
+				// remove dummy animation from the stack to prevent conflict with main animation
+				animation.cancel();
+				start();
 			};
-		};
-	});
+		});
+	}
 
 	return {
 		abort: () => {
