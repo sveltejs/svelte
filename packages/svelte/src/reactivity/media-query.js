@@ -46,10 +46,15 @@ export class MediaQuery extends ReactiveValue {
 			query.split(/[\s,]+/).some((keyword) => non_parenthesized_keywords.has(keyword.trim()))
 				? query
 				: `(${query})`;
-		const q = window.matchMedia(final_query);
+		// Custom renderers can run where there's no `window` (e.g. Node with the `svelte-custom-renderer`
+		// condition, which resolves to this module). Behave like on the server in that case, so that
+		// e.g. importing `svelte/motion` (which creates `prefersReducedMotion` eagerly) doesn't throw
+		const q = typeof window !== 'undefined' ? window.matchMedia(final_query) : null;
 		super(
-			() => q.matches,
-			(update) => on(q, 'change', update)
+			() => (q === null ? (fallback ?? false) : q.matches),
+			(update) => {
+				if (q !== null) on(q, 'change', update);
+			}
 		);
 	}
 }
