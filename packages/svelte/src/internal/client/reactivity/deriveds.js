@@ -13,7 +13,7 @@ import {
 	ASSIGNED,
 	ERROR_VALUE,
 	HAS_ABORT_CONTROLLER,
-    STRICT_REACTION
+	STRICT_REACTION
 } from '#client/constants';
 import {
 	active_reaction,

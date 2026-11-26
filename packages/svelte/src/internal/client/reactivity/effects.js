@@ -38,7 +38,7 @@ import {
 	MANAGED_EFFECT,
 	DESTROYING,
 	PAUSED,
-  STRICT_REACTION
+	STRICT_REACTION
 } from '#client/constants';
 import { invoke_error_boundary } from '../error-handling.js';
 import * as e from '../errors.js';
