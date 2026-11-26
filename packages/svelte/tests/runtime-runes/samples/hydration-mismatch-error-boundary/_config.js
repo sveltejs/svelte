@@ -8,9 +8,6 @@ export default test({
 
 	async test({ assert, target }) {
 		await tick();
-		assert.htmlEqual(
-			target.innerHTML,
-			'<p>failed: oops</p><p>hello</p>'
-		);
+		assert.htmlEqual(target.innerHTML, '<p>failed: oops</p><p>hello</p>');
 	}
 });
