@@ -53,7 +53,7 @@ export class MediaQuery extends ReactiveValue {
 		super(
 			() => (q === null ? (fallback ?? false) : q.matches),
 			(update) => {
-				if (q !== null) on(q, 'change', update);
+				if (q !== null) return on(q, 'change', update);
 			}
 		);
 	}
