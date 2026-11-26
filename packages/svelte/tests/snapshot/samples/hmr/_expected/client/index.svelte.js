@@ -15,6 +15,8 @@ if (import.meta.hot) {
 	Hmr = $.hmr(Hmr);
 
 	import.meta.hot.accept((module) => {
+		if (!module) return;
+
 		Hmr[$.HMR].update(module.default);
 	});
 }
