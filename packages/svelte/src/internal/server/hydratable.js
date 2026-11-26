@@ -92,7 +92,11 @@ function encode(key, value, unresolved) {
 
 			// the replacer must return a `js` fragment — interpolated values are serialized,
 			// so `<${id}>` renders as e.g. `<1>`, matching `placeholder`
-			return js`<${id}>`;
+			const fragment = js`<${id}>`;
+
+			// A user may still be using SvelteKit 2/3 which may resolve to devalue v5
+			// rather than v6 on the server because of npm's node_modules structure
+			return typeof fragment === 'string' ? /** @type {any} */ (placeholder) : fragment;
 		}
 	};
 

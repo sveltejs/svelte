@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.59.1",
+  "version": "5.59.2",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -61,7 +61,9 @@
       "default": "./src/internal/disclose-version.js"
     },
     "./internal/init-operations": {
-      "default": "./src/internal/init-operations.js"
+      "svelte-custom-renderer": "./src/internal/init-operations.js",
+      "browser": "./src/internal/init-operations.js",
+      "default": "./src/internal/server/init-operations.js"
     },
     "./internal/flags/async": {
       "default": "./src/internal/flags/async.js"

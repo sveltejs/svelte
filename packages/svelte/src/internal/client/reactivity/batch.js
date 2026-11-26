@@ -348,6 +348,8 @@ export class Batch {
 	}
 
 	#is_deferred() {
+		if (!async_mode_flag) return false;
+
 		if (this.is_fork) return true;
 
 		for (const effect of this.#pending.keys()) {
@@ -392,6 +394,8 @@ export class Batch {
 	 * @param {Effect | null} [root]
 	 */
 	is_blocked_by(effect, root = null) {
+		if (!async_mode_flag) return false;
+
 		for (var e = /** @type {Effect | null} */ (effect); e !== null && e !== root; e = e.parent) {
 			if (this.#skips(e)) return false;
 
@@ -750,6 +754,8 @@ export class Batch {
 	 * @param {Iterable<Source>} sources
 	 */
 	#revalidate(sources) {
+		if (!async_mode_flag) return;
+
 		// deriveds added during iteration are visited too, so this doubles as a worklist
 		/** @type {Set<Value>} */
 		var values = new Set(sources);
@@ -1107,6 +1113,8 @@ export class Batch {
 	}
 
 	#commit() {
+		if (!async_mode_flag) return;
+
 		// If there are other pending batches, they now need to be 'rebased' —
 		// in other words, their view of the world now includes the newly committed
 		// state (unless the batch in question has a more recent value for a given source),
@@ -1179,6 +1187,8 @@ export class Batch {
 	 * If it has pending work it stays linked, coming first from now on (see `#move_to_front`)
 	 */
 	commit_writes() {
+		if (!async_mode_flag) return;
+
 		this.#commit();
 		if (this.linked && this.prev !== null) this.#move_to_front();
 	}
@@ -1187,6 +1197,8 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	increment(effect) {
+		if (!async_mode_flag) return;
+
 		var count = this.#pending.get(effect) ?? 0;
 		this.#pending.set(effect, count + 1);
 	}
@@ -1195,6 +1207,8 @@ export class Batch {
 	 * @param {Effect} effect
 	 */
 	decrement(effect) {
+		if (!async_mode_flag) return;
+
 		var count = this.#pending.get(effect) ?? 0;
 
 		if (count === 1) {
@@ -1528,6 +1542,8 @@ export class Batch {
 	 * on: This ensures logic about who sees what values in intersects/merge/etc work correctly.
 	 */
 	#move_to_front() {
+		if (!async_mode_flag) return;
+
 		var prev = /** @type {Batch} */ (this.prev);
 		var first = /** @type {Batch} */ (first_batch);
 

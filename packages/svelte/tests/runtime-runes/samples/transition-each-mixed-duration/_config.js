@@ -35,7 +35,7 @@ export default test({
 		await tick();
 		raf.tick(800);
 
-		assert.htmlEqual(target.innerHTML, buttons + '<p>2</p>');
+		assert.htmlEqual(target.innerHTML, buttons + '<p style="">2</p>');
 		assert.equal(target.querySelector('p'), restored);
 
 		// An all-synchronous group still gets destroyed immediately.
