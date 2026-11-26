@@ -135,9 +135,10 @@ export function onDestroy(fn) {
  * <Hello name="Earth" />
  * ```
  * @template {Record<PropertyKey, any>} Props
+ * @template {Partial<Props>} Initial
  * @param {Component<Props>} component
- * @param {Partial<Props>} props
- * @returns {Component<Partial<Props>>}
+ * @param {Initial} props
+ * @returns {Component<Omit<Props, Initial> & Partial<Initial>>}
  */
 export function partial(component, props) {
 	const initial_props = props;
@@ -151,12 +152,10 @@ export function partial(component, props) {
 			},
 			set(target, prop, value) {
 				if (prop in props) {
-					//@ts-expect-error don't know why this won't work
-					props[prop] = value;
+					props[/** @type {keyof Props} */ (prop)] = value;
 				}
 				if (prop in initial_props) {
-					// @ts-expect-error ditto
-					initial_props[prop] = value;
+					initial_props[/** @type {keyof Initial} */ (prop)] = value;
 				}
 				return true;
 			},
