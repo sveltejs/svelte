@@ -511,6 +511,17 @@ function set_attributes(
 							element.__value = null;
 						}
 					}
+				} else if (name === 'defaultValue' && !is_custom_element && current_renderer == null) {
+					if (prev === undefined) {
+						// On initialization, defaultValue also initializes the current value
+						// @ts-expect-error
+						element.defaultValue = value;
+					} else {
+						// Setting defaultValue directly also changes the current value if the input is pristine
+						set_element_default_value(element, value);
+					}
+					// remove it from attributes's cache
+					if (name in attributes) attributes[name] = UNINITIALIZED;
 				} else if (is_default && current_renderer != null) {
 					// Route through the renderer-aware abstraction so custom renderers
 					// see defaultValue/defaultChecked as proper attributes
