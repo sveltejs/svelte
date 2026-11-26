@@ -532,7 +532,7 @@ function set_attributes(
 					element[name] = value;
 					// remove it from attributes's cache
 					if (name in attributes) attributes[name] = UNINITIALIZED;
-				} else if (typeof value !== 'function') {
+				} else if (current_renderer != null || typeof value !== 'function') {
 					set_attribute(element, name, value, skip_warning);
 				}
 			}
