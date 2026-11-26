@@ -167,7 +167,8 @@ check_bundle(
 	'forks.set(batch, run)',
 	'rebases.add(',
 	'#decrement_queued = true',
-	'this.#local_pending_count += d'
+	'this.#local_pending_count += d',
+	'merge_requests.add('
 );
 
 if (failed) {

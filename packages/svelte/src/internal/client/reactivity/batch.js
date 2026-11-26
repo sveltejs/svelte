@@ -599,7 +599,7 @@ export class Batch {
 					// See https://github.com/sveltejs/svelte/issues/18221#issuecomment-4497918414
 					// for a (non-minimal) reproduction that demonstrates a case where this is necessary
 					// to not get follow-up false-positives via "batch has scheduled roots" invariant errors.
-					if (!this.#is_deferred()) this.discard();
+					if (!async_mode_flag || !this.#is_deferred()) this.discard();
 					throw e;
 				}
 			}
@@ -629,7 +629,7 @@ export class Batch {
 		collected_effects = null;
 		legacy_updates = null;
 
-		if (this.merge_requests.size > 0) {
+		if (async_mode_flag && this.merge_requests.size > 0) {
 			const sorted = Array.from(this.merge_requests, merge_target)
 				.filter((batch) => batch !== this && batch.linked && !batch.is_fork)
 				.sort((a, b) => a.id - b.id);
@@ -671,7 +671,7 @@ export class Batch {
 			return null;
 		}
 
-		const earlier_batch = this.#find_earlier_batch();
+		const earlier_batch = async_mode_flag ? this.#find_earlier_batch() : null;
 
 		if (earlier_batch) {
 			// If this batch collected deferred effects during traversal, they still need
@@ -718,7 +718,10 @@ export class Batch {
 
 		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 
-		if (this.#pending.size === 0 && (this.#scheduled.length === 0 || next_batch !== null)) {
+		if (
+			(!async_mode_flag || this.#pending.size === 0) &&
+			(this.#scheduled.length === 0 || next_batch !== null)
+		) {
 			this.#unlink();
 		}
 
@@ -879,6 +882,8 @@ export class Batch {
 	 * @param {Batch} batch
 	 */
 	#merge(batch) {
+		if (!async_mode_flag) return;
+
 		for (const target of batch.merge_requests) this.merge_requests.add(target);
 		batch.merge_requests.clear();
 
@@ -988,7 +993,7 @@ export class Batch {
 	 */
 	capture(source, value, same, error = false, updated_during_traversal = null) {
 		var previous = this.previous.get(source);
-		var later = later_writer(this, source);
+		const later = this.next !== null && async_mode_flag ? later_writer(this, source) : null;
 
 		if (previous === undefined) {
 			// the value before this batch's change is the one before the later batch's change, if any

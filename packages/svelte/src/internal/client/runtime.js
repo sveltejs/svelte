@@ -622,7 +622,7 @@ export function update_reaction(reaction) {
 	} finally {
 		var signal = /** @type {AbortController | null} */ (abort_controller)?.signal;
 
-		if (batch !== null && signal !== undefined) {
+		if (batch !== null && signal !== undefined && async_mode_flag) {
 			// The reaction that requested the signal identifies the merge target, even if
 			// another reaction awaits its result (e.g. `let promise = $derived(load(...))`).
 			signal.addEventListener('abort', () => {
