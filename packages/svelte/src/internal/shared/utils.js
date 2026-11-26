@@ -49,6 +49,18 @@ export function run_all(arr) {
 }
 
 /**
+ * `array.push(...items)` overflows the stack for large `items`.
+ * @template T
+ * @param {T[]} array
+ * @param {T[]} items
+ */
+export function push_array(array, items) {
+	for (var i = 0; i < items.length; i++) {
+		array.push(items[i]);
+	}
+}
+
+/**
  * TODO replace with Promise.withResolvers once supported widely enough
  * @template [T=void]
  */
@@ -99,11 +111,17 @@ export function to_array(value, n) {
 		return value;
 	}
 
-	// if value is not iterable, or `n` is unspecified (indicates a rest
-	// element, which means we're not concerned about unbounded iterables)
-	// convert to an array with `Array.from`
-	if (n === undefined || !(Symbol.iterator in value)) {
+	// if `n` is unspecified (indicates a rest element, which means
+	// we're not concerned about unbounded iterables) convert to an
+	// array with `Array.from`
+	if (n === undefined) {
 		return Array.from(value);
+	}
+
+	// if value is array-like but not iterable, copy at most `n` values
+	if (!(Symbol.iterator in value)) {
+		const length = Math.min(n, /** @type {ArrayLike<T>} */ (value).length);
+		return Array.from({ length }, (_, i) => /** @type {ArrayLike<T>} */ (value)[i]);
 	}
 
 	// otherwise, populate an array with `n` values

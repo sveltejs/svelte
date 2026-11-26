@@ -117,12 +117,6 @@ const any_selector = {
 };
 
 /**
- * Snippets encountered already (avoids infinite loops)
- * @type {Set<Compiler.AST.SnippetBlock>}
- */
-const seen = new Set();
-
-/**
  * @param {Compiler.AST.RegularElement | Compiler.AST.SvelteElement | Compiler.AST.RenderTag | Compiler.AST.Component | Compiler.AST.SvelteComponent | Compiler.AST.SvelteSelf} node
  */
 function is_inside_svelte_head(node) {
@@ -153,8 +147,6 @@ export function prune(stylesheet, elements) {
 			}
 
 			for (const element of elements) {
-				seen.clear();
-
 				if (
 					// Elements rendered through <svelte:head> are not style-scopable.
 					// Prevent css hash injection (class="s-...") on tags like <meta>, <link>, <script>.
