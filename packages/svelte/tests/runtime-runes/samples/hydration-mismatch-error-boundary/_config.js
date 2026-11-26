@@ -10,7 +10,7 @@ export default test({
 		await tick();
 		assert.htmlEqual(
 			target.innerHTML,
-			'<p>failed: client error</p><section><span>after</span></section>'
+			'<p>failed: oops</p><p>hello</p>'
 		);
 	}
 });

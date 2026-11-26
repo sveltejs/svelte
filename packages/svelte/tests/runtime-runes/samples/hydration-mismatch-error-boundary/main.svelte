@@ -1,17 +1,19 @@
 <script>
-	let { browser } = $props();
+	let { browser, message = 'hello' } = $props();
 
 	function boom() {
-		throw new Error('client error');
+		throw new Error('oops');
 	}
 </script>
 
 <svelte:boundary>
-	{#if browser}<b>{boom()}</b>{/if}
+	{#if browser}
+		{boom()}
+	{/if}
 
 	{#snippet failed(error)}
 		<p>failed: {error.message}</p>
 	{/snippet}
 </svelte:boundary>
 
-<section><span>after</span></section>
+<p>{message}</p>
