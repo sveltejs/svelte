@@ -20,6 +20,7 @@ import { capture, merge_target, unset_context } from '../../reactivity/async.js'
 import { DEV } from 'esm-env';
 import { active_effect } from '../../runtime.js';
 import { invoke_error_boundary } from '../../error-handling.js';
+import { async_mode_flag } from '../../../flags/index.js';
 
 const PENDING = 0;
 const THEN = 1;
@@ -86,6 +87,8 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	 * @param {Batch} batch
 	 */
 	var is_latest = (run, batch) => {
+		if (!async_mode_flag) return run === current;
+
 		if (forks.has(batch)) return forks.get(batch) === run;
 		if (run !== current) return false;
 
@@ -104,6 +107,8 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 	 * @param {Batch} batch
 	 */
 	var owner = (batch) => {
+		if (!async_mode_flag) return null;
+
 		var target = merge_target(batch);
 		return forks.has(batch) && target.linked ? target : null;
 	};
@@ -115,17 +120,19 @@ export function await_block(node, get_input, pending_fn, then_fn, catch_fn) {
 		var run = {};
 
 		// (not the first run, which creates the block for every batch's view, see `should_defer_append`)
-		var fork = batch.is_fork && should_defer_append();
+		var fork = async_mode_flag && batch.is_fork && should_defer_append();
 
-		if (fork || forks.has(batch)) {
+		if (async_mode_flag && (fork || forks.has(batch))) {
 			forks.set(batch, run);
 			batch.oncommit(commit);
 			batch.ondiscard(discard);
 		}
 
 		if (!fork) {
-			for (const b of forks.keys()) {
-				if (!b.is_fork && b !== batch) forks.set(b, null);
+			if (async_mode_flag) {
+				for (const b of forks.keys()) {
+					if (!b.is_fork && b !== batch) forks.set(b, null);
+				}
 			}
 
 			current = run;

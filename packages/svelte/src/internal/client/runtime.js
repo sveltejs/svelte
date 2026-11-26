@@ -622,7 +622,7 @@ export function update_reaction(reaction) {
 	} finally {
 		var signal = /** @type {AbortController | null} */ (abort_controller)?.signal;
 
-		if (batch !== null && signal !== undefined) {
+		if (batch !== null && signal !== undefined && async_mode_flag) {
 			// The reaction that requested the signal identifies the merge target, even if
 			// another reaction awaits its result (e.g. `let promise = $derived(load(...))`).
 			signal.addEventListener('abort', () => {
@@ -995,6 +995,8 @@ function seen_version(signal) {
  * @param {boolean} error
  */
 function derived_version(derived, batch, value, error) {
+	if (!async_mode_flag) return derived.wv;
+
 	if (!error) {
 		var previous = /** @type {DerivedRecord | undefined} */ (batch.get_record(derived));
 		if (previous !== undefined && !previous.e && derived.equals.call(previous, value)) {
