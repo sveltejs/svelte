@@ -117,12 +117,12 @@ export function declaration_duplicate(node, name) {
 }
 
 /**
- * Cannot declare a variable with the same name as an import inside `<script module>`
+ * Cannot declare a variable with the same name as an import from `<script module>`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function declaration_duplicate_module_import(node) {
-	e(node, 'declaration_duplicate_module_import', `Cannot declare a variable with the same name as an import inside \`<script module>\`\nhttps://svelte.dev/e/declaration_duplicate_module_import`);
+	e(node, 'declaration_duplicate_module_import', `Cannot declare a variable with the same name as an import from \`<script module>\`\nhttps://svelte.dev/e/declaration_duplicate_module_import`);
 }
 
 /**
@@ -785,12 +785,12 @@ export function attribute_invalid_name(node, name) {
 }
 
 /**
- * Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses
+ * Comma-separated expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function attribute_invalid_sequence_expression(node) {
-	e(node, 'attribute_invalid_sequence_expression', `Sequence expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses\nhttps://svelte.dev/e/attribute_invalid_sequence_expression`);
+	e(node, 'attribute_invalid_sequence_expression', `Comma-separated expressions are not allowed as attribute/directive values in runes mode, unless wrapped in parentheses\nhttps://svelte.dev/e/attribute_invalid_sequence_expression`);
 }
 
 /**
@@ -977,12 +977,12 @@ export function const_tag_invalid_expression(node) {
 }
 
 /**
- * `{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>`, `<svelte:boundary` or `<Component>`
+ * `{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>`, `<svelte:boundary>` or `<Component>`
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function const_tag_invalid_placement(node) {
-	e(node, 'const_tag_invalid_placement', `\`{@const}\` must be the immediate child of \`{#snippet}\`, \`{#if}\`, \`{:else if}\`, \`{:else}\`, \`{#each}\`, \`{:then}\`, \`{:catch}\`, \`<svelte:fragment>\`, \`<svelte:boundary\` or \`<Component>\`\nhttps://svelte.dev/e/const_tag_invalid_placement`);
+	e(node, 'const_tag_invalid_placement', `\`{@const}\` must be the immediate child of \`{#snippet}\`, \`{#if}\`, \`{:else if}\`, \`{:else}\`, \`{#each}\`, \`{:then}\`, \`{:catch}\`, \`<svelte:fragment>\`, \`<svelte:boundary>\` or \`<Component>\`\nhttps://svelte.dev/e/const_tag_invalid_placement`);
 }
 
 /**
@@ -1002,6 +1002,24 @@ export function const_tag_invalid_reference(node, name) {
  */
 export function debug_tag_invalid_arguments(node) {
 	e(node, 'debug_tag_invalid_arguments', `{@debug ...} arguments must be identifiers, not arbitrary expressions\nhttps://svelte.dev/e/debug_tag_invalid_arguments`);
+}
+
+/**
+ * Declaration tags must be `let` or `const` declarations
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function declaration_tag_invalid_type(node) {
+	e(node, 'declaration_tag_invalid_type', `Declaration tags must be \`let\` or \`const\` declarations\nhttps://svelte.dev/e/declaration_tag_invalid_type`);
+}
+
+/**
+ * Declaration tags cannot be used in legacy mode
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function declaration_tag_no_legacy_mode(node) {
+	e(node, 'declaration_tag_no_legacy_mode', `Declaration tags cannot be used in legacy mode\nhttps://svelte.dev/e/declaration_tag_no_legacy_mode`);
 }
 
 /**
@@ -1177,6 +1195,16 @@ export function illegal_element_attribute(node, name) {
 }
 
 /**
+ * %message% is not compatible with `customRenderer`
+ * @param {null | number | NodeLike} node
+ * @param {string} message
+ * @returns {never}
+ */
+export function incompatible_with_custom_renderer(node, message) {
+	e(node, 'incompatible_with_custom_renderer', `${message} is not compatible with \`customRenderer\`\nhttps://svelte.dev/e/incompatible_with_custom_renderer`);
+}
+
+/**
  * %message%
  * @param {null | number | NodeLike} node
  * @param {string} message
@@ -1193,6 +1221,16 @@ export function js_parse_error(node, message) {
  */
 export function let_directive_invalid_placement(node) {
 	e(node, 'let_directive_invalid_placement', `\`let:\` directive at invalid position\nhttps://svelte.dev/e/let_directive_invalid_placement`);
+}
+
+/**
+ * Cannot use `let:` directives on a component that has a `children` snippet. Use snippet parameters instead (e.g. `{#snippet children({ %name% })}`)
+ * @param {null | number | NodeLike} node
+ * @param {string} name
+ * @returns {never}
+ */
+export function let_directive_snippet_conflict(node, name) {
+	e(node, 'let_directive_snippet_conflict', `Cannot use \`let:\` directives on a component that has a \`children\` snippet. Use snippet parameters instead (e.g. \`{#snippet children({ ${name} })}\`)\nhttps://svelte.dev/e/let_directive_snippet_conflict`);
 }
 
 /**
@@ -1522,6 +1560,15 @@ export function svelte_meta_invalid_tag(node, list) {
 }
 
 /**
+ * `customRenderer` cannot be set in `<svelte:options>` unless the `experimental.customRenderer` compiler option is enabled
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function svelte_options_customrenderer_disabled(node) {
+	e(node, 'svelte_options_customrenderer_disabled', `\`customRenderer\` cannot be set in \`<svelte:options>\` unless the \`experimental.customRenderer\` compiler option is enabled\nhttps://svelte.dev/e/svelte_options_customrenderer_disabled`);
+}
+
+/**
  * "tag" option is deprecated — use "customElement" instead
  * @param {null | number | NodeLike} node
  * @returns {never}
@@ -1550,12 +1597,12 @@ export function svelte_options_invalid_attribute_value(node, list) {
 }
 
 /**
- * "customElement" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
+ * "customElement" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: "open" | "none" | `ShadowRootInit`; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function svelte_options_invalid_customelement(node) {
-	e(node, 'svelte_options_invalid_customelement', `"customElement" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: "open" | "none"; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }\nhttps://svelte.dev/e/svelte_options_invalid_customelement`);
+	e(node, 'svelte_options_invalid_customelement', `"customElement" must be a string literal defining a valid custom element name or an object of the form { tag?: string; shadow?: "open" | "none" | \`ShadowRootInit\`; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }\nhttps://svelte.dev/e/svelte_options_invalid_customelement`);
 }
 
 /**
@@ -1568,12 +1615,12 @@ export function svelte_options_invalid_customelement_props(node) {
 }
 
 /**
- * "shadow" must be either "open" or "none"
+ * "shadow" must be either "open", "none" or `ShadowRootInit` object.
  * @param {null | number | NodeLike} node
  * @returns {never}
  */
 export function svelte_options_invalid_customelement_shadow(node) {
-	e(node, 'svelte_options_invalid_customelement_shadow', `"shadow" must be either "open" or "none"\nhttps://svelte.dev/e/svelte_options_invalid_customelement_shadow`);
+	e(node, 'svelte_options_invalid_customelement_shadow', `"shadow" must be either "open", "none" or \`ShadowRootInit\` object.\nhttps://svelte.dev/e/svelte_options_invalid_customelement_shadow`);
 }
 
 /**

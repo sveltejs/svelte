@@ -85,9 +85,10 @@ export namespace AST {
 		preserveWhitespace?: boolean;
 		namespace?: Namespace;
 		css?: 'injected';
+		customRenderer?: string | null;
 		customElement?: {
 			tag?: string;
-			shadow?: 'open' | 'none';
+			shadow?: 'open' | 'none' | ObjectExpression | undefined;
 			props?: Record<
 				string,
 				{
@@ -133,6 +134,8 @@ export namespace AST {
 		/** @internal */
 		metadata: {
 			expression: ExpressionMetadata;
+			/** If `true`, the `{@html}` block is the only child of its parent element and can use `parent.innerHTML` directly */
+			is_controlled?: boolean;
 		};
 	}
 
@@ -153,6 +156,20 @@ export namespace AST {
 		/** @internal */
 		metadata: {
 			expression: ExpressionMetadata;
+			/** If this const tag contains an await expression, or needs to wait on other async, this is set */
+			promises_id?: Identifier;
+		};
+	}
+
+	/** A `{let ...}` or `{const ...}` tag */
+	export interface DeclarationTag extends BaseNode {
+		type: 'DeclarationTag';
+		declaration: VariableDeclaration;
+		/** @internal */
+		metadata: {
+			expression: ExpressionMetadata;
+			/** If this declaration tag contains an await expression, or needs to wait on other async, this is set */
+			promises_id?: Identifier;
 		};
 	}
 
@@ -483,6 +500,8 @@ export namespace AST {
 		alternate: Fragment | null;
 		/** @internal */
 		metadata: {
+			/** List of else-if blocks that can be flattened into this if block */
+			flattened?: IfBlock[];
 			expression: ExpressionMetadata;
 		};
 	}
@@ -616,6 +635,7 @@ export namespace AST {
 	export type Tag =
 		| AST.AttachTag
 		| AST.ConstTag
+		| AST.DeclarationTag
 		| AST.DebugTag
 		| AST.ExpressionTag
 		| AST.HtmlTag

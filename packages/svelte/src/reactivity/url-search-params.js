@@ -1,10 +1,14 @@
 import { DEV } from 'esm-env';
-import { state, increment } from '../internal/client/reactivity/sources.js';
+import {
+	state,
+	check_mutation,
+	unchecked_increment
+} from '../internal/client/reactivity/sources.js';
 import { tag } from '../internal/client/dev/tracing.js';
 import { get } from '../internal/client/runtime.js';
 import { get_current_url } from './url.js';
 
-export const REPLACE = Symbol();
+export const REPLACE = Symbol('replace');
 
 /**
  * A reactive version of the built-in [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) object.
@@ -42,7 +46,7 @@ export class SvelteURLSearchParams extends URLSearchParams {
 		if (!this.#url || this.#updating) return;
 		this.#updating = true;
 
-		const search = this.toString();
+		const search = super.toString();
 		this.#url.search = search && `?${search}`;
 
 		this.#updating = false;
@@ -54,6 +58,13 @@ export class SvelteURLSearchParams extends URLSearchParams {
 	 */
 	[REPLACE](params) {
 		if (this.#updating) return;
+
+		// the URL may have changed in a way that leaves the search string untouched —
+		// don't rebuild the params or notify readers if nothing changed
+		if (params.toString() === super.toString()) return;
+
+		check_mutation(this.#version);
+
 		this.#updating = true;
 
 		for (const key of [...super.keys()]) {
@@ -64,7 +75,7 @@ export class SvelteURLSearchParams extends URLSearchParams {
 			super.append(key, value);
 		}
 
-		increment(this.#version);
+		unchecked_increment(this.#version);
 		this.#updating = false;
 	}
 
@@ -74,9 +85,10 @@ export class SvelteURLSearchParams extends URLSearchParams {
 	 * @returns {void}
 	 */
 	append(name, value) {
+		check_mutation(this.#version);
 		super.append(name, value);
 		this.#update_url();
-		increment(this.#version);
+		unchecked_increment(this.#version);
 	}
 
 	/**
@@ -85,11 +97,13 @@ export class SvelteURLSearchParams extends URLSearchParams {
 	 * @returns {void}
 	 */
 	delete(name, value) {
+		check_mutation(this.#version);
+
 		var has_value = super.has(name, value);
 		super.delete(name, value);
 		if (has_value) {
 			this.#update_url();
-			increment(this.#version);
+			unchecked_increment(this.#version);
 		}
 	}
 
@@ -127,25 +141,39 @@ export class SvelteURLSearchParams extends URLSearchParams {
 	}
 
 	/**
+	 * @param {(value: string, key: string, parent: URLSearchParams) => void} callback
+	 * @param {any} [this_arg]
+	 * @returns {void}
+	 */
+	forEach(callback, this_arg) {
+		get(this.#version);
+		super.forEach(callback, this_arg);
+	}
+
+	/**
 	 * @param {string} name
 	 * @param {string} value
 	 * @returns {void}
 	 */
 	set(name, value) {
-		var previous = super.getAll(name).join('');
+		check_mutation(this.#version);
+
+		var previous = super.getAll(name);
 		super.set(name, value);
 		// can't use has(name, value), because for something like https://svelte.dev?foo=1&bar=2&foo=3
 		// if you set `foo` to 1, then foo=3 gets deleted whilst `has("foo", "1")` returns true
-		if (previous !== super.getAll(name).join('')) {
+		var current = super.getAll(name);
+		if (previous.length !== current.length || previous.some((value, i) => value !== current[i])) {
 			this.#update_url();
-			increment(this.#version);
+			unchecked_increment(this.#version);
 		}
 	}
 
 	sort() {
+		check_mutation(this.#version);
 		super.sort();
 		this.#update_url();
-		increment(this.#version);
+		unchecked_increment(this.#version);
 	}
 
 	toString() {

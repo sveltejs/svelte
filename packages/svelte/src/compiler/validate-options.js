@@ -44,40 +44,100 @@ const common_options = {
 	warningFilter: fun(() => true),
 
 	experimental: object({
-		async: boolean(false)
+		async: boolean(false),
+		// `customRenderer` can be:
+		//  - `undefined`: the feature is off, components compile to plain DOM
+		//  - `true`: the feature is on, every component defaults to DOM (opt in via `<svelte:options>`)
+		//  - a string: the feature is on, every component defaults to that module (opt out via `<svelte:options>`)
+		//  - a function: the feature is on, the module is resolved lazily per file (`null` means DOM)
+		// The normalized value is always a function returning `string | null | undefined` where
+		// `string` is the renderer module, `null` is "DOM but feature enabled" (push `null`) and
+		// `undefined` is "feature off" (no renderer pushed at all). A function can't return
+		// `undefined` for individual files: those components wouldn't push `null`, so they'd break
+		// when rendered inside a component that uses a custom renderer. We throw rather than
+		// silently treating `undefined` as `null`, so that a forgotten `return` doesn't go unnoticed.
+		customRenderer: validator(
+			/** @type {(options: { filename: string }) => string | null | undefined} */ (() => undefined),
+			(input, keypath) => {
+				if (input === true) {
+					return () => null;
+				}
+
+				if (typeof input === 'string') {
+					// the module is imported by every component, so a relative path would resolve
+					// relative to each component rather than to wherever the option is set (which
+					// the compiler can't know)
+					if (/^\.\.?([/\\]|$)/.test(input)) {
+						throw_error(
+							`${keypath} cannot be a relative path, because it would be resolved relative to each component. Use a package name, an alias or an absolute path instead (received "${input}")`
+						);
+					}
+
+					return () => input;
+				}
+
+				if (typeof input === 'function') {
+					return (/** @type {{ filename: string }} */ options) => {
+						const result = input(options);
+
+						if (result !== null && typeof result !== 'string') {
+							throw_error(`${keypath} function must return a string or null`);
+						}
+
+						return result;
+					};
+				}
+
+				throw_error(`${keypath} should be true, a string or a function, if specified`);
+			}
+		)
 	})
 };
 
 const component_options = {
 	accessors: deprecate(w.options_deprecated_accessors, boolean(false)),
 
-	css: validator('external', (input) => {
-		if (input === true || input === false) {
-			throw_error(
-				'The boolean options have been removed from the css option. Use "external" instead of false and "injected" instead of true'
-			);
-		}
-		if (input === 'none') {
-			throw_error(
-				'css: "none" is no longer a valid option. If this was crucial for you, please open an issue on GitHub with your use case.'
-			);
-		}
+	/** @type {Validator<'injected' | 'external' | ((options: { filename: string }) => 'injected' | 'external'), (options: { filename: string }) => 'injected' | 'external'>} */
+	css: parametric(
+		/** @type {(options: { filename: string }) => 'injected' | 'external'} */ (() => 'external'),
+		(input) => {
+			if (input === true || input === false) {
+				throw_error(
+					'The boolean options have been removed from the css option. Use "external" instead of false and "injected" instead of true'
+				);
+			}
+			if (input === 'none') {
+				throw_error(
+					'css: "none" is no longer a valid option. If this was crucial for you, please open an issue on GitHub with your use case.'
+				);
+			}
 
-		if (input !== 'external' && input !== 'injected') {
-			throw_error(`css should be either "external" (default, recommended) or "injected"`);
-		}
+			if (input !== 'external' && input !== 'injected') {
+				throw_error(`css should be either "external" (default, recommended) or "injected"`);
+			}
 
-		return input;
-	}),
+			return /** @type {'external' | 'injected'} */ (input);
+		}
+	),
 
 	cssHash: fun(({ css, filename, hash }) => {
-		return `svelte-${hash(filename === '(unknown)' ? css : filename ?? css)}`;
+		return `svelte-${hash(filename === '(unknown)' ? css : (filename ?? css))}`;
 	}),
 
 	// TODO this is a sourcemap option, would be good to put under a sourcemap namespace
 	cssOutputFilename: string(undefined),
 
-	customElement: boolean(false),
+	/** @type {Validator<boolean | ((options: { filename: string }) => boolean), (options: { filename: string }) => boolean>} */
+	customElement: parametric(
+		/** @type {(options: { filename: string }) => boolean} */ (() => false),
+		(input, keypath) => {
+			if (typeof input !== 'boolean') {
+				throw_error(`${keypath} should be true or false`);
+			}
+
+			return /** @type {boolean} */ (input);
+		}
+	),
 
 	discloseVersion: boolean(true),
 
@@ -107,7 +167,8 @@ const component_options = {
 
 	preserveWhitespace: boolean(false),
 
-	runes: boolean(undefined),
+	/** @type {Validator<boolean | undefined | (() => boolean | undefined), () => boolean | undefined>} */
+	runes: parametric(() => /** @type {boolean | undefined} */ (undefined)),
 
 	hmr: boolean(false),
 
@@ -315,6 +376,28 @@ function fun(fallback) {
 			throw_error(`${keypath} should be a function, if specified`);
 		}
 		return input;
+	});
+}
+
+/**
+ * @template {(...args: any[]) => any} F
+ * @param {F} fallback
+ * @param {(value: unknown, keypath: string) => ReturnType<F>} [normalize]
+ * @returns {Validator}
+ */
+function parametric(fallback, normalize = (value) => /** @type {ReturnType<F>} */ (value)) {
+	return validator(fallback, (input, keypath) => {
+		if (typeof input === 'function') {
+			/** @type {(...args: Parameters<F>) => ReturnType<F>} */
+			const normalized = (...args) => normalize(input(...args), keypath);
+
+			return /** @type {F} */ (/** @type {unknown} */ (normalized));
+		}
+
+		/** @type {(...args: Parameters<F>) => ReturnType<F>} */
+		const normalized = (..._args) => normalize(input, keypath);
+
+		return /** @type {F} */ (/** @type {unknown} */ (normalized));
 	});
 }
 

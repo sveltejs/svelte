@@ -4,8 +4,10 @@
 import {
 	empty_comment,
 	build_attribute_value,
-	create_async_block,
-	PromiseOptimiser
+	PromiseOptimiser,
+	block_open_else,
+	block_open,
+	block_close
 } from './utils.js';
 import * as b from '#compiler/builders';
 import { is_element_node } from '../../../../nodes.js';
@@ -106,9 +108,15 @@ export function build_inline_component(node, expression, context) {
 			}
 
 			push_prop(b.prop('init', b.key(attribute.name), value));
-		} else if (attribute.type === 'BindDirective' && attribute.name !== 'this') {
+		} else if (attribute.type === 'BindDirective') {
 			// Bindings are a bit special: we don't want to add them to (async) deriveds but we need to check if they have blockers
 			optimiser.check_blockers(attribute.metadata.expression);
+
+			if (attribute.name === 'this') {
+				// bind:this is client-only, but we still need to check for blockers to ensure
+				// the server generates matching hydration markers if the client wraps in $.async
+				continue;
+			}
 
 			if (attribute.expression.type === 'SequenceExpression') {
 				const [get, set] = /** @type {SequenceExpression} */ (context.visit(attribute.expression))
@@ -295,21 +303,30 @@ export function build_inline_component(node, expression, context) {
 					b.array(props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p)))
 				);
 
+	const dynamic =
+		node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic);
+
 	/** @type {Statement} */
-	let statement = b.stmt(
-		(node.type === 'SvelteComponent' ? b.maybe_call : b.call)(
+	let statement = b.stmt(b.call(expression, b.id('$$renderer'), props_expression));
+
+	if (dynamic) {
+		statement = b.if(
 			expression,
-			b.id('$$renderer'),
-			props_expression
-		)
-	);
+			b.block([
+				b.stmt(b.call('$$renderer.push', block_open)),
+				statement,
+				b.stmt(b.call('$$renderer.push', block_close))
+			]),
+			b.block([
+				b.stmt(b.call('$$renderer.push', block_open_else)),
+				b.stmt(b.call('$$renderer.push', block_close))
+			])
+		);
+	}
 
 	if (snippet_declarations.length > 0) {
 		statement = b.block([...snippet_declarations, statement]);
 	}
-
-	const dynamic =
-		node.type === 'SvelteComponent' || (node.type === 'Component' && node.metadata.dynamic);
 
 	if (custom_css_props.length > 0) {
 		statement = b.stmt(
@@ -329,31 +346,13 @@ export function build_inline_component(node, expression, context) {
 		optimiser.check_blockers(node.metadata.expression);
 	}
 
-	const is_async = optimiser.is_async();
-
-	if (is_async) {
-		statement = create_async_block(
-			b.block([
-				optimiser.apply(),
-				dynamic && custom_css_props.length === 0
-					? b.stmt(b.call('$$renderer.push', empty_comment))
-					: b.empty,
-				statement
-			]),
-			optimiser.blockers(),
-			optimiser.has_await
-		);
-	} else if (dynamic && custom_css_props.length === 0) {
-		context.state.template.push(empty_comment);
-	}
-
-	context.state.template.push(statement);
+	context.state.template.push(...optimiser.render_block([statement]));
 
 	if (
-		!is_async &&
-		!context.state.skip_hydration_boundaries &&
-		custom_css_props.length === 0 &&
-		optimiser.expressions.length === 0
+		!dynamic &&
+		!optimiser.is_async() &&
+		!context.state.is_standalone &&
+		custom_css_props.length === 0
 	) {
 		context.state.template.push(empty_comment);
 	}

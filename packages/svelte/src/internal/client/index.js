@@ -1,7 +1,7 @@
 export { createAttachmentKey as attachment } from '../../attachments/index.js';
 export { FILENAME, HMR, NAMESPACE_SVG } from '../../constants.js';
 export { push, pop, add_svelte_meta } from './context.js';
-export { assign, assign_and, assign_or, assign_nullish } from './dev/assign.js';
+export { assign, assign_async } from './dev/assign.js';
 export { cleanup_styles } from './dev/css.js';
 export { add_locations } from './dev/elements.js';
 export { hmr } from './dev/hmr.js';
@@ -18,7 +18,12 @@ export { css_props } from './dom/blocks/css-props.js';
 export { index, each } from './dom/blocks/each.js';
 export { html } from './dom/blocks/html.js';
 export { sanitize_slots, slot } from './dom/blocks/slot.js';
-export { snippet, wrap_snippet } from './dom/blocks/snippet.js';
+export {
+	snippet,
+	wrap_snippet,
+	renderer_snippet,
+	validate_snippet_renderer
+} from './dom/blocks/snippet.js';
 export { component } from './dom/blocks/svelte-component.js';
 export { element } from './dom/blocks/svelte-element.js';
 export { head } from './dom/blocks/svelte-head.js';
@@ -33,15 +38,15 @@ export {
 	set_xlink_attribute,
 	set_value,
 	set_checked,
-	set_selected,
 	set_default_checked,
 	set_default_value,
 	CLASS,
 	STYLE
 } from './dom/elements/attributes.js';
 export { set_class } from './dom/elements/class.js';
-export { apply, event, delegate, replay_events } from './dom/elements/events.js';
+export { apply, event, delegated, delegate, replay_events } from './dom/elements/events.js';
 export { autofocus, remove_textarea_child } from './dom/elements/misc.js';
+export { customizable_select, selectedcontent } from './dom/elements/customizable-select.js';
 export { set_style } from './dom/elements/style.js';
 export { animation, transition } from './dom/elements/transitions.js';
 export { bind_active_element } from './dom/elements/bindings/document.js';
@@ -61,7 +66,13 @@ export {
 } from './dom/elements/bindings/media.js';
 export { bind_online } from './dom/elements/bindings/navigator.js';
 export { bind_prop } from './dom/elements/bindings/props.js';
-export { bind_select_value, init_select, select_option } from './dom/elements/bindings/select.js';
+export {
+	bind_select_value,
+	init_select,
+	select_option,
+	set_selected,
+	set_default_select_value
+} from './dom/elements/bindings/select.js';
 export { bind_element_size, bind_resize_observer } from './dom/elements/bindings/size.js';
 export { bind_this } from './dom/elements/bindings/this.js';
 export {
@@ -98,12 +109,13 @@ export {
 	with_script
 } from './dom/template.js';
 export {
-	async_body,
 	for_await_track_reactivity_loss,
 	run,
 	save,
 	track_reactivity_loss,
-	run_after_blockers
+	unsave,
+	run_after_blockers,
+	wait
 } from './reactivity/async.js';
 export { eager, flushSync as flush } from './reactivity/batch.js';
 export {
@@ -112,7 +124,6 @@ export {
 	derived_safe_equal
 } from './reactivity/deriveds.js';
 export {
-	aborted,
 	effect_tracking,
 	effect_root,
 	legacy_pre_effect,
@@ -152,25 +163,26 @@ export {
 	safe_get,
 	tick,
 	untrack,
-	exclude_from_object,
 	deep_read,
 	deep_read_state,
 	active_effect
 } from './runtime.js';
-export { validate_binding, validate_each_keys } from './validate.js';
+export { validate_binding } from './validate.js';
 export { raf } from './timing.js';
 export { proxy } from './proxy.js';
 export { create_custom_element } from './dom/elements/custom-element.js';
 export {
 	child,
+	only_child,
 	first_child,
+	get_last_child,
 	sibling,
 	$window as window,
 	$document as document
 } from './dom/operations.js';
 export { attr, clsx } from '../shared/attributes.js';
 export { snapshot } from '../shared/clone.js';
-export { noop, fallback, to_array } from '../shared/utils.js';
+export { noop, fallback, to_array, exclude_from_object } from '../shared/utils.js';
 export {
 	invalid_default_snippet,
 	validate_dynamic_element_tag,
@@ -180,4 +192,5 @@ export {
 } from '../shared/validate.js';
 export { strict_equals, equals } from './dev/equality.js';
 export { log_if_contains_state } from './dev/console-log.js';
-export { invoke_error_boundary } from './error-handling.js';
+export { push_renderer, pop_renderer } from './custom-renderer/state.js';
+export { cross, is_crossing } from './custom-renderer/cross.js';

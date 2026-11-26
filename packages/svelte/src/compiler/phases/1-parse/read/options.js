@@ -36,6 +36,26 @@ export default function read_options(node) {
 				e.svelte_options_deprecated_tag(attribute);
 				break; // eslint doesn't know this is unnecessary
 			}
+			case 'customRenderer': {
+				const { value } = attribute;
+				const chunk = Array.isArray(value) ? value[0] : value;
+
+				if (chunk === true || !chunk || (Array.isArray(value) && value.length !== 1)) {
+					e.svelte_options_invalid_attribute_value(attribute, 'a string or null');
+				}
+
+				if (chunk.type === 'Text') {
+					component_options.customRenderer = chunk.data;
+				} else if (
+					chunk.expression?.type === 'Literal' &&
+					(typeof chunk.expression.value === 'string' || chunk.expression.value === null)
+				) {
+					component_options.customRenderer = chunk.expression.value;
+				} else {
+					e.svelte_options_invalid_attribute_value(attribute, 'a string or null');
+				}
+				break;
+			}
 			case 'customElement': {
 				/** @type {AST.SvelteOptions['customElement']} */
 				const ce = {};
@@ -133,11 +153,13 @@ export default function read_options(node) {
 
 				const shadow = properties.find(([name]) => name === 'shadow')?.[1];
 				if (shadow) {
-					const shadowdom = shadow?.value;
-					if (shadowdom !== 'open' && shadowdom !== 'none') {
-						e.svelte_options_invalid_customelement_shadow(shadow);
+					if (shadow.type === 'Literal' && (shadow.value === 'open' || shadow.value === 'none')) {
+						ce.shadow = shadow.value;
+					} else if (shadow.type === 'ObjectExpression') {
+						ce.shadow = shadow;
+					} else {
+						e.svelte_options_invalid_customelement_shadow(attribute);
 					}
-					ce.shadow = shadowdom;
 				}
 
 				const extend = properties.find(([name]) => name === 'extend')?.[1];

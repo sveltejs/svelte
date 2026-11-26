@@ -18,6 +18,14 @@ export default test({
 		increment.click();
 		await tick();
 
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<button>increment</button>
+				<p>0</p>
+			`
+		);
+
 		increment.click();
 		await tick();
 
@@ -26,6 +34,28 @@ export default test({
 			`
 				<button>increment</button>
 				<p>2</p>
+			`
+		);
+
+		increment.click();
+		await tick();
+
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<button>increment</button>
+				<p>2</p>
+			`
+		);
+
+		increment.click();
+		await tick();
+
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+				<button>increment</button>
+				<p>4</p>
 			`
 		);
 	}

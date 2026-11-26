@@ -1,3 +1,4 @@
+import 'svelte/internal/init-operations';
 import 'svelte/internal/disclose-version';
 import 'svelte/internal/flags/legacy';
 import * as $ from 'svelte/internal/client';
@@ -11,11 +12,10 @@ function Hmr($$anchor) {
 }
 
 if (import.meta.hot) {
-	Hmr = $.hmr(Hmr, () => Hmr[$.HMR].source);
+	Hmr = $.hmr(Hmr);
 
 	import.meta.hot.accept((module) => {
-		module.default[$.HMR].source = Hmr[$.HMR].source;
-		$.set(Hmr[$.HMR].source, module.default[$.HMR].original);
+		Hmr[$.HMR].update(module.default);
 	});
 }
 

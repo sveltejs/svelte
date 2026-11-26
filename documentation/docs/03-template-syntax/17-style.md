@@ -1,5 +1,6 @@
 ---
 title: style:
+tags: template-style
 ---
 
 The `style:` directive provides a shorthand for setting multiple styles on an element.
@@ -40,4 +41,10 @@ even over `!important` properties:
 ```svelte
 <div style:color="red" style="color: blue">This will be red</div>
 <div style:color="red" style="color: blue !important">This will still be red</div>
+```
+
+You can set CSS custom properties:
+
+```svelte
+<div style:--columns={columns}>...</div>
 ```

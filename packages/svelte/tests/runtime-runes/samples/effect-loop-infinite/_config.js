@@ -2,7 +2,8 @@ import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	mode: ['client', 'hydrate'],
+	// infinite loops are slow in dev mode (stack traces are captured for the updates), so only run this once
+	mode: ['client'],
 
 	compileOptions: {
 		dev: true
@@ -11,11 +12,12 @@ export default test({
 	test({ assert, errors }) {
 		const [button] = document.querySelectorAll('button');
 
-		try {
+		assert.throws(() => {
 			flushSync(() => button.click());
-		} catch (e) {
-			assert.equal(errors.length, 1); // for whatever reason we can't get the name which should be 'updated at'
-			assert.ok(/** @type {Error} */ (e).message.startsWith('effect_update_depth_exceeded'));
-		}
+		}, /effect_update_depth_exceeded/);
+
+		assert.equal(errors.length, 1);
+
+		assert.doesNotThrow(flushSync);
 	}
 });

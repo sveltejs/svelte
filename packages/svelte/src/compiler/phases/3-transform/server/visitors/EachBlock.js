@@ -2,7 +2,13 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '#compiler/builders';
-import { block_close, block_open, block_open_else, create_async_block } from './shared/utils.js';
+import {
+	block_close,
+	block_open,
+	block_open_else,
+	create_child_block,
+	prepend_block_marker
+} from './shared/utils.js';
 
 /**
  * @param {AST.EachBlock} node
@@ -18,8 +24,8 @@ export function EachBlock(node, context) {
 
 	const array_id = state.scope.root.unique('each_array');
 
-	/** @type {Statement} */
-	let block = b.block([b.const(array_id, b.call('$.ensure_array_like', collection))]);
+	/** @type {Statement[]} */
+	let statements = [b.const(array_id, b.call('$.ensure_array_like', collection))];
 
 	/** @type {Statement[]} */
 	const each = [];
@@ -51,9 +57,9 @@ export function EachBlock(node, context) {
 
 		const fallback = /** @type {BlockStatement} */ (context.visit(node.fallback));
 
-		fallback.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), block_open_else)));
+		prepend_block_marker(fallback, /** @type {string} */ (block_open_else.value));
 
-		block.body.push(
+		statements.push(
 			b.if(
 				b.binary('!==', b.member(array_id, 'length'), b.literal(0)),
 				b.block([open, for_loop]),
@@ -62,19 +68,15 @@ export function EachBlock(node, context) {
 		);
 	} else {
 		state.template.push(block_open);
-		block.body.push(for_loop);
+		statements.push(for_loop);
 	}
 
-	if (node.metadata.expression.is_async()) {
-		state.template.push(
-			create_async_block(
-				block,
-				node.metadata.expression.blockers(),
-				node.metadata.expression.has_await
-			),
-			block_close
-		);
-	} else {
-		state.template.push(...block.body, block_close);
-	}
+	state.template.push(
+		...create_child_block(
+			statements,
+			node.metadata.expression.blockers(),
+			node.metadata.expression.has_await
+		),
+		block_close
+	);
 }

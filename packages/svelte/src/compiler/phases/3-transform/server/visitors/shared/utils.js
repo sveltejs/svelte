@@ -1,6 +1,7 @@
 /** @import { Expression, Identifier, Node, Statement, BlockStatement, ArrayExpression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ServerTransformState } from '../../types.js' */
+/** @import { ExpressionMetadata } from '../../../../nodes.js' */
 
 import { escape_html } from '../../../../../../escaping.js';
 import {
@@ -12,8 +13,7 @@ import {
 import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
 import { regex_whitespaces_strict } from '../../../../patterns.js';
-import { has_await_expression } from '../../../../../utils/ast.js';
-import { ExpressionMetadata } from '../../../../nodes.js';
+import { has_await_expression, save } from '../../../../../utils/ast.js';
 
 /** Opens an if/each block, so that we can remove nodes in the case of a mismatch */
 export const block_open = b.literal(BLOCK_OPEN);
@@ -60,7 +60,9 @@ export function process_children(nodes, { visit, state }) {
 				if (evaluated.is_known) {
 					quasi.value.cooked += escape_html((evaluated.value ?? '') + '');
 				} else {
-					expressions.push(b.call('$.escape', /** @type {Expression} */ (visit(node.expression))));
+					expressions.push(
+						b.call('$.escape', /** @type {Expression} */ (visit(node.expression, state)))
+					);
 
 					quasi = b.quasi('', i + 1 === sequence.length);
 					quasis.push(quasi);
@@ -80,8 +82,20 @@ export function process_children(nodes, { visit, state }) {
 		if (node.type === 'ExpressionTag' && node.metadata.expression.is_async()) {
 			flush();
 
-			const expression = /** @type {Expression} */ (visit(node.expression));
-			state.template.push(create_push(b.call('$.escape', expression), node.metadata.expression));
+			const expression = /** @type {Expression} */ (visit(node.expression, state));
+
+			let call = b.call(
+				'$$renderer.push',
+				b.thunk(b.call('$.escape', expression), node.metadata.expression.has_await)
+			);
+
+			const blockers = node.metadata.expression.blockers();
+
+			if (blockers.elements.length > 0) {
+				call = b.call('$$renderer.async', blockers, b.arrow([b.id('$$renderer')], call));
+			}
+
+			state.template.push(b.stmt(call));
 		} else if (node.type === 'Text' || node.type === 'Comment' || node.type === 'ExpressionTag') {
 			sequence.push(node);
 		} else {
@@ -167,6 +181,36 @@ export function build_template(template) {
 }
 
 /**
+ * Prepends a hydration marker (e.g. `<!--[0-->`) to a branch. The branch has already been
+ * turned into statements by `build_template`, so if it happens to start with a static
+ * `$$renderer.push(...)` we fold the marker into that call rather than emitting a second one.
+ * @param {BlockStatement} block
+ * @param {string} marker
+ */
+export function prepend_block_marker(block, marker) {
+	const first = block.body[0];
+
+	if (
+		first?.type === 'ExpressionStatement' &&
+		first.expression.type === 'CallExpression' &&
+		first.expression.callee.type === 'Identifier' &&
+		first.expression.callee.name === '$$renderer.push' &&
+		first.expression.arguments.length === 1 &&
+		first.expression.arguments[0].type === 'TemplateLiteral'
+	) {
+		const quasi = first.expression.arguments[0].quasis[0];
+
+		// markers never contain characters that need escaping in a template literal
+		quasi.value.cooked = marker + quasi.value.cooked;
+		quasi.value.raw = marker + quasi.value.raw;
+
+		return;
+	}
+
+	block.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), b.literal(marker))));
+}
+
+/**
  *
  * @param {AST.Attribute['value']} value
  * @param {ComponentContext} context
@@ -213,26 +257,39 @@ export function build_attribute_value(
 		const node = value[i];
 
 		if (node.type === 'Text') {
-			quasi.value.raw += trim_whitespace
+			quasi.value.cooked += trim_whitespace
 				? node.data.replace(regex_whitespaces_strict, ' ')
 				: node.data;
 		} else {
-			expressions.push(
-				b.call(
-					'$.stringify',
-					transform(
-						/** @type {Expression} */ (context.visit(node.expression)),
-						node.metadata.expression
-					)
-				)
-			);
+			const evaluated = context.state.scope.evaluate(node.expression);
 
-			quasi = b.quasi('', i + 1 === value.length);
-			quasis.push(quasi);
+			if (evaluated.is_known) {
+				quasi.value.cooked += (evaluated.value ?? '') + '';
+			} else {
+				const expression = transform(
+					/** @type {Expression} */ (context.visit(node.expression)),
+					node.metadata.expression
+				);
+
+				expressions.push(
+					evaluated.is_string && evaluated.is_defined
+						? expression
+						: b.call('$.stringify', expression)
+				);
+
+				quasi = b.quasi('', i + 1 === value.length);
+				quasis.push(quasi);
+			}
 		}
 	}
 
-	return b.template(quasis, expressions);
+	for (const quasi of quasis) {
+		quasi.value.raw = sanitize_template_string(/** @type {string} */ (quasi.value.cooked));
+	}
+
+	return expressions.length > 0
+		? b.template(quasis, expressions)
+		: b.literal(/** @type {string} */ (quasi.value.cooked));
 }
 
 /**
@@ -258,77 +315,28 @@ export function build_getter(node, state) {
 		);
 	}
 
+	if (binding.kind === 'derived') {
+		return (binding.declaration_kind === 'var' ? b.maybe_call : b.call)(node);
+	}
+
 	return node;
 }
 
 /**
- * Creates a `$$renderer.child(...)` expression statement
- * @param {BlockStatement | Expression} body
- * @param {boolean} async
- * @returns {Statement}
- */
-export function create_child_block(body, async) {
-	return b.stmt(b.call('$$renderer.child', b.arrow([b.id('$$renderer')], body, async)));
-}
-
-/**
- * Creates a `$$renderer.async(...)` expression statement
- * @param {BlockStatement | Expression} body
+ * @param {Statement[]} statements
  * @param {ArrayExpression} blockers
  * @param {boolean} has_await
- * @param {boolean} needs_hydration_markers
  */
-export function create_async_block(
-	body,
-	blockers = b.array([]),
-	has_await = true,
-	needs_hydration_markers = true
-) {
-	return b.stmt(
-		b.call(
-			needs_hydration_markers ? '$$renderer.async_block' : '$$renderer.async',
-			blockers,
-			b.arrow([b.id('$$renderer')], body, has_await)
-		)
-	);
-}
-
-/**
- * @param {Expression} expression
- * @param {ExpressionMetadata} metadata
- * @param {boolean} needs_hydration_markers
- * @returns {Expression | Statement}
- */
-export function create_push(expression, metadata, needs_hydration_markers = false) {
-	if (metadata.is_async()) {
-		let statement = b.stmt(b.call('$$renderer.push', b.thunk(expression, metadata.has_await)));
-
-		const blockers = metadata.blockers();
-
-		if (blockers.elements.length > 0) {
-			statement = create_async_block(
-				b.block([statement]),
-				blockers,
-				false,
-				needs_hydration_markers
-			);
-		}
-
-		return statement;
+export function create_child_block(statements, blockers, has_await) {
+	if (blockers.elements.length === 0 && !has_await) {
+		return statements;
 	}
 
-	return expression;
-}
+	const fn = b.arrow([b.id('$$renderer')], b.block(statements), has_await);
 
-/**
- * @param {BlockStatement | Expression} body
- * @param {Identifier | false} component_fn_id
- * @returns {Statement}
- */
-export function call_component_renderer(body, component_fn_id) {
-	return b.stmt(
-		b.call('$$renderer.component', b.arrow([b.id('$$renderer')], body, false), component_fn_id)
-	);
+	return blockers.elements.length > 0
+		? [b.stmt(b.call('$$renderer.async_block', blockers, fn))]
+		: [b.stmt(b.call('$$renderer.child_block', fn))];
 }
 
 /**
@@ -367,14 +375,14 @@ export class PromiseOptimiser {
 	 * @param {ExpressionMetadata} metadata
 	 */
 	check_blockers(metadata) {
-		for (const binding of metadata.dependencies) {
+		for (const binding of metadata.references) {
 			if (binding.blocker) {
 				this.#blockers.add(binding.blocker);
 			}
 		}
 	}
 
-	apply() {
+	#apply() {
 		if (this.expressions.length === 0) {
 			return b.empty;
 		}
@@ -393,7 +401,7 @@ export class PromiseOptimiser {
 
 		return b.const(
 			b.array_pattern(this.expressions.map((_, i) => b.id(`$$${i}`))),
-			b.await(b.call('Promise.all', promises))
+			save(b.call('Promise.all', promises))
 		);
 	}
 
@@ -403,5 +411,39 @@ export class PromiseOptimiser {
 
 	is_async() {
 		return this.expressions.length > 0 || this.#blockers.size > 0;
+	}
+
+	/**
+	 * @param {Statement[]} statements
+	 * @returns {Statement[]}
+	 */
+	render(statements) {
+		if (!this.is_async()) {
+			return statements;
+		}
+
+		const fn = b.arrow(
+			[b.id('$$renderer')],
+			b.block([this.#apply(), ...statements]),
+			this.has_await
+		);
+
+		const blockers = this.blockers();
+
+		return blockers.elements.length > 0
+			? [b.stmt(b.call('$$renderer.async', blockers, fn))]
+			: [b.stmt(b.call('$$renderer.child', fn))];
+	}
+
+	/**
+	 * @param {Statement[]} statements
+	 * @returns {Statement[]}
+	 */
+	render_block(statements) {
+		if (!this.is_async()) {
+			return statements;
+		}
+
+		return create_child_block([this.#apply(), ...statements], this.blockers(), this.has_await);
 	}
 }

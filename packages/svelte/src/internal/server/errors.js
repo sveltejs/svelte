@@ -27,6 +27,19 @@ export function await_invalid() {
 }
 
 /**
+ * `<svelte:element this="%tag%">` is not a valid element name — the element will not be rendered
+ * @param {string} tag
+ * @returns {never}
+ */
+export function dynamic_element_invalid_tag(tag) {
+	const error = new Error(`dynamic_element_invalid_tag\n\`<svelte:element this="${tag}">\` is not a valid element name — the element will not be rendered\nhttps://svelte.dev/e/dynamic_element_invalid_tag`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
  * The `html` property of server render results has been deprecated. Use `body` instead.
  * @returns {never}
  */
@@ -59,7 +72,7 @@ ${stack}\nhttps://svelte.dev/e/hydratable_clobbering`);
 /**
  * Failed to serialize `hydratable` data for key `%key%`.
  * 
- * `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/uneval) can, plus Promises.
+ * `hydratable` can serialize anything [`uneval` from `devalue`](https://npmjs.com/package/devalue) can, plus Promises.
  * 
  * Cause:
  * %stack%
@@ -70,10 +83,34 @@ ${stack}\nhttps://svelte.dev/e/hydratable_clobbering`);
 export function hydratable_serialization_failed(key, stack) {
 	const error = new Error(`hydratable_serialization_failed\nFailed to serialize \`hydratable\` data for key \`${key}\`.
 
-\`hydratable\` can serialize anything [\`uneval\` from \`devalue\`](https://npmjs.com/package/uneval) can, plus Promises.
+\`hydratable\` can serialize anything [\`uneval\` from \`devalue\`](https://npmjs.com/package/devalue) can, plus Promises.
 
 Cause:
 ${stack}\nhttps://svelte.dev/e/hydratable_serialization_failed`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
+ * `csp.nonce` was set while `csp.hash` was `true`. These options cannot be used simultaneously.
+ * @returns {never}
+ */
+export function invalid_csp() {
+	const error = new Error(`invalid_csp\n\`csp.nonce\` was set while \`csp.hash\` was \`true\`. These options cannot be used simultaneously.\nhttps://svelte.dev/e/invalid_csp`);
+
+	error.name = 'Svelte error';
+
+	throw error;
+}
+
+/**
+ * The `idPrefix` option cannot include `--`.
+ * @returns {never}
+ */
+export function invalid_id_prefix() {
+	const error = new Error(`invalid_id_prefix\nThe \`idPrefix\` option cannot include \`--\`.\nhttps://svelte.dev/e/invalid_id_prefix`);
 
 	error.name = 'Svelte error';
 

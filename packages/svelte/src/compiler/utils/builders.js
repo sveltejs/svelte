@@ -1,5 +1,4 @@
 /** @import * as ESTree from 'estree' */
-import { walk } from 'zimmerframe';
 import { regex_is_valid_identifier } from '../phases/patterns.js';
 import { sanitize_template_string } from './sanitize_template_string.js';
 import { has_await_expression } from './ast.js';
@@ -36,6 +35,13 @@ export function assignment_pattern(left, right) {
  * @returns {ESTree.ArrowFunctionExpression}
  */
 export function arrow(params, body, async = false) {
+	// optimize `async () => await x()`, but not `async () => await x(await y)`
+	if (async && body.type === 'AwaitExpression') {
+		if (!has_await_expression(body.argument)) {
+			return arrow(params, body.argument);
+		}
+	}
+
 	return {
 		type: 'ArrowFunctionExpression',
 		params,
@@ -462,13 +468,6 @@ export function thunk(expression, async = false) {
  * @returns {ESTree.Expression}
  */
 export function unthunk(expression) {
-	// optimize `async () => await x()`, but not `async () => await x(await y)`
-	if (expression.async && expression.body.type === 'AwaitExpression') {
-		if (!has_await_expression(expression.body.argument)) {
-			return unthunk(arrow(expression.params, expression.body.argument));
-		}
-	}
-
 	if (
 		expression.async === false &&
 		expression.body.type === 'CallExpression' &&
@@ -637,7 +636,7 @@ export function import_all(as, source) {
 }
 
 /**
- * @param {Array<[string, string]>} parts
+ * @param {Array<[string, string] | [string, string, boolean]>} parts
  * @param {string} source
  * @returns {ESTree.ImportDeclaration}
  */
@@ -647,7 +646,7 @@ export function imports(parts, source) {
 		attributes: [],
 		source: literal(source),
 		specifiers: parts.map((p) => ({
-			type: 'ImportSpecifier',
+			type: p[2] ? 'ImportDefaultSpecifier' : 'ImportSpecifier',
 			imported: id(p[0]),
 			local: id(p[1])
 		}))
@@ -686,7 +685,8 @@ export {
 	if_builder as if,
 	this_instance as this,
 	null_instance as null,
-	debugger_builder as debugger
+	debugger_builder as debugger,
+	new_builder as new
 };
 
 /**

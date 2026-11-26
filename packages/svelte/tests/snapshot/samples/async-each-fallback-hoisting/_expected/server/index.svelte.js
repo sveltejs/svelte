@@ -2,7 +2,7 @@ import 'svelte/internal/flags/async';
 import * as $ from 'svelte/internal/server';
 
 export default function Async_each_fallback_hoisting($$renderer) {
-	$$renderer.async_block([], async ($$renderer) => {
+	$$renderer.child_block(async ($$renderer) => {
 		const each_array = $.ensure_array_like((await $.save(Promise.resolve([])))());
 
 		if (each_array.length !== 0) {
@@ -15,8 +15,7 @@ export default function Async_each_fallback_hoisting($$renderer) {
 				$$renderer.push(async () => $.escape(await Promise.reject('This should never be reached')));
 			}
 		} else {
-			$$renderer.push('<!--[!-->');
-			$$renderer.push(`<!---->`);
+			$$renderer.push(`<!--[!--><!---->`);
 			$$renderer.push(async () => $.escape(await Promise.resolve(4)));
 		}
 	});

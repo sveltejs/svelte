@@ -1,5 +1,6 @@
 ---
 title: {#await ...}
+tags: template-await
 ---
 
 ```svelte

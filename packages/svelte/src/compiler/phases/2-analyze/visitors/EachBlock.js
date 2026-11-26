@@ -54,7 +54,9 @@ export function EachBlock(node, context) {
 
 		// collect transitive dependencies...
 		for (const binding of node.metadata.expression.dependencies) {
-			collect_transitive_dependencies(binding, node.metadata.transitive_deps);
+			if (binding.declaration_kind !== 'function') {
+				collect_transitive_dependencies(binding, node.metadata.transitive_deps);
+			}
 		}
 
 		// ...and ensure they are marked as state, so they can be turned

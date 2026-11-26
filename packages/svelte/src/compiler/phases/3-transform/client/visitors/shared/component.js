@@ -1,7 +1,7 @@
 /** @import { BlockStatement, Expression, ExpressionStatement, Identifier, MemberExpression, Pattern, Property, SequenceExpression, SourceLocation, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../../types.js' */
-import { dev, is_ignored } from '../../../../../state.js';
+import { custom_renderer, dev, is_ignored } from '../../../../../state.js';
 import { get_attribute_chunks, object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { add_svelte_meta, build_bind_this, Memoizer, validate_binding } from '../shared/utils.js';
@@ -333,7 +333,7 @@ export function build_component(node, component_name, loc, context) {
 			// can be used as props without creating conflicts
 			context.visit(child, {
 				...context.state,
-				init: snippet_declarations
+				snippets: snippet_declarations
 			});
 
 			push_prop(b.prop('init', child.expression, child.expression));
@@ -391,13 +391,20 @@ export function build_component(node, component_name, loc, context) {
 						!node.attributes.some((attr) => attr.type === 'LetDirective')
 				)
 			) {
+				let children_fn = dev
+					? b.call('$.wrap_snippet', b.id(context.state.analysis.name), slot_fn)
+					: slot_fn;
+
+				if (custom_renderer !== undefined) {
+					children_fn = b.call(
+						'$.renderer_snippet',
+						custom_renderer ? b.id('$renderer') : b.literal(null),
+						children_fn
+					);
+				}
+
 				// create `children` prop...
-				push_prop(
-					b.init(
-						'children',
-						dev ? b.call('$.wrap_snippet', b.id(context.state.analysis.name), slot_fn) : slot_fn
-					)
-				);
+				push_prop(b.init('children', children_fn));
 
 				// and `$$slots.default: true` so that `<slot>` on the child works
 				serialized_slots.push(b.init(slot_name, b.true));
@@ -461,7 +468,7 @@ export function build_component(node, component_name, loc, context) {
 		memoizer.check_blockers(node.metadata.expression);
 	}
 
-	const statements = [...snippet_declarations, ...memoizer.deriveds(context.state.analysis.runes)];
+	let statements = [...snippet_declarations, ...memoizer.deriveds(context.state.analysis.runes)];
 
 	if (is_component_dynamic) {
 		const prev = fn;
@@ -488,10 +495,10 @@ export function build_component(node, component_name, loc, context) {
 	if (Object.keys(custom_css_props).length > 0) {
 		if (context.state.metadata.namespace === 'svg') {
 			// this boils down to <g><!></g>
-			context.state.template.push_element('g', node.start);
+			context.state.template.push_element('g', node.start, false);
 		} else {
 			// this boils down to <svelte-css-wrapper style='display: contents'><!></svelte-css-wrapper>
-			context.state.template.push_element('svelte-css-wrapper', node.start);
+			context.state.template.push_element('svelte-css-wrapper', node.start, false);
 			context.state.template.set_prop('style', 'display: contents');
 		}
 
@@ -500,7 +507,9 @@ export function build_component(node, component_name, loc, context) {
 
 		statements.push(
 			b.stmt(b.call('$.css_props', anchor, b.thunk(b.object(custom_css_props)))),
-			b.stmt(fn(b.member(anchor, 'lastChild'))),
+			b.stmt(
+				fn(custom_renderer ? b.call('$.get_last_child', anchor) : b.member(anchor, 'lastChild'))
+			),
 			b.stmt(b.call('$.reset', anchor))
 		);
 	} else {
@@ -515,15 +524,21 @@ export function build_component(node, component_name, loc, context) {
 	const blockers = memoizer.blockers();
 
 	if (async_values || blockers) {
-		return b.stmt(
-			b.call(
-				'$.async',
-				anchor,
-				blockers,
-				async_values,
-				b.arrow([b.id('$$anchor'), ...memoizer.async_ids()], b.block(statements))
+		statements = [
+			b.stmt(
+				b.call(
+					'$.async',
+					anchor,
+					blockers,
+					async_values,
+					b.arrow([b.id('$$anchor'), ...memoizer.async_ids()], b.block(statements))
+				)
 			)
-		);
+		];
+
+		if (context.state.is_standalone) {
+			statements.push(b.stmt(b.call('$.next')));
+		}
 	}
 
 	return statements.length > 1 ? b.block(statements) : statements[0];

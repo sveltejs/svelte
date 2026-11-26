@@ -1,9 +1,24 @@
 import fs from 'node:fs';
-import { it } from 'vitest';
+import { inject, it } from 'vitest';
+
+declare module 'vitest' {
+	export interface ProvidedContext {
+		/** Set for suites that are split up into several shards, see `vitest.config.js` */
+		shard?: {
+			index: number;
+			count: number;
+			/** Only run samples whose name starts with this prefix */
+			include?: string;
+			/** Don't run samples whose name starts with one of these prefixes (they have their own shard) */
+			exclude?: string[];
+		};
+	}
+}
 
 export interface BaseTest {
 	skip?: boolean;
 	solo?: boolean;
+	timeout?: number;
 }
 
 /**
@@ -30,7 +45,7 @@ export function suite<Test extends BaseTest>(fn: (config: Test, test_dir: string
 			await for_each_dir<Test>(cwd, samples_dir, (config, dir) => {
 				let it_fn = config.skip ? it.skip : config.solo ? it.only : it;
 
-				it_fn(dir, () => fn(config, `${cwd}/${samples_dir}/${dir}`));
+				it_fn(dir, { timeout: config.timeout }, () => fn(config, `${cwd}/${samples_dir}/${dir}`));
 			});
 		}
 	};
@@ -57,7 +72,7 @@ export function suite_with_variants<Test extends BaseTest, Variants extends stri
 					const solo = config.solo;
 					let it_fn = skip ? it.skip : solo ? it.only : it;
 
-					it_fn(`${dir} (${variant})`, async () => {
+					it_fn(`${dir} (${variant})`, { timeout: config.timeout }, async () => {
 						if (!called_common) {
 							called_common = true;
 							common = await common_setup(config, `${cwd}/${samples_dir}/${dir}`);
@@ -82,8 +97,19 @@ async function for_each_dir<Test extends BaseTest>(
 	cwd = cwd.replace(/\\/g, '/');
 	let created_test = false;
 
-	for (const dir of fs.readdirSync(`${cwd}/${samples_dir}`)) {
-		if (dir[0] === '.' || !filter.test(dir)) continue;
+	const shard = inject('shard');
+	const dirs = fs.readdirSync(`${cwd}/${samples_dir}`).filter((dir) => {
+		if (dir[0] === '.') return false;
+		if (shard?.include !== undefined) return dir.startsWith(shard.include);
+		return !shard?.exclude?.some((prefix) => dir.startsWith(prefix));
+	});
+
+	for (let i = 0; i < dirs.length; i += 1) {
+		const dir = dirs[i];
+
+		// distribute samples in chunks
+		if (shard && Math.floor((i * shard.count) / dirs.length) !== shard.index) continue;
+		if (!filter.test(dir)) continue;
 
 		if (fs.readdirSync(`${cwd}/${samples_dir}/${dir}`).every((file) => ignored.includes(file))) {
 			continue;

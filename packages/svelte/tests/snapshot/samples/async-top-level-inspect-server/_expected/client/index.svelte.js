@@ -1,0 +1,16 @@
+import 'svelte/internal/init-operations';
+import 'svelte/internal/disclose-version';
+import 'svelte/internal/flags/async';
+import * as $ from 'svelte/internal/client';
+
+var root = $.from_html(`<p> </p>`);
+
+export default function Async_top_level_inspect_server($$anchor) {
+	var data;
+	var $$promises = $.run([async () => data = await Promise.resolve(42), () => void 0]);
+	var p = root();
+	var text = $.only_child(p, true);
+
+	$.template_effect(() => $.set_text(text, data), void 0, void 0, [$$promises[1]]);
+	$.append($$anchor, p);
+}

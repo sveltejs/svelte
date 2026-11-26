@@ -14,3 +14,14 @@
 <button>Click me</button>
 <a href="/#">Link text</a>
 <a href="/#"><img src="./icon.svg" alt="Link text"></a>
+
+<select>
+	<!-- valid if button contains <selectedcontent> -->
+	<button>
+		<selectedcontent></selectedcontent>
+	</button>
+
+	<option>one</option>
+	<option>two</option>
+	<option>three</option>
+</select>

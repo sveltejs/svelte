@@ -15,6 +15,6 @@
 	{d}
 
 	{#snippet failed()}
-		<p>Error occured</p>
+		<p>Error occurred</p>
 	{/snippet}
 </svelte:boundary>

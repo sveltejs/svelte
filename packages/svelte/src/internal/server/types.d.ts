@@ -9,6 +9,8 @@ export interface SSRContext {
 	c: null | Map<unknown, unknown>;
 	/** renderer */
 	r: null | Renderer;
+	/** True if initialized, i.e. an `await` was reached */
+	i: boolean;
 	/** dev mode only: the current component function */
 	function?: any;
 	/** dev mode only: the current element */
@@ -32,14 +34,3 @@ export interface HydratableContext {
 export interface RenderContext {
 	hydratable: HydratableContext;
 }
-
-export interface SyncRenderOutput {
-	/** HTML that goes into the `<head>` */
-	head: string;
-	/** @deprecated use `body` instead */
-	html: string;
-	/** HTML that goes somewhere into the `<body>` */
-	body: string;
-}
-
-export type RenderOutput = SyncRenderOutput & PromiseLike<SyncRenderOutput>;

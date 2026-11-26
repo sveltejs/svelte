@@ -1,7 +1,6 @@
 /** @import { BlockStatement, Statement, Expression, VariableDeclaration } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import { dev } from '../../../../state.js';
 import * as b from '#compiler/builders';
 
 /**
@@ -40,6 +39,7 @@ export function SvelteBoundary(node, context) {
 	const hoisted = [];
 
 	let has_const = false;
+	let has_declaration = false;
 
 	// const tags need to live inside the boundary, but might also be referenced in hoisted snippets.
 	// to resolve this we cheat: we duplicate const tags inside snippets
@@ -55,6 +55,10 @@ export function SvelteBoundary(node, context) {
 				});
 			}
 		}
+
+		if (child.type === 'DeclarationTag') {
+			has_declaration = true;
+		}
 	}
 
 	for (const child of node.fragment.nodes) {
@@ -68,23 +72,27 @@ export function SvelteBoundary(node, context) {
 		if (child.type === 'SnippetBlock') {
 			if (
 				context.state.options.experimental.async &&
-				has_const &&
+				(has_const || has_declaration) &&
 				!['failed', 'pending'].includes(child.expression.name)
 			) {
-				// we can't hoist snippets as they may reference const tags, so we just keep them in the fragment
+				// we can't hoist snippets as they may reference const/declaration tags, so we just keep them in the fragment
 				nodes.push(child);
 			} else {
 				/** @type {Statement[]} */
 				const statements = [];
 
-				context.visit(child, { ...context.state, init: statements });
+				context.visit(child, { ...context.state, snippets: statements });
 
 				const snippet = /** @type {VariableDeclaration} */ (statements[0]);
 
-				const snippet_fn = dev
-					? // @ts-expect-error we know this shape is correct
-						snippet.declarations[0].init.arguments[1]
-					: snippet.declarations[0].init;
+				/** @type {any} */
+				let snippet_fn = snippet.declarations[0].init;
+
+				// unwrap `$.wrap_snippet(component, fn)` (dev) and `$.renderer_snippet(renderer, fn)`
+				// (custom renderers), which both take the snippet function as their last argument
+				while (snippet_fn.type === 'CallExpression') {
+					snippet_fn = snippet_fn.arguments.at(-1);
+				}
 
 				if (!context.state.options.experimental.async) {
 					snippet_fn.body.body.unshift(

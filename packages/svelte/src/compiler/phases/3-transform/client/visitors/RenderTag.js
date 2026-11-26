@@ -2,6 +2,7 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
 import { unwrap_optional } from '../../../../utils/ast.js';
+import { custom_renderer, source } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { add_svelte_meta, build_expression, Memoizer } from './shared/utils.js';
 
@@ -37,13 +38,24 @@ export function RenderTag(node, context) {
 	/** @type {Statement[]} */
 	const statements = memoizer.deriveds(context.state.analysis.runes);
 
-	let snippet_function = build_expression(
-		context,
-		/** @type {Expression} */ (call.callee),
-		node.metadata.expression
-	);
+	const callee = /** @type {Expression} */ (call.callee);
+
+	let snippet_function = build_expression(context, callee, node.metadata.expression);
+
+	const meta = {
+		snippetName: source.slice(
+			/** @type {number} */ (callee.start),
+			/** @type {number} */ (callee.end)
+		)
+	};
 
 	if (node.metadata.dynamic) {
+		// In custom renderer components, validate that the snippet is compatible
+		// with the current renderer before rendering it
+		if (custom_renderer) {
+			snippet_function = b.call('$.validate_snippet_renderer', snippet_function);
+		}
+
 		// If we have a chain expression then ensure a nullish snippet function gets turned into an empty one
 		if (node.expression.type === 'ChainExpression') {
 			snippet_function = b.logical('??', snippet_function, b.id('$.noop'));
@@ -53,10 +65,17 @@ export function RenderTag(node, context) {
 			add_svelte_meta(
 				b.call('$.snippet', context.state.node, b.thunk(snippet_function), ...args),
 				node,
-				'render'
+				'render',
+				meta
 			)
 		);
 	} else {
+		// In custom renderer components, validate that the snippet is compatible
+		// with the current renderer before rendering it
+		if (custom_renderer) {
+			snippet_function = b.call('$.validate_snippet_renderer', snippet_function);
+		}
+
 		statements.push(
 			add_svelte_meta(
 				(node.expression.type === 'CallExpression' ? b.call : b.maybe_call)(
@@ -65,7 +84,8 @@ export function RenderTag(node, context) {
 					...args
 				),
 				node,
-				'render'
+				'render',
+				meta
 			)
 		);
 	}
@@ -85,6 +105,10 @@ export function RenderTag(node, context) {
 				)
 			)
 		);
+
+		if (context.state.is_standalone) {
+			context.state.init.push(b.stmt(b.call('$.next')));
+		}
 	} else {
 		context.state.init.push(statements.length === 1 ? statements[0] : b.block(statements));
 	}

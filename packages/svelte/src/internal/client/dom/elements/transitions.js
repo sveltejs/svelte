@@ -5,7 +5,7 @@ import { active_effect, untrack } from '../../runtime.js';
 import { loop } from '../../loop.js';
 import { should_intro } from '../../render.js';
 import { TRANSITION_GLOBAL, TRANSITION_IN, TRANSITION_OUT } from '../../../../constants.js';
-import { BLOCK_EFFECT, EFFECT_RAN, EFFECT_TRANSPARENT } from '#client/constants';
+import { BLOCK_EFFECT, REACTION_RAN, EFFECT_TRANSPARENT } from '#client/constants';
 import { queue_micro_task } from '../task.js';
 import { without_reactive_context } from './bindings/shared.js';
 
@@ -115,10 +115,17 @@ export function animation(element, get_fn, get_params) {
 			) {
 				const options = get_fn()(this.element, { from, to }, get_params?.());
 
-				animation = animate(this.element, options, undefined, 1, () => {
-					animation?.abort();
-					animation = undefined;
-				});
+				animation = animate(
+					this.element,
+					options,
+					undefined,
+					1,
+					() => {},
+					() => {
+						animation?.abort();
+						animation = undefined;
+					}
+				);
 			}
 		},
 		fix() {
@@ -239,17 +246,24 @@ export function transition(flags, element, get_fn, get_params) {
 				intro?.abort();
 			}
 
-			dispatch_event(element, 'introstart');
+			intro = animate(
+				element,
+				get_options(),
+				outro,
+				1,
+				() => {
+					dispatch_event(element, 'introstart');
+				},
+				() => {
+					dispatch_event(element, 'introend');
 
-			intro = animate(element, get_options(), outro, 1, () => {
-				dispatch_event(element, 'introend');
+					// Ensure we cancel the animation to prevent leaking
+					intro?.abort();
+					intro = current_options = undefined;
 
-				// Ensure we cancel the animation to prevent leaking
-				intro?.abort();
-				intro = current_options = undefined;
-
-				element.style.overflow = overflow;
-			});
+					element.style.overflow = overflow;
+				}
+			);
 		},
 		out(fn) {
 			if (!is_outro) {
@@ -260,12 +274,19 @@ export function transition(flags, element, get_fn, get_params) {
 
 			element.inert = true;
 
-			dispatch_event(element, 'outrostart');
-
-			outro = animate(element, get_options(), intro, 0, () => {
-				dispatch_event(element, 'outroend');
-				fn?.();
-			});
+			outro = animate(
+				element,
+				get_options(),
+				intro,
+				0,
+				() => {
+					dispatch_event(element, 'outrostart');
+				},
+				() => {
+					dispatch_event(element, 'outroend');
+					fn?.();
+				}
+			);
 		},
 		stop: () => {
 			intro?.abort();
@@ -293,7 +314,7 @@ export function transition(flags, element, get_fn, get_params) {
 				}
 			}
 
-			run = !block || (block.f & EFFECT_RAN) !== 0;
+			run = !block || (block.f & REACTION_RAN) !== 0;
 		}
 
 		if (run) {
@@ -310,11 +331,13 @@ export function transition(flags, element, get_fn, get_params) {
  * @param {AnimationConfig | ((opts: { direction: 'in' | 'out' }) => AnimationConfig)} options
  * @param {Animation | undefined} counterpart The corresponding intro/outro to this outro/intro
  * @param {number} t2 The target `t` value — `1` for intro, `0` for outro
+ * @param {(() => void)} on_begin Called just before beginning the animation
  * @param {(() => void)} on_finish Called after successfully completing the animation
  * @returns {Animation}
  */
-function animate(element, options, counterpart, t2, on_finish) {
+function animate(element, options, counterpart, t2, on_begin, on_finish) {
 	var is_intro = t2 === 1;
+	var aborted = false;
 
 	if (is_function(options)) {
 		// In the case of a deferred transition (such as `crossfade`), `option` will be
@@ -322,12 +345,11 @@ function animate(element, options, counterpart, t2, on_finish) {
 		// once the DOM has been updated...
 		/** @type {Animation} */
 		var a;
-		var aborted = false;
 
 		queue_micro_task(() => {
 			if (aborted) return;
 			var o = options({ direction: is_intro ? 'in' : 'out' });
-			a = animate(element, o, counterpart, t2, on_finish);
+			a = animate(element, o, counterpart, t2, on_begin, on_finish);
 		});
 
 		// ...but we want to do so without using `async`/`await` everywhere, so
@@ -337,53 +359,29 @@ function animate(element, options, counterpart, t2, on_finish) {
 				aborted = true;
 				a?.abort();
 			},
-			deactivate: () => a.deactivate(),
-			reset: () => a.reset(),
-			t: () => a.t()
+			deactivate: () => a?.deactivate(),
+			reset: () => a?.reset(),
+			t: () => a?.t() ?? 1 - t2
 		};
 	}
 
 	counterpart?.deactivate();
 
-	if (!options?.duration) {
-		on_finish();
+	const { delay = 0, duration = 0, css, tick, easing = linear } = options ?? {};
 
-		return {
-			abort: noop,
-			deactivate: noop,
-			reset: noop,
-			t: () => t2
-		};
-	}
-
-	const { delay = 0, css, tick, easing = linear } = options;
-
-	var keyframes = [];
-
-	if (is_intro && counterpart === undefined) {
-		if (tick) {
-			tick(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
-		}
-
-		if (css) {
-			var styles = css_to_keyframe(css(0, 1));
-			keyframes.push(styles, styles);
-		}
-	}
+	/** @type {globalThis.Animation} */
+	var animation;
 
 	var get_t = () => 1 - t2;
 
-	// create a dummy animation that lasts as long as the delay (but with whatever devtools
-	// multiplier is in effect). in the common case that it is `0`, we keep it anyway so that
-	// the CSS keyframes aren't created until the DOM is updated
-	//
-	// fill forwards to prevent the element from rendering without styles applied
-	// see https://github.com/sveltejs/svelte/issues/14732
-	var animation = element.animate(keyframes, { duration: delay, fill: 'forwards' });
+	function finish() {
+		get_t = () => t2;
+		tick?.(t2, 1 - t2);
+		on_finish();
+	}
 
-	animation.onfinish = () => {
-		// remove dummy animation from the stack to prevent conflict with main animation
-		animation.cancel();
+	function start() {
+		on_begin();
 
 		// for bidirectional transitions, we start from the current position,
 		// rather than doing a full intro/outro
@@ -391,64 +389,109 @@ function animate(element, options, counterpart, t2, on_finish) {
 		counterpart?.abort();
 
 		var delta = t2 - t1;
-		var duration = /** @type {number} */ (options.duration) * Math.abs(delta);
+		var d = duration * Math.abs(delta);
+
+		if (d === 0) {
+			if (css && !is_intro) {
+				var keyframe = css_to_keyframe(css(t2, 1 - t2));
+				animation = element.animate([keyframe], { duration: 0, fill: 'forwards' });
+			}
+
+			finish();
+			return;
+		}
+
 		var keyframes = [];
 
-		if (duration > 0) {
-			/**
-			 * Whether or not the CSS includes `overflow: hidden`, in which case we need to
-			 * add it as an inline style to work around a Safari <18 bug
-			 * TODO 6.0 remove this, if possible
-			 */
-			var needs_overflow_hidden = false;
+		/**
+		 * Whether or not the CSS includes `overflow: hidden`, in which case we need to
+		 * add it as an inline style to work around a Safari <18 bug
+		 * TODO 6.0 remove this, if possible
+		 */
+		var needs_overflow_hidden = false;
 
-			if (css) {
-				var n = Math.ceil(duration / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
+		if (css) {
+			var n = Math.ceil(d / (1000 / 60)); // `n` must be an integer, or we risk missing the `t2` value
 
-				for (var i = 0; i <= n; i += 1) {
-					var t = t1 + delta * easing(i / n);
-					var styles = css_to_keyframe(css(t, 1 - t));
-					keyframes.push(styles);
+			for (var i = 0; i <= n; i += 1) {
+				var t = t1 + delta * easing(i / n);
+				var styles = css_to_keyframe(css(t, 1 - t));
+				keyframes.push(styles);
 
-					needs_overflow_hidden ||= styles.overflow === 'hidden';
-				}
-			}
-
-			if (needs_overflow_hidden) {
-				/** @type {HTMLElement} */ (element).style.overflow = 'hidden';
-			}
-
-			get_t = () => {
-				var time = /** @type {number} */ (
-					/** @type {globalThis.Animation} */ (animation).currentTime
-				);
-
-				return t1 + delta * easing(time / duration);
-			};
-
-			if (tick) {
-				loop(() => {
-					if (animation.playState !== 'running') return false;
-
-					var t = get_t();
-					tick(t, 1 - t);
-
-					return true;
-				});
+				needs_overflow_hidden ||= styles.overflow === 'hidden';
 			}
 		}
 
-		animation = element.animate(keyframes, { duration, fill: 'forwards' });
+		if (needs_overflow_hidden) {
+			/** @type {HTMLElement} */ (element).style.overflow = 'hidden';
+		}
 
-		animation.onfinish = () => {
-			get_t = () => t2;
-			tick?.(t2, 1 - t2);
-			on_finish();
+		get_t = () => {
+			var time = /** @type {number} */ (
+				/** @type {globalThis.Animation} */ (animation).currentTime
+			);
+
+			return t1 + delta * easing(time / d);
 		};
-	};
+
+		if (tick) {
+			loop(() => {
+				if (animation.playState !== 'running') return false;
+
+				var t = get_t();
+				tick(t, 1 - t);
+
+				return true;
+			});
+		}
+
+		animation = element.animate(keyframes, { duration: d, fill: 'forwards' });
+		animation.onfinish = finish;
+	}
+
+	if (!duration && !delay) {
+		start();
+	} else {
+		// wait a microtask before applying the initial styles and creating the dummy animation,
+		// so that transitions created in the same batch (e.g. on nested elements) all measure
+		// the DOM first (#18421). this still happens before the next paint, so the element
+		// won't be rendered without styles applied (#14732)
+		queue_micro_task(() => {
+			if (aborted) return;
+
+			var keyframes = [];
+
+			if (is_intro && counterpart === undefined) {
+				if (tick) {
+					tick(0, 1); // TODO put in nested effect, to avoid interleaved reads/writes?
+				}
+
+				if (css) {
+					var styles = css_to_keyframe(css(0, 1));
+					keyframes.push(styles, styles);
+				}
+			}
+
+			// create a dummy animation that lasts as long as the delay (but with whatever devtools
+			// multiplier is in effect). in the common case that it is `0`, we keep it anyway so that
+			// the CSS keyframes aren't created until the DOM is updated
+			//
+			// fill forwards to prevent the element from rendering without styles applied
+			// see https://github.com/sveltejs/svelte/issues/14732
+			animation = element.animate(keyframes, { duration: delay, fill: 'forwards' });
+
+			animation.onfinish = () => {
+				// remove dummy animation from the stack to prevent conflict with main animation
+				animation.cancel();
+				start();
+			};
+		});
+	}
 
 	return {
 		abort: () => {
+			aborted = true;
+
 			if (animation) {
 				animation.cancel();
 				// This prevents memory leaks in Chromium

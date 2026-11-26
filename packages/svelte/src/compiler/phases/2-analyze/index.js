@@ -2,6 +2,7 @@
 /** @import { Binding, AST, ValidatedCompileOptions, ValidatedModuleCompileOptions } from '#compiler' */
 /** @import { AnalysisState, Visitors } from './types' */
 /** @import { Analysis, ComponentAnalysis, Js, ReactiveStatement, Template } from '../types' */
+/** @import { Scope } from '../scope.js' */
 import { walk } from 'zimmerframe';
 import { parse } from '../1-parse/acorn.js';
 import * as e from '../../errors.js';
@@ -13,15 +14,15 @@ import {
 	unwrap_pattern
 } from '../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
-import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
+import { ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
+import check_graph_for_cycles from '../../utils/check_graph_for_cycles.js';
 import { create_attribute, is_custom_element_node } from '../nodes.js';
 import { analyze_css } from './css/css-analyze.js';
 import { prune } from './css/css-prune.js';
 import { hash, is_rune } from '../../../utils.js';
 import { warn_unused } from './css/css-warn.js';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
-import { ignore_map, ignore_stack, pop_ignore, push_ignore } from '../../state.js';
+import { ignore_map, get_ignore_snapshot, pop_ignore, push_ignore } from '../../state.js';
 import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
 import { AnimateDirective } from './visitors/AnimateDirective.js';
@@ -36,6 +37,7 @@ import { ClassDeclaration } from './visitors/ClassDeclaration.js';
 import { ClassDirective } from './visitors/ClassDirective.js';
 import { Component } from './visitors/Component.js';
 import { ConstTag } from './visitors/ConstTag.js';
+import { DeclarationTag } from './visitors/DeclarationTag.js';
 import { DebugTag } from './visitors/DebugTag.js';
 import { EachBlock } from './visitors/EachBlock.js';
 import { ExportDefaultDeclaration } from './visitors/ExportDefaultDeclaration.js';
@@ -134,7 +136,7 @@ const visitors = {
 			push_ignore(ignores);
 		}
 
-		ignore_map.set(node, structuredClone(ignore_stack));
+		ignore_map.set(node, get_ignore_snapshot());
 
 		const scope = state.scopes.get(node);
 		next(scope !== undefined && scope !== state.scope ? { ...state, scope } : state);
@@ -157,6 +159,7 @@ const visitors = {
 	ClassDirective,
 	Component,
 	ConstTag,
+	DeclarationTag,
 	DebugTag,
 	EachBlock,
 	ExportDefaultDeclaration,
@@ -283,7 +286,7 @@ export function analyze_module(source, options) {
 		runes: true,
 		immutable: true,
 		tracing: false,
-		async_deriveds: new Set(),
+		async_deriveds: new Map(),
 		comments,
 		classes: new Map(),
 		pickled_awaits: new Set()
@@ -312,6 +315,7 @@ export function analyze_module(source, options) {
 			options: /** @type {ValidatedCompileOptions} */ (options),
 			fragment: null,
 			parent_element: null,
+			in_declaration_tag: false,
 			reactive_statement: null,
 			derived_function_depth: -1
 		},
@@ -345,6 +349,8 @@ export function analyze_component(root, source, options) {
 
 	let synthetic_stores_legacy_check = [];
 
+	const runes_option = options.runes?.({ filename: options.filename });
+
 	// create synthetic bindings for store subscriptions
 	for (const [name, references] of module.scope.references) {
 		if (name[0] !== '$' || RESERVED.includes(name)) continue;
@@ -359,7 +365,7 @@ export function analyze_component(root, source, options) {
 		// If we're not in legacy mode through the compiler option, assume the user
 		// is referencing a rune and not a global store.
 		if (
-			options.runes === false ||
+			runes_option === false ||
 			!is_rune(name) ||
 			(declaration !== null &&
 				// const state = $state(0) is valid
@@ -395,7 +401,7 @@ export function analyze_component(root, source, options) {
 				e.store_invalid_scoped_subscription(is_nested_store_subscription_node);
 			}
 
-			if (options.runes !== false) {
+			if (runes_option !== false) {
 				if (declaration === null && /[a-z]/.test(store_name[0])) {
 					e.global_reference_invalid(references[0].node, name);
 				} else if (declaration !== null && is_rune(name)) {
@@ -447,7 +453,7 @@ export function analyze_component(root, source, options) {
 	const component_name = get_component_name(options.filename);
 
 	const runes =
-		options.runes ??
+		runes_option ??
 		(has_await || instance.has_await || Array.from(module.scope.references.keys()).some(is_rune));
 
 	if (!runes) {
@@ -463,15 +469,38 @@ export function analyze_component(root, source, options) {
 		}
 	}
 
-	const is_custom_element = !!options.customElementOptions || options.customElement;
+	const custom_element_from_option = options.customElement({ filename: options.filename });
+	const css = options.css({ filename: options.filename });
+	const custom_renderer = options.experimental.customRenderer({ filename: options.filename });
 
-	const name = module.scope.generate(options.name ?? component_name);
+	// Injected styles are added to the document, which doesn't apply to components that use a
+	// custom renderer (an actual renderer module, i.e. a string — `null` means the DOM): they are
+	// never server-rendered and their nodes aren't in the document. An inherited `css: 'injected'`
+	// (from the compiler options, which tools like vite-plugin-svelte set) is therefore ignored and
+	// the CSS is returned as with `css: 'external'`; only an explicit `<svelte:options css="injected" />`
+	// in such a component is an error
+	const has_custom_renderer = typeof custom_renderer === 'string';
+
+	if (has_custom_renderer) {
+		const css_attribute = root.options?.attributes.find((attribute) => attribute.name === 'css');
+
+		if (css_attribute) {
+			e.incompatible_with_custom_renderer(css_attribute, "`css: 'injected'`");
+		}
+	}
+
+	const custom_element = options.customElementOptions ?? custom_element_from_option;
+	const is_custom_element = !!options.customElementOptions || custom_element_from_option;
+
+	// `$`-prefixed names are reserved for internal bindings like `$`, `$$props` and `$$css`
+	const name = module.scope.generate((options.name ?? component_name).replace(/^\$/, '_$'));
 
 	state.adjust({
 		component_name: name,
 		dev: options.dev,
 		rootDir: options.rootDir,
-		runes
+		runes,
+		custom_renderer: custom_renderer
 	});
 
 	// TODO remove all the ?? stuff, we don't need it now that we're validating the config
@@ -491,7 +520,7 @@ export function analyze_component(root, source, options) {
 		maybe_runes:
 			!runes &&
 			// if they explicitly disabled runes, use the legacy behavior
-			options.runes !== false &&
+			runes_option !== false &&
 			![...module.scope.references.keys()].some((name) =>
 				['$$props', '$$restProps'].includes(name)
 			) &&
@@ -523,8 +552,8 @@ export function analyze_component(root, source, options) {
 		needs_props: false,
 		event_directive_node: null,
 		uses_event_attributes: false,
-		custom_element: is_custom_element,
-		inject_styles: options.css === 'injected' || is_custom_element,
+		custom_element,
+		inject_styles: (css === 'injected' && !has_custom_renderer) || is_custom_element,
 		accessors:
 			is_custom_element ||
 			(runes ? false : !!options.accessors) ||
@@ -549,7 +578,7 @@ export function analyze_component(root, source, options) {
 		source,
 		snippet_renderers: new Map(),
 		snippets: new Set(),
-		async_deriveds: new Set(),
+		async_deriveds: new Map(),
 		pickled_awaits: new Set(),
 		instance_body: {
 			sync: [],
@@ -657,7 +686,8 @@ export function analyze_component(root, source, options) {
 									if (
 										binding &&
 										binding.kind === 'normal' &&
-										binding.declaration_kind !== 'import'
+										binding.declaration_kind !== 'import' &&
+										binding.declaration_kind !== 'function'
 									) {
 										binding.kind = 'state';
 										binding.mutated = true;
@@ -679,7 +709,7 @@ export function analyze_component(root, source, options) {
 				w.options_deprecated_accessors(attribute);
 			}
 
-			if (attribute.name === 'customElement' && !options.customElement) {
+			if (attribute.name === 'customElement' && !custom_element_from_option) {
 				w.options_missing_custom_element(attribute);
 			}
 
@@ -689,7 +719,7 @@ export function analyze_component(root, source, options) {
 		}
 	}
 
-	calculate_blockers(instance, scopes, analysis);
+	calculate_blockers(instance, analysis);
 
 	if (analysis.runes) {
 		const props_refs = module.scope.references.get('$$props');
@@ -712,6 +742,7 @@ export function analyze_component(root, source, options) {
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
 				fragment: ast === template.ast ? ast : null,
 				parent_element: null,
+				in_declaration_tag: false,
 				has_props_rune: false,
 				component_slots: new Set(),
 				expression: null,
@@ -779,6 +810,7 @@ export function analyze_component(root, source, options) {
 				options,
 				fragment: ast === template.ast ? ast : null,
 				parent_element: null,
+				in_declaration_tag: false,
 				has_props_rune: false,
 				ast_type: ast === instance.ast ? 'instance' : ast === template.ast ? 'template' : 'module',
 				reactive_statement: null,
@@ -821,6 +853,11 @@ export function analyze_component(root, source, options) {
 					} else {
 						e.export_undefined(specifier, name);
 					}
+				} else if (binding.initial?.type === 'SnippetBlock') {
+					// If a snippet is exported, a consumer could only import this named export and not the default export (the component).
+					// In this case we need to set hasGlobal of our output to true so that e.g. vite-plugin-svelte does not tell Vite to
+					// tree-shake the CSS if the default export is not used.
+					analysis.css.has_global = true;
 				}
 			}
 		}
@@ -855,9 +892,7 @@ export function analyze_component(root, source, options) {
 		analyze_css(analysis.css.ast, analysis);
 
 		// mark nodes as scoped/unused/empty etc
-		for (const node of analysis.elements) {
-			prune(analysis.css.ast, node);
-		}
+		prune(analysis.css.ast, analysis.elements);
 
 		const { comment } = analysis.css.ast.content;
 		const should_ignore_unused =
@@ -939,18 +974,17 @@ export function analyze_component(root, source, options) {
  * top level statements. This includes indirect blockers such as functions referencing async top level statements.
  *
  * @param {Js} instance
- * @param {Map<AST.SvelteNode, Scope>} scopes
  * @param {ComponentAnalysis} analysis
  * @returns {void}
  */
-function calculate_blockers(instance, scopes, analysis) {
+function calculate_blockers(instance, analysis) {
 	/**
 	 * @param {ESTree.Node} expression
 	 * @param {Scope} scope
 	 * @param {Set<Binding>} touched
 	 * @param {Set<ESTree.Node>} seen
 	 */
-	const touch = (expression, scope, touched, seen = new Set()) => {
+	const touch = (expression, scope, touched, seen) => {
 		if (seen.has(expression)) return;
 		seen.add(expression);
 
@@ -958,6 +992,14 @@ function calculate_blockers(instance, scopes, analysis) {
 			expression,
 			{ scope },
 			{
+				_(node, context) {
+					const scope = instance.scopes.get(node);
+					if (scope) {
+						context.next({ scope });
+					} else {
+						context.next();
+					}
+				},
 				ImportDeclaration(node) {},
 				Identifier(node, context) {
 					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
@@ -978,14 +1020,11 @@ function calculate_blockers(instance, scopes, analysis) {
 
 	/**
 	 * @param {ESTree.Node} node
-	 * @param {Set<ESTree.Node>} seen
 	 * @param {Set<Binding>} reads
 	 * @param {Set<Binding>} writes
+	 * @param {Scope} scope
 	 */
-	const trace_references = (node, reads, writes, seen = new Set()) => {
-		if (seen.has(node)) return;
-		seen.add(node);
-
+	const trace_references = (node, reads, writes, scope) => {
 		/**
 		 * @param {ESTree.Pattern} node
 		 * @param {Scope} scope
@@ -1002,12 +1041,19 @@ function calculate_blockers(instance, scopes, analysis) {
 			}
 		}
 
+		// Share seen nodes across calls so transitive assignments are only visited once.
+		// Keep separate read/write state because the target sets can differ.
+		/** @type {Set<ESTree.Node>} */
+		const writes_seen = new Set();
+		/** @type {Set<ESTree.Node>} */
+		const reads_seen = new Set();
+
 		walk(
 			node,
-			{ scope: instance.scope },
+			{ scope },
 			{
 				_(node, context) {
-					const scope = scopes.get(node);
+					const scope = instance.scopes.get(node);
 					if (scope) {
 						context.next({ scope });
 					} else {
@@ -1031,18 +1077,8 @@ function calculate_blockers(instance, scopes, analysis) {
 					const rune = get_rune(node, context.state.scope);
 					if (rune === '$effect') return;
 
-					/** @type {Set<Binding>} */
-					const touched = new Set();
-					touch(node, context.state.scope, touched);
-
-					for (const b of touched) {
-						writes.add(b);
-					}
+					touch(node, context.state.scope, writes, writes_seen);
 				},
-				// don't look inside functions until they are called
-				ArrowFunctionExpression(_, context) {},
-				FunctionDeclaration(_, context) {},
-				FunctionExpression(_, context) {},
 				Identifier(node, context) {
 					const parent = /** @type {ESTree.Node} */ (context.path.at(-1));
 					if (is_reference(node, parent)) {
@@ -1051,12 +1087,27 @@ function calculate_blockers(instance, scopes, analysis) {
 							reads.add(binding);
 						}
 					}
-				}
+				},
+				ReturnStatement(node, context) {
+					// We have to assume that anything returned from a function, even if it's a function itself,
+					// might be called immediately, so we have to touch all references within it. Example:
+					// function foo() { return () => blocker; } foo(); // blocker is touched
+					if (node.argument) {
+						touch(node.argument, context.state.scope, reads, reads_seen);
+					}
+				},
+				// don't look inside functions until they are called
+				ArrowFunctionExpression(_, context) {},
+				FunctionDeclaration(_, context) {},
+				FunctionExpression(_, context) {}
 			}
 		);
 	};
 
 	let awaited = false;
+
+	/** @type {Array<ESTree.Statement | ESTree.VariableDeclarator>} */
+	let sync_group = [];
 
 	// TODO this should probably be attached to the scope?
 	const promises = b.id('$$promises');
@@ -1070,6 +1121,13 @@ function calculate_blockers(instance, scopes, analysis) {
 
 		const binding = /** @type {Binding} */ (instance.scope.get(id.name));
 		binding.blocker = blocker;
+	}
+
+	function flush_sync_group() {
+		if (sync_group.length === 0) return;
+
+		analysis.instance_body.async.push({ nodes: sync_group, has_await: false });
+		sync_group = [];
 	}
 
 	/**
@@ -1131,7 +1189,10 @@ function calculate_blockers(instance, scopes, analysis) {
 					/** @type {Set<Binding>} */
 					const writes = new Set();
 
-					trace_references(declarator, reads, writes);
+					trace_references(declarator, reads, writes, instance.scope);
+
+					// Needs to happen before blocker computation
+					if (has_await) flush_sync_group();
 
 					const blocker = /** @type {NonNullable<Binding['blocker']>} */ (
 						b.member(promises, b.literal(analysis.instance_body.async.length), true)
@@ -1145,11 +1206,12 @@ function calculate_blockers(instance, scopes, analysis) {
 						push_declaration(id, blocker);
 					}
 
-					// one declarator per declaration, makes things simpler
-					analysis.instance_body.async.push({
-						node: declarator,
-						has_await
-					});
+					if (has_await) {
+						// one declarator per declaration, makes things simpler
+						analysis.instance_body.async.push({ nodes: [declarator], has_await: true });
+					} else {
+						sync_group.push(declarator);
+					}
 				}
 			}
 		} else if (awaited) {
@@ -1159,7 +1221,10 @@ function calculate_blockers(instance, scopes, analysis) {
 			/** @type {Set<Binding>} */
 			const writes = new Set();
 
-			trace_references(node, reads, writes);
+			trace_references(node, reads, writes, instance.scope);
+
+			// Needs to happen before blocker computation
+			if (has_await) flush_sync_group();
 
 			const blocker = /** @type {NonNullable<Binding['blocker']>} */ (
 				b.member(promises, b.literal(analysis.instance_body.async.length), true)
@@ -1171,24 +1236,58 @@ function calculate_blockers(instance, scopes, analysis) {
 
 			if (node.type === 'ClassDeclaration') {
 				push_declaration(node.id, blocker);
-				analysis.instance_body.async.push({ node, has_await });
+			}
+
+			if (has_await) {
+				analysis.instance_body.async.push({ nodes: [node], has_await: true });
 			} else {
-				analysis.instance_body.async.push({ node, has_await });
+				sync_group.push(node);
 			}
 		} else {
 			analysis.instance_body.sync.push(node);
 		}
 	}
 
+	// With no top-level await, no binding can have a blocker and function tracing
+	// cannot affect the output.
+	if (!awaited) return;
+
+	flush_sync_group();
+
+	// a store subscription must wait on whatever blocks the store itself; this must happen
+	// before function tracing so that functions reading `$store` inherit the blocker
+	for (const [name, binding] of instance.scope.declarations) {
+		if (binding.kind !== 'store_sub') continue;
+
+		const store_blocker = instance.scope.get(name.slice(1))?.blocker;
+		if (!store_blocker) continue;
+
+		if (
+			!binding.blocker ||
+			/** @type {ESTree.SimpleLiteral & { value: number }} */ (binding.blocker.property).value <
+				/** @type {ESTree.SimpleLiteral & { value: number }} */ (store_blocker.property).value
+		) {
+			binding.blocker = store_blocker;
+		}
+	}
+
 	for (const fn of functions) {
 		/** @type {Set<Binding>} */
 		const reads_writes = new Set();
-		const body =
+		const init =
 			fn.type === 'VariableDeclarator'
-				? /** @type {ESTree.FunctionExpression | ESTree.ArrowFunctionExpression} */ (fn.init).body
-				: fn.body;
+				? /** @type {ESTree.FunctionExpression | ESTree.ArrowFunctionExpression} */ (fn.init)
+				: fn;
 
-		trace_references(body, reads_writes, reads_writes);
+		const fn_scope = /** @type {Scope} */ (instance.scopes.get(init));
+
+		if (init.body.type === 'BlockStatement') {
+			trace_references(init.body, reads_writes, reads_writes, fn_scope);
+		} else {
+			// A concise arrow body is an implicit return, so treat it like the
+			// `ReturnStatement` visitor in `trace_references` would.
+			touch(init.body, fn_scope, reads_writes, new Set());
+		}
 
 		const max = [...reads_writes].reduce((max, binding) => {
 			if (binding.blocker) {
@@ -1262,7 +1361,8 @@ function order_reactive_statements(unsorted_reactive_declarations) {
 	 * @returns
 	 */
 	const add_declaration = (node, declaration) => {
-		if ([...reactive_declarations.values()].includes(declaration)) return;
+		// Visited set: each ReactiveStatement is stored under exactly one LabeledStatement node
+		if (reactive_declarations.has(node)) return;
 
 		for (const binding of declaration.dependencies) {
 			if (declaration.assignments.has(binding)) continue;

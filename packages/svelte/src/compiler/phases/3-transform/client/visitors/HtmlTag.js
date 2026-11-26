@@ -1,7 +1,8 @@
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import { is_ignored } from '../../../../state.js';
+import { dev, is_ignored, locator } from '../../../../state.js';
 import * as b from '#compiler/builders';
+import { async_thunk } from '../utils.js';
 import { build_expression } from './shared/utils.js';
 
 /**
@@ -9,37 +10,56 @@ import { build_expression } from './shared/utils.js';
  * @param {ComponentContext} context
  */
 export function HtmlTag(node, context) {
-	context.state.template.push_comment();
+	const is_controlled = node.metadata.is_controlled;
 
-	const is_async = node.metadata.expression.is_async();
+	if (!is_controlled) {
+		context.state.template.push_comment();
+	}
+
+	const has_await = node.metadata.expression.has_await;
+	const has_blockers = node.metadata.expression.has_blockers();
 
 	const expression = build_expression(context, node.expression, node.metadata.expression);
-	const html = is_async ? b.call('$.get', b.id('$$html')) : expression;
+	const html = has_await ? b.call('$.get', b.id('$$html')) : expression;
 
-	const is_svg = context.state.metadata.namespace === 'svg';
-	const is_mathml = context.state.metadata.namespace === 'mathml';
+	// When is_controlled, the parent node already provides the correct namespace,
+	// so is_svg/is_mathml are only needed for the non-controlled path's wrapper element
+	const is_svg = !is_controlled && context.state.metadata.namespace === 'svg';
+	const is_mathml = !is_controlled && context.state.metadata.namespace === 'mathml';
+
+	const location = dev && locator(node.start);
 
 	const statement = b.stmt(
 		b.call(
 			'$.html',
 			context.state.node,
 			b.thunk(html),
+			is_controlled && b.true,
 			is_svg && b.true,
 			is_mathml && b.true,
-			is_ignored(node, 'hydration_html_changed') && b.true
+			is_ignored(node, 'hydration_html_changed') && b.true,
+			location &&
+				b.array([
+					b.member(b.id(context.state.analysis.name), '$.FILENAME', true),
+					b.literal(location.line),
+					b.literal(location.column)
+				])
 		)
 	);
 
 	// push into init, so that bindings run afterwards, which might trigger another run and override hydration
-	if (is_async) {
+	if (has_await || has_blockers) {
 		context.state.init.push(
 			b.stmt(
 				b.call(
 					'$.async',
 					context.state.node,
 					node.metadata.expression.blockers(),
-					b.array([b.thunk(expression, node.metadata.expression.has_await)]),
-					b.arrow([context.state.node, b.id('$$html')], b.block([statement]))
+					has_await ? b.array([async_thunk(expression, node.metadata.expression)]) : b.void0,
+					b.arrow(
+						has_await ? [context.state.node, b.id('$$html')] : [context.state.node],
+						b.block([statement])
+					)
 				)
 			)
 		);

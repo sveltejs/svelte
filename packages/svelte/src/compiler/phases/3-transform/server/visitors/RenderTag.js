@@ -3,7 +3,7 @@
 /** @import { ComponentContext } from '../types.js' */
 import { unwrap_optional } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { create_async_block, empty_comment, PromiseOptimiser } from './shared/utils.js';
+import { empty_comment, PromiseOptimiser } from './shared/utils.js';
 
 /**
  * @param {AST.RenderTag} node
@@ -35,17 +35,11 @@ export function RenderTag(node, context) {
 		)
 	);
 
-	if (optimiser.is_async()) {
-		statement = create_async_block(
-			b.block([optimiser.apply(), statement]),
-			optimiser.blockers(),
-			optimiser.has_await
-		);
-	}
+	context.state.template.push(...optimiser.render_block([statement]));
 
-	context.state.template.push(statement);
-
-	if (!context.state.skip_hydration_boundaries) {
+	// If the render tag is wrapped in $.async, that $.async call already contains surrounding markers,
+	// so we don't need to (or rather must not, to avoid hydration mismatches) add our own.
+	if (!optimiser.is_async() && !context.state.is_standalone) {
 		context.state.template.push(empty_comment);
 	}
 }

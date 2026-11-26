@@ -1,30 +1,33 @@
 /** @import { ComponentContext, Effect, EffectNodes, TemplateNode } from '#client' */
 /** @import { Component, ComponentType, SvelteComponent, MountOptions } from '../../index.js' */
+/** @import { Renderer } from './custom-renderer/types.js' */
 import { DEV } from 'esm-env';
 import {
 	clear_text_content,
-	create_text,
+	create_anchor,
 	get_first_child,
 	get_next_sibling,
-	init_operations
+	append_child,
+	get_parent_node,
+	remove_child,
+	set_node_value,
+	get_node_value,
+	node_type
 } from './dom/operations.js';
 import { HYDRATION_END, HYDRATION_ERROR, HYDRATION_START } from '../../constants.js';
 import { active_effect } from './runtime.js';
-import { push, pop, component_context } from './context.js';
+import { push, pop, component_context, mark_as_component } from './context.js';
 import { component_root } from './reactivity/effects.js';
 import { hydrate_node, hydrating, set_hydrate_node, set_hydrating } from './dom/hydration.js';
-import { array_from } from '../shared/utils.js';
-import {
-	all_registered_events,
-	handle_event_propagation,
-	root_event_handles
-} from './dom/elements/events.js';
+import { listen_to_delegated_events } from './dom/elements/events.js';
 import * as w from './warnings.js';
 import * as e from './errors.js';
 import { assign_nodes } from './dom/template.js';
-import { is_passive_event } from '../../utils.js';
-import { COMMENT_NODE, STATE_SYMBOL } from './constants.js';
+import { COMMENT_NODE, TEXT_CACHE } from './constants.js';
 import { boundary } from './dom/blocks/boundary.js';
+import { push_renderer, pop_renderer } from './custom-renderer/state.js';
+import { async_mode_flag, custom_renderers_flag } from '../flags/index.js';
+import { current_batch } from './reactivity/batch.js';
 
 /**
  * This is normally true — block effects should run their intro transitions —
@@ -45,12 +48,11 @@ export function set_should_intro(value) {
  */
 export function set_text(text, value) {
 	// For objects, we apply string coercion (which might make things like $state array references in the template reactive) before diffing
-	var str = value == null ? '' : typeof value === 'object' ? value + '' : value;
-	// @ts-expect-error
-	if (str !== (text.__t ??= text.nodeValue)) {
-		// @ts-expect-error
-		text.__t = str;
-		text.nodeValue = str + '';
+	var str = value == null ? '' : typeof value === 'object' ? `${value}` : value;
+	// prettier-ignore
+	if (str !== (/** @type {any} */ (text)[TEXT_CACHE] ??= get_node_value(text))) {
+		/** @type {any} */ (text)[TEXT_CACHE] = str;
+		set_node_value(text, `${str}`);
 	}
 }
 
@@ -60,8 +62,9 @@ export function set_text(text, value) {
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
+ * @template [Renderer=undefined]
  * @param {ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>} component
- * @param {MountOptions<Props>} options
+ * @param {MountOptions<Props, Renderer>} options
  * @returns {Exports}
  */
 export function mount(component, options) {
@@ -73,6 +76,7 @@ export function mount(component, options) {
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any>} Exports
+ * @template [Renderer=undefined]
  * @param {ComponentType<SvelteComponent<Props>> | Component<Props, Exports, any>} component
  * @param {{} extends Props ? {
  * 		target: Document | Element | ShadowRoot;
@@ -81,6 +85,7 @@ export function mount(component, options) {
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: boolean;
+ *		transformError?: (error: unknown) => unknown;
  * 	} : {
  * 		target: Document | Element | ShadowRoot;
  * 		props: Props;
@@ -88,11 +93,13 @@ export function mount(component, options) {
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		recover?: boolean;
+ *		transformError?: (error: unknown) => unknown;
  * 	}} options
  * @returns {Exports}
  */
+// `Renderer` is unused, but the type parameters need to match `mount`'s,
+// otherwise a `hydrate | mount` union isn't callable
 export function hydrate(component, options) {
-	init_operations();
 	options.intro = options.intro ?? false;
 	const target = options.target;
 	const was_hydrating = hydrating;
@@ -103,7 +110,7 @@ export function hydrate(component, options) {
 
 		while (
 			anchor &&
-			(anchor.nodeType !== COMMENT_NODE || /** @type {Comment} */ (anchor).data !== HYDRATION_START)
+			(node_type(anchor) !== COMMENT_NODE || get_node_value(anchor) !== HYDRATION_START)
 		) {
 			anchor = get_next_sibling(anchor);
 		}
@@ -116,6 +123,15 @@ export function hydrate(component, options) {
 		set_hydrate_node(/** @type {Comment} */ (anchor));
 
 		const instance = _mount(component, { ...options, anchor });
+
+		// The server rendered the hydrated DOM with the state that hydration ran with (set before `hydrate()`,
+		// or while hydrating, e.g. by lazily initialized state), so that state is the real world from now on.
+		// This is what happens when mounting, too, where the batch commits right away because the root boundary
+		// is pending. Otherwise, while the hydration batch waits for async work, other batches' views would undo
+		// those writes — e.g. that of a pending boundary's content, which renders in a batch of its own
+		if (async_mode_flag && current_batch !== null) {
+			current_batch.commit_writes();
+		}
 
 		set_hydrating(false);
 
@@ -137,8 +153,6 @@ export function hydrate(component, options) {
 			e.hydration_failed();
 		}
 
-		// If an error occurred above, the operations might not yet have been initialised.
-		init_operations();
 		clear_text_content(target);
 
 		set_hydrating(false);
@@ -149,58 +163,43 @@ export function hydrate(component, options) {
 	}
 }
 
-/** @type {Map<string, number>} */
-const document_listeners = new Map();
+/**
+ * @template {Record<string, any>} Exports
+ * @param {ComponentType<SvelteComponent<any>> | Component<any>} Component
+ * @param {MountOptions<any, any> & { renderer?: Renderer }} options
+ * @returns {Exports}
+ */
+function _mount(Component, options) {
+	if (custom_renderers_flag && options.renderer) {
+		var previous_renderer = push_renderer(options.renderer);
+
+		try {
+			return _mount_inner(Component, options);
+		} finally {
+			pop_renderer(previous_renderer);
+		}
+	}
+
+	return _mount_inner(Component, options);
+}
 
 /**
  * @template {Record<string, any>} Exports
  * @param {ComponentType<SvelteComponent<any>> | Component<any>} Component
- * @param {MountOptions} options
+ * @param {MountOptions<any, any> & { renderer?: Renderer }} options
  * @returns {Exports}
  */
-function _mount(Component, { target, anchor, props = {}, events, context, intro = true }) {
-	init_operations();
-
-	/** @type {Set<string>} */
-	var registered_events = new Set();
-
-	/** @param {Array<string>} events */
-	var event_handle = (events) => {
-		for (var i = 0; i < events.length; i++) {
-			var event_name = events[i];
-
-			if (registered_events.has(event_name)) continue;
-			registered_events.add(event_name);
-
-			var passive = is_passive_event(event_name);
-
-			// Add the event listener to both the container and the document.
-			// The container listener ensures we catch events from within in case
-			// the outer content stops propagation of the event.
-			target.addEventListener(event_name, handle_event_propagation, { passive });
-
-			var n = document_listeners.get(event_name);
-
-			if (n === undefined) {
-				// The document listener ensures we catch events that originate from elements that were
-				// manually moved outside of the container (e.g. via manual portals).
-				document.addEventListener(event_name, handle_event_propagation, { passive });
-				document_listeners.set(event_name, 1);
-			} else {
-				document_listeners.set(event_name, n + 1);
-			}
-		}
-	};
-
-	event_handle(array_from(all_registered_events));
-	root_event_handles.add(event_handle);
-
+function _mount_inner(
+	Component,
+	{ target, anchor, props = {}, events, context, intro = true, transformError, renderer }
+) {
 	/** @type {Exports} */
 	// @ts-expect-error will be defined because the render effect runs synchronously
 	var component = undefined;
 
 	var unmount = component_root(() => {
-		var anchor_node = anchor ?? target.appendChild(create_text());
+		var anchor_node =
+			anchor ?? /** @type {Text} */ (append_child(/** @type {Node} */ (target), create_anchor()));
 
 		boundary(
 			/** @type {TemplateNode} */ (anchor_node),
@@ -208,11 +207,9 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 				pending: () => {}
 			},
 			(anchor_node) => {
-				if (context) {
-					push({});
-					var ctx = /** @type {ComponentContext} */ (component_context);
-					ctx.c = context;
-				}
+				push({});
+				var ctx = /** @type {ComponentContext} */ (component_context);
+				if (context) ctx.c = context;
 
 				if (events) {
 					// We can't spread the object or else we'd lose the state proxy stuff, if it is one
@@ -225,7 +222,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 
 				should_intro = intro;
 				// @ts-expect-error the public typings are not what the actual function looks like
-				component = Component(anchor_node, props) || {};
+				component = Component(anchor_node, props) || mark_as_component();
 				should_intro = true;
 
 				if (hydrating) {
@@ -233,38 +230,32 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
 
 					if (
 						hydrate_node === null ||
-						hydrate_node.nodeType !== COMMENT_NODE ||
-						/** @type {Comment} */ (hydrate_node).data !== HYDRATION_END
+						node_type(hydrate_node) !== COMMENT_NODE ||
+						get_node_value(hydrate_node) !== HYDRATION_END
 					) {
 						w.hydration_mismatch();
 						throw HYDRATION_ERROR;
 					}
 				}
 
-				if (context) {
-					pop();
-				}
-			}
+				pop();
+			},
+			transformError
 		);
 
+		// Setup event delegation _after_ component is mounted - if an error would happen during mount, it would otherwise not be cleaned up.
+		// When mounting with a custom renderer the target isn't a DOM node; any DOM content inside it is rendered
+		// into DOM containers that become delegation roots themselves (see `cross`)
+		var stop_listening = renderer
+			? null
+			: listen_to_delegated_events(/** @type {EventTarget} */ (target));
+
 		return () => {
-			for (var event_name of registered_events) {
-				target.removeEventListener(event_name, handle_event_propagation);
-
-				var n = /** @type {number} */ (document_listeners.get(event_name));
-
-				if (--n === 0) {
-					document.removeEventListener(event_name, handle_event_propagation);
-					document_listeners.delete(event_name);
-				} else {
-					document_listeners.set(event_name, n);
-				}
-			}
-
-			root_event_handles.delete(event_handle);
+			stop_listening?.();
 
 			if (anchor_node !== anchor) {
-				anchor_node.parentNode?.removeChild(anchor_node);
+				var parent = get_parent_node(/** @type {Node} */ (anchor_node));
+				if (parent) remove_child(parent, /** @type {ChildNode} */ (anchor_node));
 			}
 		};
 	});
@@ -308,11 +299,7 @@ export function unmount(component, options) {
 	}
 
 	if (DEV) {
-		if (STATE_SYMBOL in component) {
-			w.state_proxy_unmount();
-		} else {
-			w.lifecycle_double_unmount();
-		}
+		w.lifecycle_double_unmount();
 	}
 
 	return Promise.resolve();

@@ -1,25 +1,25 @@
 /** @import { AssignmentExpression, Expression, Identifier, MemberExpression, SequenceExpression, Literal, Super, UpdateExpression, ExpressionStatement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentClientTransformState, ComponentContext, Context } from '../../types' */
+/** @import { ExpressionMetadata } from '../../../../nodes.js' */
 import { walk } from 'zimmerframe';
 import { object } from '../../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { sanitize_template_string } from '../../../../../utils/sanitize_template_string.js';
-import { regex_is_valid_identifier } from '../../../../patterns.js';
+import { regex_directive_name_separator, regex_is_valid_identifier } from '../../../../patterns.js';
 import is_reference from 'is-reference';
 import { dev, is_ignored, locator, component_name } from '../../../../../state.js';
-import { build_getter } from '../../utils.js';
-import { ExpressionMetadata } from '../../../../nodes.js';
+import { async_thunk, build_getter, is_state_source } from '../../utils.js';
 
 /**
  * A utility for extracting complex expressions (such as call expressions)
  * from templates and replacing them with `$0`, `$1` etc
  */
 export class Memoizer {
-	/** @type {Array<{ id: Identifier, expression: Expression }>} */
+	/** @type {Array<{ id: Identifier, expression: Expression, metadata: ExpressionMetadata }>} */
 	#sync = [];
 
-	/** @type {Array<{ id: Identifier, expression: Expression }>} */
+	/** @type {Array<{ id: Identifier, expression: Expression, metadata: ExpressionMetadata }>} */
 	#async = [];
 
 	/** @type {Set<Expression>} */
@@ -43,7 +43,7 @@ export class Memoizer {
 
 		const id = b.id('#'); // filled in later
 
-		(metadata.has_await ? this.#async : this.#sync).push({ id, expression });
+		(metadata.has_await ? this.#async : this.#sync).push({ id, expression, metadata });
 
 		return id;
 	}
@@ -52,7 +52,7 @@ export class Memoizer {
 	 * @param {ExpressionMetadata} metadata
 	 */
 	check_blockers(metadata) {
-		for (const binding of metadata.dependencies) {
+		for (const binding of metadata.references) {
 			if (binding.blocker) {
 				this.#blockers.add(binding.blocker);
 			}
@@ -82,12 +82,16 @@ export class Memoizer {
 
 	async_values() {
 		if (this.#async.length === 0) return;
-		return b.array(this.#async.map((memo) => b.thunk(memo.expression, true)));
+		// use `b.arrow` rather than `b.thunk` so that deferred async/template effects
+		// always read live bindings rather than a possibly stale snapshot.
+		return b.array(this.#async.map((memo) => async_thunk(memo.expression, memo.metadata)));
 	}
 
 	sync_values() {
 		if (this.#sync.length === 0) return;
-		return b.array(this.#sync.map((memo) => b.thunk(memo.expression)));
+		// use `b.arrow` rather than `b.thunk` so that deferred async/template effects
+		// always read live bindings rather than a possibly stale snapshot.
+		return b.array(this.#sync.map((memo) => b.arrow([], memo.expression)));
 	}
 }
 
@@ -134,7 +138,7 @@ export function build_template_chunk(
 
 			const evaluated = state.scope.evaluate(value);
 
-			has_await ||= node.metadata.expression.has_await;
+			has_await ||= node.metadata.expression.has_await || node.metadata.expression.has_blockers();
 			has_state ||= has_await || (node.metadata.expression.has_state && !evaluated.is_known);
 
 			if (values.length === 1) {
@@ -217,16 +221,19 @@ export function build_render_statement(state) {
  * @param {string} name
  */
 export function parse_directive_name(name) {
-	// this allow for accessing members of an object
-	const parts = name.split('.');
-	let part = /** @type {string} */ (parts.shift());
+	// this allows accessing members of an object, with `.` or `?.`
+	const [first, ...rest] = name.split(regex_directive_name_separator);
 
 	/** @type {Identifier | MemberExpression} */
-	let expression = b.id(part);
+	let expression = b.id(first);
 
-	while ((part = /** @type {string} */ (parts.shift()))) {
+	for (let i = 0; i < rest.length; i += 2) {
+		const optional = rest[i] === '?.';
+		const part = rest[i + 1];
+		if (!part) break;
+
 		const computed = !regex_is_valid_identifier.test(part);
-		expression = b.member(expression, computed ? b.literal(part) : b.id(part), computed);
+		expression = b.member(expression, computed ? b.literal(part) : b.id(part), computed, optional);
 	}
 
 	return expression;
@@ -267,6 +274,10 @@ export function build_bind_this(expression, value, { state, visit }) {
 
 			const binding = state.scope.get(node.name);
 			if (!binding) return;
+
+			// if it is a state or a derived it means is a declaration tag...in that case we don't want to pass the
+			// value but the signal itself or assignment will break
+			if (is_state_source(binding, state.analysis) || binding.kind === 'derived') return;
 
 			for (const [owner, scope] of state.scopes) {
 				if (owner.type === 'EachBlock' && scope === binding.scope) {

@@ -1,5 +1,6 @@
 ---
 title: $state
+tags: rune-state
 ---
 
 The `$state` rune allows you to create _reactive state_, which means that your UI _reacts_ when it changes.
@@ -165,6 +166,8 @@ To take a static snapshot of a deeply reactive `$state` proxy, use `$state.snaps
 ```
 
 This is handy when you want to pass some state to an external library or API that doesn't expect a proxy, such as `structuredClone`.
+
+If a value has a `toJSON` method, the snapshot will clone the value returned from `toJSON` instead of the original object.
 
 ## `$state.eager`
 

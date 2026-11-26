@@ -1,7 +1,7 @@
 /** @import { AssignmentPattern, BlockStatement, Expression, Identifier, Statement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types' */
-import { dev } from '../../../../state.js';
+import { dev, custom_renderer } from '../../../../state.js';
 import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import { get_value } from './shared/declarations.js';
@@ -79,6 +79,16 @@ export function SnippetBlock(node, context) {
 		? b.call('$.wrap_snippet', b.id(context.state.analysis.name), b.function(null, args, body))
 		: b.arrow(args, body);
 
+	// when custom renderers are enabled, snippets remember which renderer they were
+	// compiled for (`null` for DOM) so that they can be rendered across renderers
+	if (custom_renderer !== undefined) {
+		snippet = b.call(
+			'$.renderer_snippet',
+			custom_renderer ? b.id('$renderer') : b.literal(null),
+			snippet
+		);
+	}
+
 	const declaration = b.const(node.expression, snippet);
 
 	// Top-level snippets are hoisted so they can be referenced in the `<script>`
@@ -89,6 +99,6 @@ export function SnippetBlock(node, context) {
 			context.state.instance_level_snippets.push(declaration);
 		}
 	} else {
-		context.state.init.push(declaration);
+		context.state.snippets.push(declaration);
 	}
 }

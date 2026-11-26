@@ -166,11 +166,12 @@ export function a11y_autofocus(node) {
 }
 
 /**
- * Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+ * Visible, non-interactive element `<%element%>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
  * @param {null | NodeLike} node
+ * @param {string} element
  */
-export function a11y_click_events_have_key_events(node) {
-	w(node, 'a11y_click_events_have_key_events', `Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as \`<button type="button">\` or \`<a>\` might be more appropriate\nhttps://svelte.dev/e/a11y_click_events_have_key_events`);
+export function a11y_click_events_have_key_events(node, element) {
+	w(node, 'a11y_click_events_have_key_events', `Visible, non-interactive element \`<${element}>\` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as \`<button type="button">\` or \`<a>\` might be more appropriate\nhttps://svelte.dev/e/a11y_click_events_have_key_events`);
 }
 
 /**
@@ -803,11 +804,11 @@ export function script_context_deprecated(node) {
 }
 
 /**
- * Unrecognized attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it
+ * Unrecognised attribute — should be one of `generics`, `lang` or `module`. If this exists for a preprocessor, ensure that the preprocessor removes it
  * @param {null | NodeLike} node
  */
 export function script_unknown_attribute(node) {
-	w(node, 'script_unknown_attribute', `Unrecognized attribute — should be one of \`generics\`, \`lang\` or \`module\`. If this exists for a preprocessor, ensure that the preprocessor removes it\nhttps://svelte.dev/e/script_unknown_attribute`);
+	w(node, 'script_unknown_attribute', `Unrecognised attribute — should be one of \`generics\`, \`lang\` or \`module\`. If this exists for a preprocessor, ensure that the preprocessor removes it\nhttps://svelte.dev/e/script_unknown_attribute`);
 }
 
 /**

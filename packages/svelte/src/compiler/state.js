@@ -33,6 +33,16 @@ export let component_name = '<unknown>';
 export let source;
 
 /**
+ * The source code split into lines, initialized when a diagnostic needs a code frame
+ * @type {string[] | undefined}
+ */
+let source_lines;
+
+export function get_source_lines() {
+	return (source_lines ??= source.split('\n'));
+}
+
+/**
  * True if compiling with `dev: true`
  * @type {boolean}
  */
@@ -40,12 +50,22 @@ export let dev;
 
 export let runes = false;
 
+/**
+ * The custom renderer for the component currently being compiled:
+ * - `string`: the renderer module path (the component uses a custom renderer)
+ * - `null`: the custom renderer feature is enabled but this component renders to the DOM
+ * - `undefined`: the custom renderer feature is off
+ * @type {string | null | undefined}
+ */
+export let custom_renderer = undefined;
+
 /** @type {(index: number) => Location} */
 export let locator;
 
 /** @param {string} value */
 export function set_source(value) {
 	source = value;
+	source_lines = undefined;
 
 	const l = getLocator(source, { offsetLine: 1 });
 
@@ -83,15 +103,37 @@ export let ignore_stack = [];
 export let ignore_map = new Map();
 
 /**
+ * Cached snapshot of the ignore_stack. Only re-created when the stack changes
+ * (i.e. when push_ignore or pop_ignore is called), avoiding a structuredClone
+ * on every node visit during analysis.
+ * @type {Set<string>[] | null}
+ */
+let cached_ignore_snapshot = null;
+
+/**
+ * Returns a snapshot of the current ignore_stack, reusing a cached copy
+ * when the stack hasn't changed since the last call.
+ * @returns {Set<string>[]}
+ */
+export function get_ignore_snapshot() {
+	if (cached_ignore_snapshot === null) {
+		cached_ignore_snapshot = ignore_stack.map((s) => new Set(s));
+	}
+	return cached_ignore_snapshot;
+}
+
+/**
  * @param {string[]} ignores
  */
 export function push_ignore(ignores) {
 	const next = new Set([...(ignore_stack.at(-1) || []), ...ignores]);
 	ignore_stack.push(next);
+	cached_ignore_snapshot = null;
 }
 
 export function pop_ignore() {
 	ignore_stack.pop();
+	cached_ignore_snapshot = null;
 }
 
 /**
@@ -110,8 +152,10 @@ export function is_ignored(node, code) {
 export function reset(state) {
 	dev = false;
 	runes = false;
+	custom_renderer = undefined;
 	component_name = UNKNOWN_FILENAME;
 	source = '';
+	source_lines = undefined;
 	filename = (state.filename ?? UNKNOWN_FILENAME).replace(/\\/g, '/');
 	warning_filter = state.warning ?? (() => true);
 	warnings = [];
@@ -125,6 +169,7 @@ export function reset(state) {
  *   component_name?: string;
  *   rootDir?: string;
  *   runes: boolean;
+ *   custom_renderer?: string | null | undefined;
  * }} state
  */
 export function adjust(state) {
@@ -132,6 +177,7 @@ export function adjust(state) {
 
 	dev = state.dev;
 	runes = state.runes;
+	custom_renderer = state.custom_renderer;
 	component_name = state.component_name ?? UNKNOWN_FILENAME;
 
 	if (typeof root_dir === 'string' && filename.startsWith(root_dir)) {
@@ -140,5 +186,6 @@ export function adjust(state) {
 	}
 
 	ignore_stack = [];
-	ignore_map.clear();
+	ignore_map = new Map(); // faster than .clear()
+	cached_ignore_snapshot = null;
 }

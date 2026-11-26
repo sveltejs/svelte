@@ -1,0 +1,44 @@
+
+	select.svelte-xyz,
+	.svelte-xyz::picker(select) {
+	  appearance: base-select;
+	}
+	selectedcontent.svelte-xyz b:where(.svelte-xyz){
+		color: red;
+	}
+	e.svelte-xyz{
+		selectedcontent:where(.svelte-xyz) &{
+			color: green;
+		}
+	}
+	select.svelte-xyz > button:where(.svelte-xyz) > selectedcontent:where(.svelte-xyz) > b:where(.svelte-xyz) {
+		color: blue;
+	}
+
+	select.svelte-xyz > button:where(.svelte-xyz) > selectedcontent:where(.svelte-xyz) i:where(.svelte-xyz) {
+		color: blue;
+	}
+
+	selectedcontent.svelte-xyz:has(b:where(.svelte-xyz)){
+		background-color: rebeccapurple;
+	}
+
+	selectedcontent.svelte-xyz:has(i:where(.svelte-xyz)){
+		background-color: rebeccapurple;
+	}
+
+	option.svelte-xyz > b:where(.svelte-xyz){
+		color: orange;
+	}
+
+	option.svelte-xyz b:where(.svelte-xyz){
+		color: #ff3e00;
+	}
+
+	option.svelte-xyz > b:where(.svelte-xyz) > i:where(.svelte-xyz){
+		text-decoration: underline;
+	}
+
+	option.svelte-xyz i:where(.svelte-xyz){
+		text-decoration: dashed;
+	}

@@ -2,6 +2,7 @@
 // to de-opt (this occurs often when using popular extensions).
 export var is_array = Array.isArray;
 export var index_of = Array.prototype.indexOf;
+export var includes = Array.prototype.includes;
 export var array_from = Array.from;
 export var object_keys = Object.keys;
 export var define_property = Object.defineProperty;
@@ -11,6 +12,7 @@ export var object_prototype = Object.prototype;
 export var array_prototype = Array.prototype;
 export var get_prototype_of = Object.getPrototypeOf;
 export var is_extensible = Object.isExtensible;
+export var has_own_property = Object.prototype.hasOwnProperty;
 
 /**
  * @param {any} thing
@@ -43,6 +45,18 @@ export function run(fn) {
 export function run_all(arr) {
 	for (var i = 0; i < arr.length; i++) {
 		arr[i]();
+	}
+}
+
+/**
+ * `array.push(...items)` overflows the stack for large `items`.
+ * @template T
+ * @param {T[]} array
+ * @param {T[]} items
+ */
+export function push_array(array, items) {
+	for (var i = 0; i < items.length; i++) {
+		array.push(items[i]);
 	}
 }
 
@@ -97,11 +111,17 @@ export function to_array(value, n) {
 		return value;
 	}
 
-	// if value is not iterable, or `n` is unspecified (indicates a rest
-	// element, which means we're not concerned about unbounded iterables)
-	// convert to an array with `Array.from`
-	if (n === undefined || !(Symbol.iterator in value)) {
+	// if `n` is unspecified (indicates a rest element, which means
+	// we're not concerned about unbounded iterables) convert to an
+	// array with `Array.from`
+	if (n === undefined) {
 		return Array.from(value);
+	}
+
+	// if value is array-like but not iterable, copy at most `n` values
+	if (!(Symbol.iterator in value)) {
+		const length = Math.min(n, /** @type {ArrayLike<T>} */ (value).length);
+		return Array.from({ length }, (_, i) => /** @type {ArrayLike<T>} */ (value)[i]);
 	}
 
 	// otherwise, populate an array with `n` values
@@ -115,4 +135,28 @@ export function to_array(value, n) {
 	}
 
 	return array;
+}
+
+/**
+ * @param {Record<string | symbol, unknown>} obj
+ * @param {Array<string | symbol>} keys
+ * @returns {Record<string | symbol, unknown>}
+ */
+export function exclude_from_object(obj, keys) {
+	/** @type {Record<string | symbol, unknown>} */
+	var result = {};
+
+	for (var key in obj) {
+		if (!keys.includes(key)) {
+			result[key] = obj[key];
+		}
+	}
+
+	for (var symbol of Object.getOwnPropertySymbols(obj)) {
+		if (Object.propertyIsEnumerable.call(obj, symbol) && !keys.includes(symbol)) {
+			result[symbol] = obj[symbol];
+		}
+	}
+
+	return result;
 }

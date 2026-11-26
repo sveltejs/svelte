@@ -1,4 +1,4 @@
-/** @import { Effect, Source } from './types.js' */
+/** @import { Derived, Effect, Source } from './types.js' */
 import { DEV } from 'esm-env';
 import {
 	PROPS_IS_BINDABLE,
@@ -48,11 +48,11 @@ export function update_pre_prop(fn, d = 1) {
 /**
  * The proxy handler for rest props (i.e. `const { x, ...rest } = $props()`).
  * Is passed the full `$$props` object and excludes the named props.
- * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol>, name?: string }>}}
+ * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Set<string | symbol>, name?: string }>}}
  */
 const rest_props_handler = {
 	get(target, key) {
-		if (target.exclude.includes(key)) return;
+		if (target.exclude.has(key)) return;
 		return target.props[key];
 	},
 	set(target, key) {
@@ -64,7 +64,7 @@ const rest_props_handler = {
 		return false;
 	},
 	getOwnPropertyDescriptor(target, key) {
-		if (target.exclude.includes(key)) return;
+		if (target.exclude.has(key)) return;
 		if (key in target.props) {
 			return {
 				enumerable: true,
@@ -74,26 +74,23 @@ const rest_props_handler = {
 		}
 	},
 	has(target, key) {
-		if (target.exclude.includes(key)) return false;
+		if (target.exclude.has(key)) return false;
 		return key in target.props;
 	},
 	ownKeys(target) {
-		return Reflect.ownKeys(target.props).filter((key) => !target.exclude.includes(key));
+		return Reflect.ownKeys(target.props).filter((key) => !target.exclude.has(key));
 	}
 };
 
 /**
  * @param {Record<string, unknown>} props
- * @param {string[]} exclude
+ * @param {Set<string>} exclude
  * @param {string} [name]
  * @returns {Record<string, unknown>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function rest_props(props, exclude, name) {
-	return new Proxy(
-		DEV ? { props, exclude, name, other: {}, to_proxy: [] } : { props, exclude },
-		rest_props_handler
-	);
+	return new Proxy(DEV ? { props, exclude, name } : { props, exclude }, rest_props_handler);
 }
 
 /**
@@ -282,8 +279,14 @@ export function prop(props, key, flags, fallback) {
 
 	var fallback_value = /** @type {V} */ (fallback);
 	var fallback_dirty = true;
+	var fallback_signal = /** @type {Derived<V> | undefined} */ (undefined);
 
 	var get_fallback = () => {
+		if (lazy && runes) {
+			fallback_signal ??= derived(/** @type {() => V} */ (fallback));
+			return get(fallback_signal);
+		}
+
 		if (fallback_dirty) {
 			fallback_dirty = false;
 
@@ -296,7 +299,7 @@ export function prop(props, key, flags, fallback) {
 	};
 
 	/** @type {((v: V) => void) | undefined} */
-	var setter;
+	let setter;
 
 	if (bindable) {
 		// Can be the case when someone does `mount(Component, props)` with `let props = $state({...})`
@@ -308,6 +311,7 @@ export function prop(props, key, flags, fallback) {
 			(is_entry_props && key in props ? (v) => (props[key] = v) : undefined);
 	}
 
+	/** @type {V} */
 	var initial_value;
 	var is_store_sub = false;
 
@@ -417,9 +421,7 @@ export function prop(props, key, flags, fallback) {
 
 			// special case — avoid recalculating the derived if we're in a
 			// teardown function and the prop was overridden locally, or the
-			// component was already destroyed (this latter part is necessary
-			// because `bind:this` can read props after the component has
-			// been destroyed. TODO simplify `bind:this`
+			// component was already destroyed (people could access props in a timeout)
 			if ((is_destroying_effect && overridden) || (parent_effect.f & DESTROYED) !== 0) {
 				return d.v;
 			}

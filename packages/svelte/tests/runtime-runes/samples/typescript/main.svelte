@@ -27,6 +27,11 @@
 		abstract x(): void;
 		y() {}
 	}
+	class Subclass extends Foo<string> {
+		constructor(value: string) {
+			super(value);
+		}
+	}
 
 	declare const declared_const: number;
 	declare function declared_fn(): void;

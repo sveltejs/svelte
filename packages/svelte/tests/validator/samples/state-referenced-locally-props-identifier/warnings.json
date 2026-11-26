@@ -1,0 +1,26 @@
+[
+	{
+		"code": "state_referenced_locally",
+		"message": "This reference only captures the initial value of `props`. Did you mean to reference it inside a closure instead?",
+		"start": {
+			"line": 3,
+			"column": 19
+		},
+		"end": {
+			"line": 3,
+			"column": 24
+		}
+	},
+	{
+		"code": "state_referenced_locally",
+		"message": "This reference only captures the initial value of `props`. Did you mean to reference it inside a closure instead?",
+		"start": {
+			"line": 4,
+			"column": 15
+		},
+		"end": {
+			"line": 4,
+			"column": 20
+		}
+	}
+]

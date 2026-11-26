@@ -40,6 +40,10 @@ If you want to use one of these features, you need to setup up a `script` prepro
 
 To use non-type-only TypeScript features within Svelte components, you need to add a preprocessor that will turn TypeScript into JavaScript.
 
+### Using Vite
+
+If you're using SvelteKit, or Vite _without_ SvelteKit, you can use `vitePreprocess` from `@sveltejs/vite-plugin-svelte` in your config file:
+
 ```ts
 /// file: svelte.config.js
 // @noErrors
@@ -53,29 +57,9 @@ const config = {
 export default config;
 ```
 
-### Using SvelteKit or Vite
+### Using other build tools
 
-The easiest way to get started is scaffolding a new SvelteKit project by typing `npx sv create`, following the prompts and choosing the TypeScript option.
-
-```ts
-/// file: svelte.config.js
-// @noErrors
-import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
-
-const config = {
-	preprocess: vitePreprocess()
-};
-
-export default config;
-```
-
-If you don't need or want all the features SvelteKit has to offer, you can scaffold a Svelte-flavoured Vite project instead by typing `npm create vite@latest` and selecting the `svelte-ts` option.
-
-In both cases, a `svelte.config.js` with `vitePreprocess` will be added. Vite/SvelteKit will read from this config file.
-
-### Other build tools
-
-If you're using tools like Rollup or Webpack instead, install their respective Svelte plugins. For Rollup that's [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) and for Webpack that's [svelte-loader](https://github.com/sveltejs/svelte-loader). For both, you need to install `typescript` and `svelte-preprocess` and add the preprocessor to the plugin config (see the respective READMEs for more info). If you're starting a new project, you can also use the [rollup](https://github.com/sveltejs/template) or [webpack](https://github.com/sveltejs/template-webpack) template to scaffold the setup from a script.
+If you're using tools like Rollup (via [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte)) or Webpack (via [svelte-loader](https://github.com/sveltejs/svelte-loader)) instead, install `typescript` and `svelte-preprocess` and add the preprocessor to the plugin config. See the respective plugin READMEs for more info.
 
 > [!NOTE] If you're starting a new project, we recommend using SvelteKit or Vite instead
 
@@ -85,7 +69,7 @@ When using TypeScript, make sure your `tsconfig.json` is setup correctly.
 
 - Use a [`target`](https://www.typescriptlang.org/tsconfig/#target) of at least `ES2015` so classes are not compiled to functions
 - Set [`verbatimModuleSyntax`](https://www.typescriptlang.org/tsconfig/#verbatimModuleSyntax) to `true` so that imports are left as-is
-- Set [`isolatedModules`](https://www.typescriptlang.org/tsconfig/#isolatedModules) to `true` so that each file is looked at in isolation. TypeScript has a few features which require cross-file analysis and compilation, which the Svelte compiler and tooling like Vite don't do. 
+- Set [`isolatedModules`](https://www.typescriptlang.org/tsconfig/#isolatedModules) to `true` so that each file is looked at in isolation. TypeScript has a few features which require cross-file analysis and compilation, which the Svelte compiler and tooling like Vite don't do.
 
 ## Typing `$props`
 
@@ -184,6 +168,12 @@ If you don't give `$state` an initial value, part of its types will be `undefine
 // @noErrors
 // Error: Type 'number | undefined' is not assignable to type 'number'
 let count: number = $state();
+```
+
+You can pass the type directly as a generic parameter to safely handle this. TypeScript will infer the variable as `number | undefined`.
+
+```ts
+let count = $state<number>();
 ```
 
 If you know that the variable _will_ be defined before you first use it, use an `as` casting. This is especially useful in the context of classes:

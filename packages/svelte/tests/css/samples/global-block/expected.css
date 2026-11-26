@@ -39,7 +39,7 @@
 		/*}*/
 	}
 
-	/* ...wich is equivalent to `div :global { &.x { ...} }` ... */
+	/* ...which is equivalent to `div :global { &.x { ...} }` ... */
 	div.svelte-xyz {
 		&.x {
 			color: green;
@@ -51,7 +51,7 @@
 		color: green;
 	}
 
-	/* ...and therefore `div { :global.x { ... }` aswell */
+	/* ...and therefore `div { :global.x { ... }` as well */
 	div.svelte-xyz {
 		&.x {
 			color: green;

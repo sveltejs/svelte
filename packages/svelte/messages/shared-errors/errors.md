@@ -1,3 +1,9 @@
+## custom_renderer_unavailable_on_server
+
+> You need to specify a custom condition to use a custom renderer in a non-browser environment such as Node. Add the `svelte-custom-renderer` resolve condition (eg. run Node with `--conditions=svelte-custom-renderer`).
+>
+> If you're using a bundler, add `svelte-custom-renderer` to its list of resolve conditions instead.
+
 ## experimental_async_required
 
 > Cannot use `%name%(...)` unless the `experimental.async` compiler option is `true`
@@ -34,6 +40,10 @@ Here, `List.svelte` is using `{@render children(item)` which means it expects `P
 
 > A snippet function was passed invalid arguments. Snippets should only be instantiated via `{@render ...}`
 
+## invariant_violation
+
+> An invariant violation occurred, meaning Svelte's internal assumptions were flawed. This is a bug in Svelte, not your app — please open an issue at https://github.com/sveltejs/svelte, citing the following message: "%message%"
+
 ## lifecycle_outside_component
 
 > `%name%(...)` can only be used during component initialisation
@@ -58,9 +68,15 @@ Certain lifecycle methods can only be used during component initialisation. To f
 
 ## missing_context
 
-> Context was not set in a parent component
+> Context was not set in the current component or any of its ancestors
 
-The [`createContext()`](svelte#createContext) utility returns a `[get, set]` pair of functions. `get` will throw an error if `set` was not used to set the context in a parent component.
+The [`createContext()`](svelte#createContext) utility returns a `[get, set, has]` triplet of functions. `get` will throw an error if `set` was not used to set the context in the current component or any of its ancestors.
+
+## set_context_after_init
+
+> `setContext` must be called when a component first initializes, not in a subsequent effect or after an `await` expression
+
+This restriction only applies when using the `experimental.async` option, which will be active by default in Svelte 6.
 
 ## snippet_without_render_tag
 

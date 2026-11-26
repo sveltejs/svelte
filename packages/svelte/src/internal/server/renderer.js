@@ -1,15 +1,20 @@
 /** @import { Component } from 'svelte' */
-/** @import { HydratableContext, RenderOutput, SSRContext, SyncRenderOutput } from './types.js' */
+/** @import { HydratableContext, SSRContext } from './types.js' */
+/** @import { Csp, RenderOutput, SyncRenderOutput, Sha256Source } from '../../server/public.js' */
 /** @import { MaybePromise } from '#shared' */
 import { async_mode_flag } from '../flags/index.js';
-import { abort } from './abort-signal.js';
-import { pop, push, set_ssr_context, ssr_context, save } from './context.js';
+import { STALE_REACTION } from '../client/constants.js';
+import { pop, push, set_ssr_context, ssr_context } from './context.js';
 import * as e from './errors.js';
 import * as w from './warnings.js';
 import { BLOCK_CLOSE, BLOCK_OPEN } from './hydration.js';
+import { HYDRATION_START_FAILED } from '../../constants.js';
 import { attributes } from './index.js';
 import { get_render_context, with_render_context, init_render_context } from './render-context.js';
-import { DEV } from 'esm-env';
+import { sha256 } from './crypto.js';
+import * as devalue from 'devalue';
+import { has_own_property, is_array, noop, push_array } from '../shared/utils.js';
+import { escape_html } from '../../escaping.js';
 
 /** @typedef {'head' | 'body'} RendererType */
 /** @typedef {{ [key in RendererType]: string }} AccumulatedContent */
@@ -17,6 +22,87 @@ import { DEV } from 'esm-env';
 /**
  * @typedef {string | Renderer} RendererItem
  */
+
+class RenderResult {
+	/** @type {() => AccumulatedContent} */
+	#render;
+
+	/** @type {() => Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }>} */
+	#render_async;
+
+	/** @type {AccumulatedContent | undefined} */
+	#sync;
+
+	/** @type {{ script: '' }} */
+	#hashes = { script: '' };
+
+	/** @type {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }> | undefined} */
+	#promise;
+
+	/**
+	 * @param {() => AccumulatedContent} render
+	 * @param {() => Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }>} render_async
+	 */
+	constructor(render, render_async) {
+		this.#render = render;
+		this.#render_async = render_async;
+	}
+
+	#get() {
+		return (this.#sync ??= this.#render());
+	}
+
+	get html() {
+		return this.#get().body;
+	}
+
+	get head() {
+		return this.#get().head;
+	}
+
+	get body() {
+		return this.#get().body;
+	}
+
+	get hashes() {
+		return this.#hashes;
+	}
+
+	/**
+	 * This is not type-safe, but honestly it's the best I can do right now, and it's a straightforward function.
+	 *
+	 * @template TResult1
+	 * @template [TResult2=never]
+	 * @param {(value: SyncRenderOutput) => TResult1} onfulfilled
+	 * @param {(reason: unknown) => TResult2} onrejected
+	 */
+	then(onfulfilled, onrejected) {
+		if (!async_mode_flag) {
+			const result = this.#get();
+			const user_result = onfulfilled({
+				head: result.head,
+				body: result.body,
+				html: result.body,
+				hashes: { script: [] }
+			});
+			return Promise.resolve(user_result);
+		}
+
+		this.#promise ??= this.#render_async().then((result) => {
+			Object.defineProperty(result, 'html', {
+				// eslint-disable-next-line getter-return
+				get: () => {
+					e.html_deprecated();
+				}
+			});
+			return result;
+		});
+		return this.#promise.then(
+			(result) => onfulfilled(/** @type {SyncRenderOutput} */ (result)),
+			onrejected
+		);
+	}
+}
 
 /**
  * Renderers are basically a tree of `string | Renderer`s, where each `Renderer` in the tree represents
@@ -46,6 +132,20 @@ export class Renderer {
 	 */
 	#is_component_body = false;
 
+	/** @type {boolean} */
+	#is_title = false;
+
+	/**
+	 * If set, this renderer is an error boundary. When async collection
+	 * of the children fails, the failed snippet is rendered instead.
+	 * @type {{
+	 * 	failed: (renderer: Renderer, error: unknown, reset: () => void) => void;
+	 * 	transformError: (error: unknown) => unknown;
+	 * 	context: SSRContext | null;
+	 * } | null}
+	 */
+	#boundary = null;
+
 	/**
 	 * The type of string content that this renderer is accumulating.
 	 * @type {RendererType}
@@ -73,7 +173,7 @@ export class Renderer {
 	 * State that is local to the branch it is declared in.
 	 * It will be shallow-copied to all children.
 	 *
-	 * @type {{ select_value: string | undefined }}
+	 * @type {{ select_value: any, multiple: boolean }}
 	 */
 	local;
 
@@ -85,7 +185,7 @@ export class Renderer {
 		this.#parent = parent;
 
 		this.global = global;
-		this.local = parent ? { ...parent.local } : { select_value: undefined };
+		this.local = parent ? { ...parent.local } : { select_value: undefined, multiple: false };
 		this.type = parent ? parent.type : 'body';
 	}
 
@@ -146,6 +246,11 @@ export class Renderer {
 		let promise = Promise.resolve(thunks[0]());
 		const promises = [promise];
 
+		if (context !== null && thunks.length > 1) {
+			// the remaining thunks run after an `await`, by which point it is too late to set context
+			context.i = true;
+		}
+
 		for (const fn of thunks.slice(1)) {
 			promise = promise.then(() => {
 				const previous_context = ssr_context;
@@ -161,7 +266,21 @@ export class Renderer {
 			promises.push(promise);
 		}
 
+		// prevent unhandled rejections, and attach the promise to the renderer instance
+		// so that rejections correctly cause rendering to fail
+		promise.catch(noop);
+		this.promise = this.global.track(promise);
+
 		return promises;
+	}
+
+	/**
+	 * @param {(renderer: Renderer) => MaybePromise<void>} fn
+	 */
+	child_block(fn) {
+		this.#out.push(BLOCK_OPEN);
+		this.child(fn);
+		this.#out.push(BLOCK_CLOSE);
 	}
 
 	/**
@@ -179,7 +298,8 @@ export class Renderer {
 			...ssr_context,
 			p: parent,
 			c: null,
-			r: child
+			r: child,
+			i: ssr_context?.i ?? false
 		});
 
 		const result = fn(child);
@@ -187,15 +307,98 @@ export class Renderer {
 		set_ssr_context(parent);
 
 		if (result instanceof Promise) {
+			// catch to avoid unhandled promise rejections - we'll end up throwing in `collect_async` if something fails
+			result.catch(noop);
+			result.finally(() => set_ssr_context(null)).catch(noop);
+
 			if (child.global.mode === 'sync') {
 				e.await_invalid();
 			}
-			// just to avoid unhandled promise rejections -- we'll end up throwing in `collect_async` if something fails
-			result.catch(() => {});
-			child.promise = result;
+
+			child.promise = child.global.track(result);
 		}
 
 		return child;
+	}
+
+	/**
+	 * Render children inside an error boundary. If the children throw and the API-level
+	 * `transformError` transform handles the error (doesn't re-throw), the `failed` snippet is
+	 * rendered instead. Otherwise the error propagates.
+	 *
+	 * @param {{ failed?: (renderer: Renderer, error: unknown, reset: () => void) => void }} props
+	 * @param {(renderer: Renderer) => MaybePromise<void>} children_fn
+	 */
+	boundary(props, children_fn) {
+		// Create a child renderer for the boundary content.
+		// Mark it as a boundary so that #collect_content_async can catch
+		// errors from nested async children and render the failed snippet.
+		const child = new Renderer(this.global, this);
+		this.#out.push(child);
+
+		const parent_context = ssr_context;
+
+		if (props.failed) {
+			child.#boundary = {
+				failed: props.failed,
+				transformError: this.global.transformError,
+				context: parent_context
+			};
+		}
+
+		set_ssr_context({
+			...ssr_context,
+			p: parent_context,
+			c: null,
+			r: child,
+			i: ssr_context?.i ?? false
+		});
+
+		try {
+			const result = children_fn(child);
+
+			set_ssr_context(parent_context);
+
+			if (result instanceof Promise) {
+				if (child.global.mode === 'sync') {
+					e.await_invalid();
+				}
+				result.catch(noop);
+				child.promise = child.global.track(result);
+			}
+		} catch (error) {
+			// synchronous errors are handled here, async errors will be handled in #collect_content_async
+			set_ssr_context(parent_context);
+
+			const failed_snippet = props.failed;
+
+			if (!failed_snippet) throw error;
+
+			const result = this.global.transformError(error);
+
+			child.#out.length = 0;
+			child.#boundary = null;
+
+			if (result instanceof Promise) {
+				if (this.global.mode === 'sync') {
+					e.await_invalid();
+				}
+
+				child.promise = child.global.track(
+					/** @type {Promise<unknown>} */ (result).then((transformed) => {
+						set_ssr_context(parent_context);
+						child.#out.push(Renderer.#serialize_failed_boundary(transformed));
+						failed_snippet(child, transformed, noop);
+						child.#out.push(BLOCK_CLOSE);
+					})
+				);
+				child.promise.catch(noop);
+			} else {
+				child.#out.push(Renderer.#serialize_failed_boundary(result));
+				failed_snippet(child, result, noop);
+				child.#out.push(BLOCK_CLOSE);
+			}
+		}
 	}
 
 	/**
@@ -207,8 +410,11 @@ export class Renderer {
 	 */
 	component(fn, component_fn) {
 		push(component_fn);
-		const child = this.child(fn);
-		child.#is_component_body = true;
+		// mark before running so `onDestroy` callbacks are still collected if `fn` throws
+		this.child((renderer) => {
+			renderer.#is_component_body = true;
+			return fn(renderer);
+		});
 		pop();
 	}
 
@@ -219,17 +425,20 @@ export class Renderer {
 	 * @param {Record<string, boolean> | undefined} [classes]
 	 * @param {Record<string, string> | undefined} [styles]
 	 * @param {number | undefined} [flags]
+	 * @param {boolean | undefined} [is_rich]
 	 * @returns {void}
 	 */
-	select(attrs, fn, css_hash, classes, styles, flags) {
-		const { value, ...select_attrs } = attrs;
+	select(attrs, fn, css_hash, classes, styles, flags, is_rich) {
+		const { value, defaultValue, ...select_attrs } = attrs;
+		if (select_attrs.multiple === '') select_attrs.multiple = true;
 
 		this.push(`<select${attributes(select_attrs, css_hash, classes, styles, flags)}>`);
 		this.child((renderer) => {
-			renderer.local.select_value = value;
+			renderer.local.select_value = value === undefined ? defaultValue : value;
+			renderer.local.multiple = !!select_attrs.multiple;
 			fn(renderer);
 		});
-		this.push('</select>');
+		this.push(`${is_rich ? '<!>' : ''}</select>`);
 	}
 
 	/**
@@ -239,8 +448,9 @@ export class Renderer {
 	 * @param {Record<string, boolean> | undefined} [classes]
 	 * @param {Record<string, string> | undefined} [styles]
 	 * @param {number | undefined} [flags]
+	 * @param {boolean | undefined} [is_rich]
 	 */
-	option(attrs, body, css_hash, classes, styles, flags) {
+	option(attrs, body, css_hash, classes, styles, flags, is_rich) {
 		this.#out.push(`<option${attributes(attrs, css_hash, classes, styles, flags)}`);
 
 		/**
@@ -249,15 +459,23 @@ export class Renderer {
 		 * @param {{ head?: string, body: any }} content
 		 */
 		const close = (renderer, value, { head, body }) => {
-			if ('value' in attrs) {
+			if (has_own_property.call(attrs, 'value')) {
 				value = attrs.value;
 			}
 
-			if (value === this.local.select_value) {
-				renderer.#out.push(' selected');
+			var select_value = this.local.select_value;
+
+			if (
+				// Super edge-case, but theoretically someone could use arrays with non-multiple selects,
+				// so we gotta check for the multiple attribute presence, too.
+				this.local.multiple && is_array(select_value)
+					? select_value.includes(value)
+					: value === select_value
+			) {
+				renderer.#out.push(' selected=""');
 			}
 
-			renderer.#out.push(`>${body}</option>`);
+			renderer.#out.push(`>${body}${is_rich ? '<!>' : ''}</option>`);
 
 			// super edge case, but may as well handle it
 			if (head) {
@@ -280,7 +498,7 @@ export class Renderer {
 				}
 			});
 		} else {
-			close(this, body, { body });
+			close(this, body, { body: escape_html(body) });
 		}
 	}
 
@@ -288,26 +506,12 @@ export class Renderer {
 	 * @param {(renderer: Renderer) => void} fn
 	 */
 	title(fn) {
-		const path = this.get_path();
+		const title = new Renderer(this.global, this);
+		title.type = 'head';
+		title.#is_title = true;
 
-		/** @param {string} head */
-		const close = (head) => {
-			this.global.set_title(head, path);
-		};
-
-		this.child((renderer) => {
-			const r = new Renderer(renderer.global, renderer);
-			fn(r);
-
-			if (renderer.global.mode === 'async') {
-				return r.#collect_content_async().then((content) => {
-					close(content.head);
-				});
-			} else {
-				const content = r.#collect_content();
-				close(content.head);
-			}
-		});
+		this.#out.push(title);
+		title.child(fn);
 	}
 
 	/**
@@ -329,17 +533,12 @@ export class Renderer {
 	}
 
 	/**
-	 * @returns {number[]}
-	 */
-	get_path() {
-		return this.#parent ? [...this.#parent.get_path(), this.#parent.#out.indexOf(this)] : [];
-	}
-
-	/**
 	 * @deprecated this is needed for legacy component bindings
 	 */
 	copy() {
 		const copy = new Renderer(this.global, this.#parent);
+		copy.type = this.type;
+		copy.#is_title = this.#is_title;
 		copy.#out = this.#out.map((item) => (item instanceof Renderer ? item.copy() : item));
 		copy.promise = this.promise;
 		return copy;
@@ -357,14 +556,19 @@ export class Renderer {
 		}
 
 		this.local = other.local;
-		this.#out = other.#out.map((item) => {
-			if (item instanceof Renderer) {
-				item.subsume(item);
+		this.#out = other.#out.map((item, i) => {
+			const current = this.#out[i];
+
+			if (current instanceof Renderer && item instanceof Renderer) {
+				current.subsume(item);
+				return current;
 			}
+
 			return item;
 		});
 		this.promise = other.promise;
 		this.type = other.type;
+		this.#is_title = other.#is_title;
 	}
 
 	get length() {
@@ -372,120 +576,100 @@ export class Renderer {
 	}
 
 	/**
+	 * Creates the hydration comment that marks the start of a failed boundary.
+	 * The error is JSON-serialized and embedded inside an HTML comment for the client
+	 * to parse during hydration. The JSON is escaped to prevent `-->` or `<!--` sequences
+	 * from breaking out of the comment (XSS). Uses unicode escapes which `JSON.parse()`
+	 * handles transparently.
+	 * @param {unknown} error
+	 * @returns {string}
+	 */
+	static #serialize_failed_boundary(error) {
+		var json = JSON.stringify(error);
+		var escaped = json.replace(/>/g, '\\u003e').replace(/</g, '\\u003c');
+		return `<!--${HYDRATION_START_FAILED}${escaped}-->`;
+	}
+
+	/**
 	 * Only available on the server and when compiling with the `server` option.
 	 * Takes a component and returns an object with `body` and `head` properties on it, which you can use to populate the HTML when server-rendering your app.
 	 * @template {Record<string, any>} Props
 	 * @param {Component<Props>} component
-	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} [options]
+	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} [options]
 	 * @returns {RenderOutput}
 	 */
 	static render(component, options = {}) {
-		/** @type {AccumulatedContent | undefined} */
-		let sync;
-		/** @type {Promise<AccumulatedContent> | undefined} */
-		let async;
-
-		const result = /** @type {RenderOutput} */ ({});
-		// making these properties non-enumerable so that console.logging
-		// doesn't trigger a sync render
-		Object.defineProperties(result, {
-			html: {
-				get: () => {
-					return (sync ??= Renderer.#render(component, options)).body;
-				}
-			},
-			head: {
-				get: () => {
-					return (sync ??= Renderer.#render(component, options)).head;
-				}
-			},
-			body: {
-				get: () => {
-					return (sync ??= Renderer.#render(component, options)).body;
-				}
-			},
-			then: {
-				value:
-					/**
-					 * this is not type-safe, but honestly it's the best I can do right now, and it's a straightforward function.
-					 *
-					 * @template TResult1
-					 * @template [TResult2=never]
-					 * @param { (value: SyncRenderOutput) => TResult1 } onfulfilled
-					 * @param { (reason: unknown) => TResult2 } onrejected
-					 */
-					(onfulfilled, onrejected) => {
-						if (!async_mode_flag) {
-							const result = (sync ??= Renderer.#render(component, options));
-							const user_result = onfulfilled({
-								head: result.head,
-								body: result.body,
-								html: result.body
-							});
-							return Promise.resolve(user_result);
-						}
-						async ??= init_render_context().then(() =>
+		return /** @type {RenderOutput} */ (
+			/** @type {unknown} */ (
+				new RenderResult(
+					() => Renderer.#render(component, options),
+					() =>
+						init_render_context().then(() =>
 							with_render_context(() => Renderer.#render_async(component, options))
-						);
-						return async.then((result) => {
-							Object.defineProperty(result, 'html', {
-								// eslint-disable-next-line getter-return
-								get: () => {
-									e.html_deprecated();
-								}
-							});
-							return onfulfilled(/** @type {SyncRenderOutput} */ (result));
-						}, onrejected);
+						)
+				)
+			)
+		);
+	}
+
+	/**
+	 * runs onDestroy callbacks deepest component first, each with its child renderers in document order
+	 * only call once the content has been collected
+	 * @param {boolean} suppress_errors so callback errors on a failed render do not mask the render error
+	 */
+	#run_on_destroy(suppress_errors) {
+		let first_error;
+		let has_error = false;
+
+		/**
+		 * @param {Renderer} renderer
+		 * @param {Array<() => void>} callbacks callbacks of the enclosing component
+		 */
+		const visit = (renderer, callbacks) => {
+			if (renderer.#is_component_body) callbacks = [];
+			if (renderer.#on_destroy) push_array(callbacks, renderer.#on_destroy);
+
+			for (const child of renderer.#out) {
+				if (child instanceof Renderer) visit(child, callbacks);
+			}
+
+			if (!renderer.#is_component_body) return;
+
+			for (const cleanup of callbacks) {
+				try {
+					cleanup();
+				} catch (error) {
+					if (!suppress_errors && !has_error) {
+						first_error = error;
+						has_error = true;
 					}
+				}
 			}
-		});
+		};
 
-		return result;
+		visit(this, []);
+
+		if (has_error) throw first_error;
 	}
 
 	/**
-	 * Collect all of the `onDestroy` callbacks registered during rendering. In an async context, this is only safe to call
-	 * after awaiting `collect_async`.
-	 *
-	 * Child renderers are "porous" and don't affect execution order, but component body renderers
-	 * create ordering boundaries. Within a renderer, callbacks run in order until hitting a component boundary.
-	 * @returns {Iterable<() => void>}
+	 * @param {'sync' | 'async'} mode
+	 * @param {{ idPrefix?: string; csp?: Csp; transformError?: (error: unknown) => unknown }} options
+	 * @returns {Renderer}
 	 */
-	*#collect_on_destroy() {
-		for (const component of this.#traverse_components()) {
-			yield* component.#collect_ondestroy();
+	static #create(mode, options) {
+		if (options.idPrefix?.includes('--')) {
+			e.invalid_id_prefix();
 		}
-	}
 
-	/**
-	 * Performs a depth-first search of renderers, yielding the deepest components first, then additional components as we backtrack up the tree.
-	 * @returns {Iterable<Renderer>}
-	 */
-	*#traverse_components() {
-		for (const child of this.#out) {
-			if (typeof child !== 'string') {
-				yield* child.#traverse_components();
-			}
-		}
-		if (this.#is_component_body) {
-			yield this;
-		}
-	}
-
-	/**
-	 * @returns {Iterable<() => void>}
-	 */
-	*#collect_ondestroy() {
-		if (this.#on_destroy) {
-			for (const fn of this.#on_destroy) {
-				yield fn;
-			}
-		}
-		for (const child of this.#out) {
-			if (child instanceof Renderer && !child.#is_component_body) {
-				yield* child.#collect_ondestroy();
-			}
-		}
+		return new Renderer(
+			new SSRState(
+				mode,
+				options.idPrefix ? options.idPrefix + '-' : '',
+				options.csp,
+				options.transformError
+			)
+		);
 	}
 
 	/**
@@ -498,13 +682,27 @@ export class Renderer {
 	 */
 	static #render(component, options) {
 		var previous_context = ssr_context;
-		try {
-			const renderer = Renderer.#open_render('sync', component, options);
+		const renderer = Renderer.#create('sync', options);
+		/** @type {AccumulatedContent | undefined} */
+		let result;
+		let render_error;
+		let failed = false;
 
-			const content = renderer.#collect_content();
-			return Renderer.#close_render(content, renderer);
+		try {
+			try {
+				Renderer.#open_render(renderer, component, options);
+				result = Renderer.#close_render(renderer.#collect_content(), renderer);
+			} catch (error) {
+				render_error = error;
+				failed = true;
+			}
+
+			renderer.#run_on_destroy(failed);
+			if (failed) throw render_error;
+
+			return /** @type {AccumulatedContent} */ (result);
 		} finally {
-			abort();
+			renderer.global.abort();
 			set_ssr_context(previous_context);
 		}
 	}
@@ -514,23 +712,40 @@ export class Renderer {
 	 *
 	 * @template {Record<string, any>} Props
 	 * @param {Component<Props>} component
-	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} options
-	 * @returns {Promise<AccumulatedContent>}
+	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp }} options
+	 * @returns {Promise<AccumulatedContent & { hashes: { script: Sha256Source[] } }>}
 	 */
 	static async #render_async(component, options) {
 		const previous_context = ssr_context;
+		const renderer = Renderer.#create('async', options);
+		/** @type {(AccumulatedContent & { hashes: { script: Sha256Source[] } }) | undefined} */
+		let result;
+		let render_error;
+		let failed = false;
 
 		try {
-			const renderer = Renderer.#open_render('async', component, options);
-			const content = await renderer.#collect_content_async();
-			const hydratables = await renderer.#collect_hydratables();
-			if (hydratables !== null) {
-				content.head = hydratables + content.head;
+			try {
+				Renderer.#open_render(renderer, component, options);
+				const content = await renderer.#collect_content_async();
+				const hydratables = await renderer.#collect_hydratables();
+				if (hydratables !== null) {
+					content.head = hydratables + content.head;
+				}
+				result = Renderer.#close_render(content, renderer);
+			} catch (error) {
+				render_error = error;
+				failed = true;
+				renderer.global.abort();
+				await renderer.global.settle();
 			}
-			return Renderer.#close_render(content, renderer);
+
+			renderer.#run_on_destroy(failed);
+			if (failed) throw render_error;
+
+			return /** @type {AccumulatedContent & { hashes: { script: Sha256Source[] } }} */ (result);
 		} finally {
 			set_ssr_context(previous_context);
-			abort();
+			renderer.global.abort();
 		}
 	}
 
@@ -543,7 +758,9 @@ export class Renderer {
 		for (const item of this.#out) {
 			if (typeof item === 'string') {
 				content[this.type] += item;
-			} else if (item instanceof Renderer) {
+			} else if (item.#is_title) {
+				this.global.title = item.#collect_content().head;
+			} else {
 				item.#collect_content(content);
 			}
 		}
@@ -563,8 +780,46 @@ export class Renderer {
 		for (const item of this.#out) {
 			if (typeof item === 'string') {
 				content[this.type] += item;
-			} else if (item instanceof Renderer) {
-				await item.#collect_content_async(content);
+			} else if (item.#is_title) {
+				this.global.title = (await item.#collect_content_async()).head;
+			} else {
+				if (item.#boundary) {
+					// This renderer is an error boundary - collect into a separate
+					// accumulator so we can discard partial content on error
+					/** @type {AccumulatedContent} */
+					const boundary_content = { head: '', body: '' };
+					const title = this.global.title;
+
+					try {
+						await item.#collect_content_async(boundary_content);
+						// Success - merge into the main content
+						content.head += boundary_content.head;
+						content.body += boundary_content.body;
+					} catch (error) {
+						// a failed boundary does not render its title
+						this.global.title = title;
+
+						const { context, failed, transformError } = item.#boundary;
+
+						set_ssr_context(context);
+
+						let promise = transformError(error);
+						set_ssr_context(null);
+
+						let transformed = await promise;
+						set_ssr_context(context);
+
+						// Render the failed snippet instead of the partial children content
+						const failed_renderer = new Renderer(item.global, item);
+						failed_renderer.type = item.type;
+						failed_renderer.#out.push(Renderer.#serialize_failed_boundary(transformed));
+						failed(failed_renderer, transformed, noop);
+						failed_renderer.#out.push(BLOCK_CLOSE);
+						await failed_renderer.#collect_content_async(content);
+					}
+				} else {
+					await item.#collect_content_async(content);
+				}
 			}
 		}
 
@@ -585,51 +840,40 @@ export class Renderer {
 			await comparison;
 		}
 
-		return await Renderer.#hydratable_block(ctx);
+		return await this.#hydratable_block(ctx);
 	}
 
 	/**
 	 * @template {Record<string, any>} Props
-	 * @param {'sync' | 'async'} mode
+	 * @param {Renderer} renderer
 	 * @param {import('svelte').Component<Props>} component
-	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string }} options
-	 * @returns {Renderer}
+	 * @param {{ props?: Omit<Props, '$$slots' | '$$events'>; context?: Map<any, any>; idPrefix?: string; csp?: Csp; transformError?: (error: unknown) => unknown }} options
+	 * @returns {void}
 	 */
-	static #open_render(mode, component, options) {
-		const renderer = new Renderer(
-			new SSRState(mode, options.idPrefix ? options.idPrefix + '-' : '')
-		);
+	static #open_render(renderer, component, options) {
+		var previous_context = ssr_context;
 
-		renderer.push(BLOCK_OPEN);
+		try {
+			/** @type {SSRContext} */
+			const context = { p: null, c: options.context ?? null, r: renderer, i: false };
+			set_ssr_context(context);
 
-		if (options.context) {
-			push();
-			/** @type {SSRContext} */ (ssr_context).c = options.context;
-			/** @type {SSRContext} */ (ssr_context).r = renderer;
+			renderer.push(BLOCK_OPEN);
+			// @ts-expect-error
+			component(renderer, options.props ?? {});
+			renderer.push(BLOCK_CLOSE);
+		} finally {
+			set_ssr_context(previous_context);
 		}
-
-		// @ts-expect-error
-		component(renderer, options.props ?? {});
-
-		if (options.context) {
-			pop();
-		}
-
-		renderer.push(BLOCK_CLOSE);
-
-		return renderer;
 	}
 
 	/**
 	 * @param {AccumulatedContent} content
 	 * @param {Renderer} renderer
+	 * @returns {AccumulatedContent & { hashes: { script: Sha256Source[] } }}
 	 */
 	static #close_render(content, renderer) {
-		for (const cleanup of renderer.#collect_on_destroy()) {
-			cleanup();
-		}
-
-		let head = content.head + renderer.global.get_title();
+		let head = content.head + renderer.global.title;
 		let body = content.body;
 
 		for (const { hash, code } of renderer.global.css) {
@@ -638,14 +882,17 @@ export class Renderer {
 
 		return {
 			head,
-			body
+			body,
+			hashes: {
+				script: renderer.global.csp.script_hashes
+			}
 		};
 	}
 
 	/**
 	 * @param {HydratableContext} ctx
 	 */
-	static async #hydratable_block(ctx) {
+	async #hydratable_block(ctx) {
 		if (ctx.lookup.size === 0) {
 			return null;
 		}
@@ -659,7 +906,7 @@ export class Renderer {
 				for (const p of v.promises) await p;
 			}
 
-			entries.push(`[${JSON.stringify(k)},${v.serialized}]`);
+			entries.push(`[${devalue.uneval(k)},${v.serialized}]`);
 		}
 
 		let prelude = `const h = (window.__svelte ??= {}).h ??= new Map();`;
@@ -669,9 +916,7 @@ export class Renderer {
 				${prelude}`;
 		}
 
-		// TODO csp -- have discussed but not implemented
-		return `
-		<script>
+		const body = `
 			{
 				${prelude}
 
@@ -681,11 +926,27 @@ export class Renderer {
 					h.set(k, v);
 				}
 			}
-		</script>`;
+		`;
+
+		let csp_attr = '';
+		if (this.global.csp.nonce) {
+			csp_attr = ` nonce="${this.global.csp.nonce}"`;
+		} else if (this.global.csp.hash) {
+			// note to future selves: this doesn't need to be optimized with a Map<body, hash>
+			// because the it's impossible for identical data to occur multiple times in a single render
+			// (this would require the same hydratable key:value pair to be serialized multiple times)
+			const hash = await sha256(body);
+			this.global.csp.script_hashes.push(`sha256-${hash}`);
+		}
+
+		return `\n\t\t<script${csp_attr}>${body}</script>`;
 	}
 }
 
 export class SSRState {
+	/** @readonly @type {Csp & { script_hashes: Sha256Source[] }} */
+	csp;
+
 	/** @readonly @type {'sync' | 'async'} */
 	mode;
 
@@ -695,47 +956,73 @@ export class SSRState {
 	/** @readonly @type {Set<{ hash: string; code: string }>} */
 	css = new Set();
 
-	/** @type {{ path: number[], value: string }} */
-	#title = { path: [], value: '' };
+	/** set while collecting so the last title in document order wins */
+	title = '';
+
+	/** @type {Set<Promise<unknown>>} */
+	#pending = new Set();
+
+	/** @type {AbortController | null} */
+	#controller = null;
+
+	#aborted = false;
+
+	/**
+	 * `transformError` passed to `render`. Called when an error boundary catches an error.
+	 * Throws by default if unset in `render`.
+	 * @type {(error: unknown) => unknown}
+	 */
+	transformError;
 
 	/**
 	 * @param {'sync' | 'async'} mode
-	 * @param {string} [id_prefix]
+	 * @param {string} id_prefix
+	 * @param {Csp} csp
+	 * @param {((error: unknown) => unknown) | undefined} [transformError]
 	 */
-	constructor(mode, id_prefix = '') {
+	constructor(mode, id_prefix = '', csp = { hash: false }, transformError) {
 		this.mode = mode;
+		this.csp = { ...csp, script_hashes: [] };
+
+		this.transformError =
+			transformError ??
+			((error) => {
+				throw error;
+			});
 
 		let uid = 1;
 		this.uid = () => `${id_prefix}s${uid++}`;
 	}
 
-	get_title() {
-		return this.#title.value;
+	/**
+	 * @template T
+	 * @param {Promise<T>} promise
+	 * @returns {Promise<T>}
+	 */
+	track(promise) {
+		this.#pending.add(promise);
+		promise.then(
+			() => this.#pending.delete(promise),
+			() => this.#pending.delete(promise)
+		);
+		return promise;
 	}
 
-	/**
-	 * Performs a depth-first (lexicographic) comparison using the path. Rejects sets
-	 * from earlier than or equal to the current value.
-	 * @param {string} value
-	 * @param {number[]} path
-	 */
-	set_title(value, path) {
-		const current = this.#title.path;
-
-		let i = 0;
-		let l = Math.min(path.length, current.length);
-
-		// skip identical prefixes - [1, 2, 3, ...] === [1, 2, 3, ...]
-		while (i < l && path[i] === current[i]) i += 1;
-
-		if (path[i] === undefined) return;
-
-		// replace title if
-		// - incoming path is longer - [7, 8, 9] > [7, 8]
-		// - incoming path is later  - [7, 8, 9] > [7, 8, 8]
-		if (current[i] === undefined || path[i] > current[i]) {
-			this.#title.path = path;
-			this.#title.value = value;
+	async settle() {
+		while (this.#pending.size > 0) {
+			await Promise.allSettled([...this.#pending]);
 		}
+	}
+
+	abort() {
+		if (this.#aborted) return;
+		this.#aborted = true;
+		this.#controller?.abort(STALE_REACTION);
+	}
+
+	get_abort_signal() {
+		const controller = (this.#controller ??= new AbortController());
+		if (this.#aborted) controller.abort(STALE_REACTION);
+		return controller.signal;
 	}
 }

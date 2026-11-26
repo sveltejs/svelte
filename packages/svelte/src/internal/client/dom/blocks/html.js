@@ -1,31 +1,45 @@
-/** @import { Effect, TemplateNode } from '#client' */
-import { FILENAME, HYDRATION_ERROR } from '../../../../constants.js';
+/** @import { DevStackEntry, Effect, TemplateNode } from '#client' */
+/** @import {} from 'trusted-types' */
+import {
+	FILENAME,
+	HYDRATION_ERROR,
+	NAMESPACE_SVG,
+	NAMESPACE_MATHML
+} from '../../../../constants.js';
 import { remove_effect_dom, template_effect } from '../../reactivity/effects.js';
 import { hydrate_next, hydrate_node, hydrating, set_hydrate_node } from '../hydration.js';
-import { create_fragment_from_html } from '../reconciler.js';
+
 import { assign_nodes } from '../template.js';
 import * as w from '../../warnings.js';
 import { hash, sanitize_location } from '../../../../utils.js';
 import { DEV } from 'esm-env';
-import { dev_current_component_function } from '../../context.js';
-import { get_first_child, get_next_sibling } from '../operations.js';
+import { dev_current_component_function, dev_stack } from '../../context.js';
+import {
+	create_element,
+	get_first_child,
+	get_next_sibling,
+	get_last_child,
+	set_inner_html,
+	insert_before,
+	node_type,
+	get_node_value
+} from '../operations.js';
 import { active_effect } from '../../runtime.js';
-import { COMMENT_NODE } from '#client/constants';
+import { COMMENT_NODE, ELEMENT_NODE } from '#client/constants';
+import { set_dev_metadata } from '../../dev/elements.js';
 
 /**
- * @param {Element} element
  * @param {string | null} server_hash
- * @param {string} value
+ * @param {string | TrustedHTML} value
+ * @param {[string, number, number] | undefined} loc
  */
-function check_hash(element, server_hash, value) {
+function check_hash(server_hash, value, loc) {
 	if (!server_hash || server_hash === hash(String(value ?? ''))) return;
 
 	let location;
 
-	// @ts-expect-error
-	const loc = element.__svelte_meta?.loc;
 	if (loc) {
-		location = `near ${loc.file}:${loc.line}:${loc.column}`;
+		location = `near ${loc[0]}:${loc[1]}:${loc[2]}`;
 	} else if (dev_current_component_function?.[FILENAME]) {
 		location = `in ${dev_current_component_function[FILENAME]}`;
 	}
@@ -34,23 +48,88 @@ function check_hash(element, server_hash, value) {
 }
 
 /**
+ * Assigns the location of the `{@html ...}` tag to the top-level elements it created,
+ * which also prevents the surrounding template from assigning its locations to them
+ * @param {Effect} effect
+ * @param {DevStackEntry | null} parent
+ * @param {[string, number, number]} loc
+ */
+function assign_locations(effect, parent, loc) {
+	if (effect.nodes === null) return;
+
+	/** @type {TemplateNode | null} */
+	var node = effect.nodes.start;
+
+	while (node !== null) {
+		if (node.nodeType === ELEMENT_NODE) {
+			set_dev_metadata(
+				/** @type {Element} */ (node),
+				{ file: loc[0], line: loc[1], column: loc[2] },
+				parent
+			);
+		}
+
+		if (node === effect.nodes.end) break;
+		node = get_next_sibling(node);
+	}
+}
+
+/**
  * @param {Element | Text | Comment} node
- * @param {() => string} get_value
+ * @param {() => string | TrustedHTML} get_value
+ * @param {boolean} [is_controlled]
  * @param {boolean} [svg]
  * @param {boolean} [mathml]
  * @param {boolean} [skip_warning]
+ * @param {[string, number, number]} [location] the filename, line and column of the tag
  * @returns {void}
  */
-export function html(node, get_value, svg = false, mathml = false, skip_warning = false) {
+export function html(
+	node,
+	get_value,
+	is_controlled = false,
+	svg = false,
+	mathml = false,
+	skip_warning = false,
+	location
+) {
 	var anchor = node;
+	var parent = DEV ? dev_stack : null;
 
+	/** @type {string | TrustedHTML} */
 	var value = '';
+
+	if (is_controlled) {
+		var parent_node = /** @type {Element} */ (node);
+
+		if (hydrating) {
+			anchor = set_hydrate_node(get_first_child(parent_node));
+		}
+	}
 
 	template_effect(() => {
 		var effect = /** @type {Effect} */ (active_effect);
 
 		if (value === (value = get_value() ?? '')) {
 			if (hydrating) hydrate_next();
+			return;
+		}
+
+		if (is_controlled && !hydrating) {
+			// When @html is the only child, use innerHTML directly.
+			// This also handles contenteditable, where the user may delete the anchor comment.
+			effect.nodes = null;
+			set_inner_html(parent_node, /** @type {string} */ (value));
+
+			if (value !== '') {
+				assign_nodes(
+					/** @type {TemplateNode} */ (get_first_child(parent_node)),
+					/** @type {TemplateNode} */ (get_last_child(parent_node))
+				);
+
+				if (DEV && location) assign_locations(effect, parent, location);
+			}
+
 			return;
 		}
 
@@ -64,16 +143,13 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 		if (hydrating) {
 			// We're deliberately not trying to repair mismatches between server and client,
 			// as it's costly and error-prone (and it's an edge case to have a mismatch anyway)
-			var hash = /** @type {Comment} */ (hydrate_node).data;
+			var hash = get_node_value(hydrate_node);
 
 			/** @type {TemplateNode | null} */
 			var next = hydrate_next();
 			var last = next;
 
-			while (
-				next !== null &&
-				(next.nodeType !== COMMENT_NODE || /** @type {Comment} */ (next).data !== '')
-			) {
+			while (next !== null && (node_type(next) !== COMMENT_NODE || get_node_value(next) !== '')) {
 				last = next;
 				next = get_next_sibling(next);
 			}
@@ -84,38 +160,41 @@ export function html(node, get_value, svg = false, mathml = false, skip_warning 
 			}
 
 			if (DEV && !skip_warning) {
-				check_hash(/** @type {Element} */ (next.parentNode), hash, value);
+				check_hash(hash, value, location);
 			}
 
 			assign_nodes(hydrate_node, last);
+			if (DEV && location) assign_locations(effect, parent, location);
 			anchor = set_hydrate_node(next);
 			return;
 		}
 
-		var html = value + '';
-		if (svg) html = `<svg>${html}</svg>`;
-		else if (mathml) html = `<math>${html}</math>`;
-
 		// Don't use create_fragment_with_script_from_html here because that would mean script tags are executed.
 		// @html is basically `.innerHTML = ...` and that doesn't execute scripts either due to security reasons.
-		/** @type {DocumentFragment | Element} */
-		var node = create_fragment_from_html(html);
+		// Use a <template>, <svg>, or <math> wrapper depending on context. If value is a TrustedHTML object,
+		// it will be assigned directly to innerHTML without coercion — this allows {@html policy.createHTML(...)} to work.
+		var ns = svg ? NAMESPACE_SVG : mathml ? NAMESPACE_MATHML : undefined;
+		var wrapper = /** @type {HTMLTemplateElement | SVGElement | MathMLElement} */ (
+			create_element(svg ? 'svg' : mathml ? 'math' : 'template', ns)
+		);
+		set_inner_html(wrapper, /** @type {any} */ (value));
 
-		if (svg || mathml) {
-			node = /** @type {Element} */ (get_first_child(node));
-		}
+		/** @type {DocumentFragment | Element} */
+		var node = svg || mathml ? wrapper : /** @type {HTMLTemplateElement} */ (wrapper).content;
 
 		assign_nodes(
 			/** @type {TemplateNode} */ (get_first_child(node)),
-			/** @type {TemplateNode} */ (node.lastChild)
+			/** @type {TemplateNode} */ (get_last_child(node))
 		);
+
+		if (DEV && location) assign_locations(effect, parent, location);
 
 		if (svg || mathml) {
 			while (get_first_child(node)) {
-				anchor.before(/** @type {TemplateNode} */ (get_first_child(node)));
+				insert_before(anchor, /** @type {TemplateNode} */ (get_first_child(node)));
 			}
 		} else {
-			anchor.before(node);
+			insert_before(anchor, node);
 		}
 	});
 }

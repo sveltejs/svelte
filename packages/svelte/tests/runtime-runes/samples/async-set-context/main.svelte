@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Outer from "./Outer.svelte";
+	import A from "./A.svelte";
 
 	await Promise.resolve();
 </script>
 
-<Outer />
+<A />

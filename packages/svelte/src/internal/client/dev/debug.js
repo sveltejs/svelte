@@ -15,7 +15,6 @@ import {
 	MAYBE_DIRTY,
 	RENDER_EFFECT,
 	ROOT_EFFECT,
-	WAS_MARKED,
 	MANAGED_EFFECT
 } from '#client/constants';
 import { snapshot } from '../../shared/clone.js';
@@ -68,19 +67,35 @@ function effect_label(effect, append_effect = false) {
 
 	return label;
 }
+
 /**
- *
  * @param {Effect} effect
+ * @param {Effect[]} highlighted
  */
-export function log_effect_tree(effect, depth = 0) {
+export function log_effect_tree(effect, highlighted = [], depth = 0, is_reachable = true) {
 	const flags = effect.f;
-	const label = effect_label(effect);
+	let label = effect_label(effect);
 
 	let status =
 		(flags & CLEAN) !== 0 ? 'clean' : (flags & MAYBE_DIRTY) !== 0 ? 'maybe dirty' : 'dirty';
 
+	let styles = [`font-weight: ${status === 'clean' ? 'normal' : 'bold'}`];
+
+	if (status !== 'clean' && !is_reachable) {
+		label = `⚠️ ${label}`;
+		styles.push(`color: red`);
+	}
+
+	if ((flags & INERT) !== 0) {
+		styles.push('font-style: italic');
+	}
+
+	if (highlighted.includes(effect)) {
+		styles.push('background-color: yellow');
+	}
+
 	// eslint-disable-next-line no-console
-	console.group(`%c${label} (${status})`, `font-weight: ${status === 'clean' ? 'normal' : 'bold'}`);
+	console.group(`%c${label} (${status})`, styles.join('; '));
 
 	if (depth === 0) {
 		const callsite = new Error().stack
@@ -98,11 +113,11 @@ export function log_effect_tree(effect, depth = 0) {
 		console.groupEnd();
 	}
 
-	if (effect.deps !== null) {
+	if (effect.edges !== null) {
 		// eslint-disable-next-line no-console
 		console.groupCollapsed('%cdeps', 'font-weight: normal');
 
-		for (const dep of effect.deps) {
+		for (const dep of effect.edges) {
 			log_dep(dep);
 		}
 
@@ -120,9 +135,11 @@ export function log_effect_tree(effect, depth = 0) {
 		}
 	}
 
+	var child_is_reachable = is_reachable && ((flags & BRANCH_EFFECT) === 0 || (flags & CLEAN) === 0);
+
 	let child = effect.first;
 	while (child !== null) {
-		log_effect_tree(child, depth + 1);
+		log_effect_tree(child, highlighted, depth + 1, child_is_reachable);
 		child = child.next;
 	}
 
@@ -146,8 +163,8 @@ function log_dep(dep) {
 			untrack(() => snapshot(derived.v))
 		);
 
-		if (derived.deps) {
-			for (const d of derived.deps) {
+		if (derived.edges) {
+			for (const d of derived.edges) {
 				log_dep(d);
 			}
 		}
@@ -186,7 +203,6 @@ export function log_reactions(signal) {
 		if ((flags & DIRTY) !== 0) names.push('DIRTY');
 		if ((flags & MAYBE_DIRTY) !== 0) names.push('MAYBE_DIRTY');
 		if ((flags & CONNECTED) !== 0) names.push('CONNECTED');
-		if ((flags & WAS_MARKED) !== 0) names.push('WAS_MARKED');
 		if ((flags & INERT) !== 0) names.push('INERT');
 		if ((flags & DESTROYED) !== 0) names.push('DESTROYED');
 
@@ -443,10 +459,10 @@ export function log_inconsistent_branches(effect) {
 			console.log('%cfn:', 'font-weight: bold', branch.effect.fn);
 		}
 
-		if (branch.effect.deps !== null) {
+		if (branch.effect.edges !== null) {
 			// eslint-disable-next-line no-console
 			console.groupCollapsed('%cdeps', 'font-weight: normal');
-			for (const dep of branch.effect.deps) {
+			for (const dep of branch.effect.edges) {
 				log_dep(dep);
 			}
 			// eslint-disable-next-line no-console
@@ -497,4 +513,18 @@ export function log_inconsistent_branches(effect) {
 	console.groupEnd();
 
 	return true;
+}
+
+/**
+ * Stringify a derived function, removing `$.track_reactivity_loss` and `$.get` etc
+ * @param {Function} fn
+ */
+export function stringify_derived(fn) {
+	return `{${fn
+		.toString()
+		.replace(/^async \(\) => /, '')
+		.replace(/^\(/, '')
+		.replace(/\$\.get\((.+?)\)/g, (_, name) => name)
+		.replace(/\$\.track_reactivity_loss\((.+?)\)\(\)/g, (_, name) => name)
+		.replace(/\)$/, '')}}`;
 }

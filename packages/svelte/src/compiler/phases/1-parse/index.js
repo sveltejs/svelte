@@ -1,18 +1,18 @@
-/** @import { AST } from '#compiler' */
+/** @import { AST, CompileError } from '#compiler' */
 /** @import { Location } from 'locate-character' */
 /** @import * as ESTree from 'estree' */
 // @ts-expect-error acorn type definitions are borked in the release we use
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
-import { regex_whitespace } from '../patterns.js';
 import * as e from '../../errors.js';
-import { create_fragment } from './utils/create.js';
+import * as w from '../../warnings.js';
+import { walk } from 'zimmerframe';
+import { create_fragment, disallow_children } from '../nodes.js';
 import read_options from './read/options.js';
 import { is_reserved } from '../../../utils.js';
-import { disallow_children } from '../2-analyze/visitors/shared/special-element.js';
 import * as state from '../../state.js';
-
-const regex_position_indicator = / \(\d+:\d+\)$/;
+import { is_whitespace } from './utils/whitespace.js';
+import { has_lf_line_breaks_only } from './acorn.js';
 
 const regex_lang_attribute =
 	/<!--[^]*?-->|<script\s+(?:[^>]*|(?:[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s]+)\s+)*)lang=(["'])?([^"' >]+)\1[^>]*>/g;
@@ -33,6 +33,30 @@ export class Parser {
 
 	/** */
 	index = 0;
+
+	/**
+	 * @readonly
+	 * @type {boolean}
+	 */
+	lf_only;
+
+	/** @type {AST.CSS.CSSComment[]} */
+	css_comments = [];
+
+	/**
+	 * Creates a minimal parser instance for CSS-only parsing.
+	 * Skips Svelte component parsing setup.
+	 * @param {string} source
+	 * @returns {Parser}
+	 */
+	static forCss(source) {
+		const parser = Object.create(Parser.prototype);
+		parser.template = source;
+		parser.index = 0;
+		parser.loose = false;
+		parser.css_comments = [];
+		return parser;
+	}
 
 	/** Whether we're parsing in TypeScript mode */
 	ts = false;
@@ -55,14 +79,16 @@ export class Parser {
 	/**
 	 * @param {string} template
 	 * @param {boolean} loose
+	 * @param {boolean} [ts] Force TypeScript parsing when checking for a missing `lang="ts"`
 	 */
-	constructor(template, loose) {
+	constructor(template, loose, ts = false) {
 		if (typeof template !== 'string') {
 			throw new TypeError('Template must be a string');
 		}
 
 		this.loose = loose;
 		this.template = template.trimEnd();
+		this.lf_only = has_lf_line_breaks_only(this.template);
 
 		let match_lang;
 
@@ -71,7 +97,7 @@ export class Parser {
 
 		regex_lang_attribute.lastIndex = 0; // reset matched index to pass tests - otherwise declare the regex inside the constructor
 
-		this.ts = match_lang?.[2] === 'ts';
+		this.ts = ts || match_lang?.[2] === 'ts';
 
 		this.root = {
 			css: null,
@@ -93,10 +119,50 @@ export class Parser {
 		this.fragments.push(this.root.fragment);
 
 		/** @type {ParserState} */
-		let state = fragment;
+		let next = fragment;
 
-		while (this.index < this.template.length) {
-			state = state(this) || fragment;
+		try {
+			while (this.index < this.template.length) {
+				next = next(this) || fragment;
+			}
+		} catch (error) {
+			const err = /** @type {CompileError} */ (error);
+
+			if (
+				!this.ts &&
+				!loose &&
+				(err?.code === 'js_parse_error' || err?.code === 'expected_token')
+			) {
+				// Only suggest `lang="ts"` if it would make the component parse successfully.
+				// Suppress warnings during the retry, including calls to the user's warningFilter.
+				state.ignore_stack.push(new Set(w.codes));
+				let ts = false;
+				try {
+					walk(/** @type {any} */ (new Parser(template, false, true).root), null, {
+						_(node, { next }) {
+							// Acorn also accepts Flow-style casts, which aren't valid TypeScript.
+							if (node.type === 'TSTypeCastExpression') throw error;
+							if (node.type.startsWith('TS')) ts = true;
+							next();
+						}
+					});
+				} catch {
+					throw error;
+				} finally {
+					state.ignore_stack.pop();
+				}
+
+				if (!ts) throw error;
+
+				const message =
+					err.code === 'js_parse_error' ? err.message.split('\n')[0] : 'Unexpected token';
+				e.js_parse_error(
+					err.position?.[0] ?? null,
+					`${message} (did you forget to add \`lang="ts"\`?)`
+				);
+			}
+
+			throw error;
 		}
 
 		if (this.stack.length > 1) {
@@ -113,7 +179,7 @@ export class Parser {
 			}
 		}
 
-		if (state !== fragment) {
+		if (next !== fragment) {
 			e.unexpected_eof(this.index);
 		}
 
@@ -144,14 +210,6 @@ export class Parser {
 	}
 
 	/**
-	 * @param {any} err
-	 * @returns {never}
-	 */
-	acorn_error(err) {
-		e.js_parse_error(err.pos, err.message.replace(regex_position_indicator, ''));
-	}
-
-	/**
 	 * @param {string} str
 	 * @param {boolean} required
 	 * @param {boolean} required_in_loose
@@ -177,22 +235,26 @@ export class Parser {
 			return this.template[this.index] === str;
 		}
 
-		return this.template.slice(this.index, this.index + length) === str;
+		return this.template.startsWith(str, this.index);
 	}
 
 	/**
 	 * Match a regex at the current index
-	 * @param {RegExp} pattern  Should have a ^ anchor at the start so the regex doesn't search past the beginning, resulting in worse performance
+	 * @param {RegExp} pattern  Should have the sticky (`y`) flag so that it only matches at the current index
 	 */
 	match_regex(pattern) {
-		const match = pattern.exec(this.template.slice(this.index));
-		if (!match || match.index !== 0) return null;
+		pattern.lastIndex = this.index;
+		const match = pattern.exec(this.template);
+		if (!match || match.index !== this.index) return null;
 
 		return match[0];
 	}
 
 	allow_whitespace() {
-		while (this.index < this.template.length && regex_whitespace.test(this.template[this.index])) {
+		while (
+			this.index < this.template.length &&
+			is_whitespace(this.template.charCodeAt(this.index))
+		) {
 			this.index++;
 		}
 	}
@@ -218,7 +280,6 @@ export class Parser {
 		const code = /** @type {number} */ (this.template.codePointAt(this.index));
 
 		if (isIdentifierStart(code, true)) {
-			let i = this.index;
 			end += code <= 0xffff ? 1 : 2;
 
 			while (end < this.template.length) {
@@ -248,8 +309,27 @@ export class Parser {
 		};
 	}
 
+	/** @param {string} delimiter */
+	read_until(delimiter) {
+		if (this.index >= this.template.length) {
+			if (this.loose) return '';
+			e.unexpected_eof(this.template.length);
+		}
+
+		const start = this.index;
+		const index = this.template.indexOf(delimiter, start);
+
+		if (index !== -1) {
+			this.index = index;
+			return this.template.slice(start, this.index);
+		}
+
+		this.index = this.template.length;
+		return this.template.slice(start);
+	}
+
 	/** @param {RegExp} pattern */
-	read_until(pattern) {
+	read_until_regex(pattern) {
 		if (this.index >= this.template.length) {
 			if (this.loose) return '';
 			e.unexpected_eof(this.template.length);
@@ -268,15 +348,19 @@ export class Parser {
 	}
 
 	require_whitespace() {
-		if (!regex_whitespace.test(this.template[this.index])) {
+		if (!is_whitespace(this.template.charCodeAt(this.index))) {
 			e.expected_whitespace(this.index);
 		}
 
+		this.index++;
 		this.allow_whitespace();
 	}
 
 	pop() {
-		this.fragments.pop();
+		const fragment = this.fragments.pop();
+		if (fragment?.metadata.transparent && fragment.nodes.some((n) => n.type === 'DeclarationTag')) {
+			fragment.metadata.transparent = false;
+		}
 		return this.stack.pop();
 	}
 

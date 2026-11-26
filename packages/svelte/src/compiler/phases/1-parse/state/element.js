@@ -2,30 +2,41 @@
 /** @import { Location } from 'locate-character' */
 /** @import { AST } from '#compiler' */
 /** @import { Parser } from '../index.js' */
-import { is_void } from '../../../../utils.js';
+import { is_void, REGEX_VALID_TAG_NAME } from '../../../../utils.js';
 import read_expression from '../read/expression.js';
 import { read_script } from '../read/script.js';
 import read_style from '../read/style.js';
 import { decode_character_references } from '../utils/html.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
-import { create_fragment } from '../utils/create.js';
-import { create_attribute, ExpressionMetadata, is_element_node } from '../../nodes.js';
+import {
+	create_attribute,
+	create_fragment,
+	ExpressionMetadata,
+	is_element_node
+} from '../../nodes.js';
 import { get_attribute_expression, is_expression_attribute } from '../../../utils/ast.js';
 import { closing_tag_omitted } from '../../../../html-tree-validation.js';
 import { list } from '../../../utils/string.js';
 import { locator } from '../../../state.js';
-import * as b from '#compiler/builders';
+import { is_whitespace } from '../utils/whitespace.js';
 
-const regex_invalid_unquoted_attribute_value = /^(\/>|[\s"'=<>`])/;
-const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
-const regex_closing_comment = /-->/;
-const regex_whitespace_or_slash_or_closing_tag = /(\s|\/|>)/;
-const regex_token_ending_character = /[\s=/>"']/;
-const regex_starts_with_quote_characters = /^["']/;
-const regex_attribute_value = /^(?:"([^"]*)"|'([^'])*'|([^>\s]+))/;
-const regex_valid_element_name =
-	/^(?:![a-zA-Z]+|[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|[a-zA-Z][a-zA-Z0-9]*:[a-zA-Z][a-zA-Z0-9-]*[a-zA-Z0-9])$/;
+const regex_invalid_unquoted_attribute_value = /(\/>|[\s"'=<>`])/y;
+const regex_closing_textarea_tag = /<\/textarea(\s[^>]*)?>/iy;
+const regex_starts_with_quote_characters = /["']/y;
+const regex_attribute_value = /(?:"([^"]*)"|'([^'])*'|([^>\s]+))/y;
+const regex_doctype_name = /^![a-zA-Z]+$/;
+const regex_namespaced_name = /^[a-zA-Z][a-zA-Z0-9]*:[a-zA-Z][a-zA-Z0-9-]*[a-zA-Z0-9]$/;
+
+/** @param {string} name */
+function is_valid_element_name(name) {
+	// DOCTYPE (e.g. !DOCTYPE)
+	if (regex_doctype_name.test(name)) return true;
+	// svelte:* meta tags (e.g. svelte:element, svelte:head)
+	if (regex_namespaced_name.test(name)) return true;
+	// standard HTML/SVG/MathML elements and custom elements
+	return REGEX_VALID_TAG_NAME.test(name);
+}
 export const regex_valid_component_name =
 	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#identifiers adjusted for our needs
 	// (must start with uppercase letter if no dots, can contain dots)
@@ -57,7 +68,7 @@ export default function element(parser) {
 	let parent = parser.current();
 
 	if (parser.eat('!--')) {
-		const data = parser.read_until(regex_closing_comment);
+		const data = parser.read_until('-->');
 		parser.eat('-->', true);
 
 		parser.append({
@@ -71,7 +82,7 @@ export default function element(parser) {
 	}
 
 	if (parser.eat('/')) {
-		const name = parser.read_until(regex_whitespace_or_slash_or_closing_tag);
+		const name = read_tag_name(parser);
 
 		parser.allow_whitespace();
 		parser.eat('>', true);
@@ -127,14 +138,14 @@ export default function element(parser) {
 		return;
 	}
 
-	const tag = read_tag(parser, regex_whitespace_or_slash_or_closing_tag);
+	const tag = read_tag(parser);
 
 	if (tag.name.startsWith('svelte:') && !meta_tags.has(tag.name)) {
 		const bounds = { start: start + 1, end: start + 1 + tag.name.length };
 		e.svelte_meta_invalid_tag(bounds, list(Array.from(meta_tags.keys())));
 	}
 
-	if (!regex_valid_element_name.test(tag.name) && !regex_valid_component_name.test(tag.name)) {
+	if (!is_valid_element_name(tag.name) && !regex_valid_component_name.test(tag.name)) {
 		// <div. -> in the middle of typing -> allow in loose mode
 		if (!parser.loose || !tag.name.endsWith('.')) {
 			const bounds = { start: start + 1, end: start + 1 + tag.name.length };
@@ -392,7 +403,10 @@ export default function element(parser) {
 		// special case
 		element.fragment.nodes = read_sequence(
 			parser,
-			() => regex_closing_textarea_tag.test(parser.template.slice(parser.index)),
+			() => {
+				regex_closing_textarea_tag.lastIndex = parser.index;
+				return regex_closing_textarea_tag.test(parser.template);
+			},
 			'inside <textarea>'
 		);
 		parser.read(regex_closing_textarea_tag);
@@ -400,7 +414,13 @@ export default function element(parser) {
 	} else if (tag.name === 'script' || tag.name === 'style') {
 		// special case
 		const start = parser.index;
-		const data = parser.read_until(new RegExp(`</${tag.name}>`));
+		const close_tag = `</${tag.name}>`;
+		const close_index = parser.template.indexOf(close_tag, parser.index);
+		const data = parser.template.slice(
+			parser.index,
+			close_index === -1 ? parser.template.length : close_index
+		);
+		parser.index = close_index === -1 ? parser.template.length : close_index;
 		const end = parser.index;
 
 		/** @type {AST.Text} */
@@ -456,7 +476,7 @@ function parent_is_shadowroot_template(stack) {
 function read_static_attribute(parser) {
 	const start = parser.index;
 
-	const tag = read_tag(parser, regex_token_ending_character);
+	const tag = read_tag(parser, true);
 	if (!tag.name) return null;
 
 	/** @type {true | Array<AST.Text | AST.ExpressionTag>} */
@@ -499,6 +519,15 @@ function read_static_attribute(parser) {
  * @returns {AST.Attribute | AST.SpreadAttribute | AST.Directive | AST.AttachTag | null}
  */
 function read_attribute(parser) {
+	/** @type {AST.JSComment | null} */
+	// eslint-disable-next-line no-useless-assignment -- it is, in fact, eslint that is useless
+	let comment = null;
+
+	while ((comment = read_comment(parser))) {
+		parser.root.comments.push(comment);
+		parser.allow_whitespace();
+	}
+
 	const start = parser.index;
 
 	if (parser.eat('{')) {
@@ -579,7 +608,7 @@ function read_attribute(parser) {
 		}
 	}
 
-	const tag = read_tag(parser, regex_token_ending_character);
+	const tag = read_tag(parser, true);
 
 	if (!tag.name) return null;
 
@@ -696,6 +725,50 @@ function read_attribute(parser) {
 }
 
 /**
+ * @param {Parser} parser
+ * @returns {AST.JSComment | null}
+ */
+function read_comment(parser) {
+	const start = parser.index;
+
+	if (parser.eat('//')) {
+		const value = parser.read_until('\n');
+		const end = parser.index;
+
+		return {
+			type: 'Line',
+			start,
+			end,
+			value,
+			loc: {
+				start: locator(start),
+				end: locator(end)
+			}
+		};
+	}
+
+	if (parser.eat('/*')) {
+		const value = parser.read_until('*/');
+
+		parser.eat('*/');
+		const end = parser.index;
+
+		return {
+			type: 'Block',
+			start,
+			end,
+			value,
+			loc: {
+				start: locator(start),
+				end: locator(end)
+			}
+		};
+	}
+
+	return null;
+}
+
+/**
  * @param {string} name
  * @returns {any}
  */
@@ -775,24 +848,21 @@ function read_attribute_value(parser) {
  * @returns {any[]}
  */
 function read_sequence(parser, done, location) {
-	/** @type {AST.Text} */
-	let current_chunk = {
-		start: parser.index,
-		end: -1,
-		type: 'Text',
-		raw: '',
-		data: ''
-	};
-
 	/** @type {Array<AST.Text | AST.ExpressionTag>} */
 	const chunks = [];
+	let chunk_start = parser.index;
 
 	/** @param {number} end */
 	function flush(end) {
-		if (current_chunk.raw) {
-			current_chunk.data = decode_character_references(current_chunk.raw, true);
-			current_chunk.end = end;
-			chunks.push(current_chunk);
+		if (end > chunk_start) {
+			const raw = parser.template.slice(chunk_start, end);
+			chunks.push({
+				start: chunk_start,
+				end,
+				type: 'Text',
+				raw,
+				data: decode_character_references(raw, true)
+			});
 		}
 	}
 
@@ -806,12 +876,14 @@ function read_sequence(parser, done, location) {
 			if (parser.match('#')) {
 				const index = parser.index - 1;
 				parser.eat('#');
-				const name = parser.read_until(/[^a-z]/);
+				// const name = parser.read_until_regex(/[^a-z]/);
+				const name = read_lowercase_name(parser);
 				e.block_invalid_placement(index, name, location);
 			} else if (parser.match('@')) {
 				const index = parser.index - 1;
 				parser.eat('@');
-				const name = parser.read_until(/[^a-z]/);
+				// const name = parser.read_until_regex(/[^a-z]/);
+				const name = read_lowercase_name(parser);
 				e.tag_invalid_placement(index, name, location);
 			}
 
@@ -834,16 +906,9 @@ function read_sequence(parser, done, location) {
 			};
 
 			chunks.push(chunk);
-
-			current_chunk = {
-				start: parser.index,
-				end: -1,
-				type: 'Text',
-				raw: '',
-				data: ''
-			};
+			chunk_start = parser.index;
 		} else {
-			current_chunk.raw += parser.template[parser.index++];
+			parser.index++;
 		}
 	}
 
@@ -856,12 +921,36 @@ function read_sequence(parser, done, location) {
 
 /**
  * @param {Parser} parser
- * @param {RegExp} regex
+ * @param {boolean} [attribute]
+ */
+function read_tag_name(parser, attribute = false) {
+	const start = parser.index;
+	if (start >= parser.template.length && !parser.loose) e.unexpected_eof(parser.template.length);
+
+	while (parser.index < parser.template.length) {
+		const cc = parser.template.charCodeAt(parser.index);
+		if (
+			is_whitespace(cc) ||
+			cc === 47 || // /
+			cc === 62 || // >
+			(attribute && (cc === 34 || cc === 39 || cc === 61)) // " ' =
+		) {
+			break;
+		}
+		parser.index += 1;
+	}
+
+	return parser.template.slice(start, parser.index);
+}
+
+/**
+ * @param {Parser} parser
+ * @param {boolean} [attribute]
  * @returns {Identifier & { start: number, end: number, loc: SourceLocation }}
  */
-function read_tag(parser, regex) {
+function read_tag(parser, attribute = false) {
 	const start = parser.index;
-	const name = parser.read_until(regex);
+	const name = read_tag_name(parser, attribute);
 	const end = parser.index;
 
 	return {
@@ -874,4 +963,16 @@ function read_tag(parser, regex) {
 			end: locator(end)
 		}
 	};
+}
+
+/** @param {Parser} parser */
+function read_lowercase_name(parser) {
+	const start = parser.index;
+	while (parser.index < parser.template.length) {
+		const cc = parser.template.charCodeAt(parser.index);
+		// a-z
+		if (cc < 97 || cc > 122) break;
+		parser.index += 1;
+	}
+	return parser.template.slice(start, parser.index);
 }

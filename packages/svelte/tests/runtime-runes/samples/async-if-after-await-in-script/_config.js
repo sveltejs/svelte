@@ -6,11 +6,13 @@ export default test({
 
 	ssrHtml: '<p>yep</p>',
 
-	async test({ assert, target, variant }) {
+	async test({ assert, target, variant, warnings }) {
 		if (variant === 'dom') {
 			await tick();
 		}
 
 		assert.htmlEqual(target.innerHTML, '<p>yep</p>');
+
+		assert.deepEqual(warnings, []); // TODO not quite sure why this isn't populated yet
 	}
 });

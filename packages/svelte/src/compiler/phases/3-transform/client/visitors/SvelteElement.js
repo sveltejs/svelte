@@ -4,6 +4,7 @@
 import { dev, locator } from '../../../../state.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
+import { async_thunk } from '../utils.js';
 import { determine_namespace_for_children } from '../../utils.js';
 import {
 	build_attribute_value,
@@ -93,10 +94,11 @@ export function SvelteElement(node, context) {
 		);
 	}
 
-	const is_async = node.metadata.expression.is_async();
+	const has_await = node.metadata.expression.has_await;
+	const has_blockers = node.metadata.expression.has_blockers();
 
 	const expression = /** @type {Expression} */ (context.visit(node.tag));
-	const get_tag = b.thunk(is_async ? b.call('$.get', b.id('$$tag')) : expression);
+	const get_tag = b.thunk(has_await ? b.call('$.get', b.id('$$tag')) : expression);
 
 	/** @type {Statement[]} */
 	const inner = inner_context.state.init;
@@ -117,10 +119,10 @@ export function SvelteElement(node, context) {
 	);
 
 	if (dev) {
+		statements.push(b.stmt(b.call('$.validate_dynamic_element_tag', get_tag)));
 		if (node.fragment.nodes.length > 0) {
 			statements.push(b.stmt(b.call('$.validate_void_dynamic_element', get_tag)));
 		}
-		statements.push(b.stmt(b.call('$.validate_dynamic_element_tag', get_tag)));
 	}
 
 	const location = dev && locator(node.start);
@@ -139,15 +141,18 @@ export function SvelteElement(node, context) {
 		)
 	);
 
-	if (is_async) {
+	if (has_await || has_blockers) {
 		context.state.init.push(
 			b.stmt(
 				b.call(
 					'$.async',
 					context.state.node,
 					node.metadata.expression.blockers(),
-					b.array([b.thunk(expression, node.metadata.expression.has_await)]),
-					b.arrow([context.state.node, b.id('$$tag')], b.block(statements))
+					has_await ? b.array([async_thunk(expression, node.metadata.expression)]) : b.void0,
+					b.arrow(
+						has_await ? [context.state.node, b.id('$$tag')] : [context.state.node],
+						b.block(statements)
+					)
 				)
 			)
 		);

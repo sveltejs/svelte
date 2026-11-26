@@ -14,7 +14,7 @@ import {
 } from '../utils/ast.js';
 import { is_reserved, is_rune } from '../../utils.js';
 import { determine_slot } from '../utils/slot.js';
-import { validate_identifier_name } from './2-analyze/visitors/shared/utils.js';
+import { regex_directive_name_separator } from './patterns.js';
 
 const UNKNOWN = Symbol('unknown');
 /** Includes `BigInt` */
@@ -119,6 +119,12 @@ export class Binding {
 	 * @type {Binding[]}
 	 */
 	legacy_dependencies = [];
+
+	/**
+	 * Bindings that should be invalidated when this binding is invalidated
+	 * @type {Set<Binding>}
+	 */
+	legacy_indirect_bindings = new Set();
 
 	/**
 	 * Legacy props: the `class` in `{ export klass as class}`. $props(): The `class` in { class: klass } = $props()
@@ -227,6 +233,13 @@ class Evaluation {
 	 * @type {boolean}
 	 */
 	is_number = true;
+
+	/**
+	 * True if the value is known to be a primitive
+	 * @readonly
+	 * @type {boolean}
+	 */
+	is_primitive = true;
 
 	/**
 	 * True if the value is known to be a function
@@ -577,6 +590,7 @@ class Evaluation {
 
 			if (value === UNKNOWN) {
 				this.has_unknown = true;
+				this.is_primitive = false;
 			}
 		}
 
@@ -699,8 +713,18 @@ export class Scope {
 		}
 
 		preferred_name = preferred_name.replace(/[^a-zA-Z0-9_$]/g, '_').replace(/^[0-9]/, '_');
-		let name = preferred_name;
-		let n = 1;
+
+		// Use cached counter to skip names already known to be taken (avoids O(n²) scanning)
+		let n = this.root.next_counter(preferred_name);
+		let name;
+
+		if (n === 0) {
+			name = preferred_name;
+			n = 1;
+		} else {
+			name = `${preferred_name}_${n}`;
+			n++;
+		}
 
 		while (
 			this.references.has(name) ||
@@ -711,6 +735,7 @@ export class Scope {
 			name = `${preferred_name}_${n++}`;
 		}
 
+		this.root.set_counter(preferred_name, n);
 		this.references.set(name, []);
 		this.root.conflicts.add(name);
 		return name;
@@ -839,17 +864,48 @@ export class ScopeRoot {
 	conflicts = new Set();
 
 	/**
+	 * Tracks the next suffix counter per name to avoid O(n) rescanning in generate/unique.
+	 * @type {Map<string, number>}
+	 */
+	#name_counters = new Map();
+
+	/**
+	 * @param {string} name
+	 * @returns {number}
+	 */
+	next_counter(name) {
+		return this.#name_counters.get(name) ?? 0;
+	}
+
+	/**
+	 * @param {string} name
+	 * @param {number} value
+	 */
+	set_counter(name, value) {
+		this.#name_counters.set(name, value);
+	}
+
+	/**
 	 * @param {string} preferred_name
 	 */
 	unique(preferred_name) {
 		preferred_name = preferred_name.replace(/[^a-zA-Z0-9_$]/g, '_');
-		let final_name = preferred_name;
-		let n = 1;
+		let n = this.#name_counters.get(preferred_name) ?? 0;
+		let final_name;
+
+		if (n === 0) {
+			final_name = preferred_name;
+			n = 1;
+		} else {
+			final_name = `${preferred_name}_${n}`;
+			n++;
+		}
 
 		while (this.conflicts.has(final_name)) {
 			final_name = `${preferred_name}_${n++}`;
 		}
 
+		this.#name_counters.set(preferred_name, n);
 		this.conflicts.add(final_name);
 		const id = b.id(final_name);
 		return id;
@@ -964,7 +1020,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	 * @type {Visitor<AST.AnimateDirective | AST.TransitionDirective | AST.UseDirective, State, AST.SvelteNode>}
 	 */
 	const SvelteDirective = (node, { state, path, visit }) => {
-		state.scope.reference(b.id(node.name.split('.')[0]), path);
+		state.scope.reference(b.id(node.name.split(regex_directive_name_separator)[0]), path);
 
 		if (node.expression) {
 			visit(node.expression);
@@ -1084,7 +1140,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		FunctionExpression(node, { state, next }) {
-			const scope = state.scope.child();
+			const scope = state.scope.child(true);
 			scopes.set(node, scope);
 
 			if (node.id) scope.declare(node.id, 'normal', 'function');
@@ -1096,7 +1152,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		FunctionDeclaration(node, { state, next }) {
 			if (node.id) state.scope.declare(node.id, 'normal', 'function', node);
 
-			const scope = state.scope.child();
+			const scope = state.scope.child(true);
 			scopes.set(node, scope);
 
 			add_params(scope, node.params);
@@ -1104,7 +1160,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		ArrowFunctionExpression(node, { state, next }) {
-			const scope = state.scope.child();
+			const scope = state.scope.child(true);
 			scopes.set(node, scope);
 
 			add_params(scope, node.params);
@@ -1122,8 +1178,11 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				parent?.type === 'FunctionExpression' ||
 				parent?.type === 'ArrowFunctionExpression'
 			) {
-				// We already created a new scope for the function
-				context.next();
+				// The scopes created for the function nodes above handle the function identifier and
+				// parameters, but the block statement itself holds the non-porous function scope
+				const scope = context.state.scope.child();
+				scopes.set(node, scope);
+				context.next({ scope });
 			} else {
 				create_block_scope(node, context);
 			}
@@ -1132,6 +1191,12 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		ClassDeclaration(node, { state, next }) {
 			if (node.id) state.scope.declare(node.id, 'normal', 'let', node);
 			next();
+		},
+
+		StaticBlock(node, { state, next }) {
+			const scope = state.scope.child();
+			scopes.set(node, scope);
+			next({ scope });
 		},
 
 		VariableDeclaration(node, { state, path, next }) {
@@ -1174,6 +1239,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 
 		EachBlock(node, { state, visit }) {
 			visit(node.expression);
+			if (node.fallback) visit(node.fallback);
 
 			// context and children are a new scope
 			const scope = state.scope.child();
@@ -1219,7 +1285,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			for (const child of node.body.nodes) {
 				visit(child, { scope });
 			}
-			if (node.fallback) visit(node.fallback, { scope });
 
 			node.metadata = {
 				expression: new ExpressionMetadata(),
@@ -1285,6 +1350,14 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			}
 
 			context.next({ scope: child_scope });
+
+			// the parameters and what the body declares end up in the same function
+			const body_scope = /** @type {Scope} */ (scopes.get(node.body));
+			for (const [name, binding] of body_scope.declarations) {
+				if (child_scope.declarations.has(name)) {
+					e.declaration_duplicate(binding.node, name);
+				}
+			}
 		},
 
 		Fragment: (node, context) => {
@@ -1409,4 +1482,80 @@ function get_global_keypath(node, scope) {
 	if (binding !== null) return null; // rune name, but references a variable or store
 
 	return n.name + joined;
+}
+
+/**
+ * @param {Expression} node
+ * @param {Scope | null} scope
+ */
+export function should_proxy(node, scope) {
+	if (
+		!node ||
+		node.type === 'Literal' ||
+		node.type === 'TemplateLiteral' ||
+		node.type === 'ArrowFunctionExpression' ||
+		node.type === 'FunctionExpression' ||
+		node.type === 'UnaryExpression' ||
+		node.type === 'BinaryExpression' ||
+		(node.type === 'Identifier' && node.name === 'undefined')
+	) {
+		return false;
+	}
+
+	if (node.type === 'Identifier' && scope !== null) {
+		const binding = scope.get(node.name);
+		// Let's see if the reference is something that can be proxied
+		if (
+			binding !== null &&
+			!binding.reassigned &&
+			binding.initial !== null &&
+			binding.initial.type !== 'FunctionDeclaration' &&
+			binding.initial.type !== 'ClassDeclaration' &&
+			binding.initial.type !== 'ImportDeclaration' &&
+			binding.initial.type !== 'EachBlock' &&
+			binding.initial.type !== 'SnippetBlock'
+		) {
+			return should_proxy(binding.initial, null);
+		}
+	}
+
+	return true;
+}
+
+/**
+ * Checks if the name is valid, which it is when it's not starting with (or is) a dollar sign or if it's a function parameter.
+ * The second argument is the depth of the scope, which is there for backwards compatibility reasons: In Svelte 4, you
+ * were allowed to define `$`-prefixed variables anywhere below the top level of components. Once legacy mode is gone, this
+ * argument can be removed / the call sites adjusted accordingly.
+ * @param {Binding | null} binding
+ * @param {number | undefined} [function_depth]
+ */
+export function validate_identifier_name(binding, function_depth) {
+	if (!binding) return;
+
+	const declaration_kind = binding.declaration_kind;
+
+	if (
+		declaration_kind !== 'synthetic' &&
+		declaration_kind !== 'param' &&
+		declaration_kind !== 'rest_param' &&
+		(!function_depth || function_depth <= 1)
+	) {
+		const node = binding.node;
+
+		if (node.name === '$') {
+			e.dollar_binding_invalid(node);
+		} else if (
+			node.name.startsWith('$') &&
+			// import type { $Type } from "" - these are normally already filtered out,
+			// but for the migration they aren't, and throwing here is preventing the migration to complete
+			// TODO -> once migration script is gone we can remove this check
+			!(
+				binding.initial?.type === 'ImportDeclaration' &&
+				/** @type {any} */ (binding.initial).importKind === 'type'
+			)
+		) {
+			e.dollar_prefix_invalid(node);
+		}
+	}
 }

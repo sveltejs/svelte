@@ -1,3 +1,4 @@
+import 'svelte/internal/init-operations';
 import 'svelte/internal/disclose-version';
 import 'svelte/internal/flags/async';
 import * as $ from 'svelte/internal/client';
@@ -22,7 +23,7 @@ export default function Async_if_hoisting($$anchor) {
 		};
 
 		$.if(node, ($$render) => {
-			if ($.get($$condition)) $$render(consequent); else $$render(alternate, false);
+			if ($.get($$condition)) $$render(consequent); else $$render(alternate, -1);
 		});
 	});
 

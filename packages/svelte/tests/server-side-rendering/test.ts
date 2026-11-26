@@ -6,8 +6,8 @@
 
 import * as fs from 'node:fs';
 import { assert } from 'vitest';
-import { render } from 'svelte/server';
-import { compile_directory, should_update_expected, try_read_file } from '../helpers.js';
+import { render, type SyncRenderOutput } from 'svelte/server';
+import { compile_directory_cached, should_update_expected, try_read_file } from '../helpers.js';
 import { assert_html_equal_with_options } from '../html_equal.js';
 import { suite_with_variants, type BaseTest } from '../suite.js';
 import type { CompileOptions } from '#compiler';
@@ -21,6 +21,9 @@ interface SSRTest extends BaseTest {
 	id_prefix?: string;
 	withoutNormalizeHtml?: boolean;
 	error?: string;
+	csp?: { nonce: string } | { hash: true };
+	script_hashes?: string[];
+	transformError?: (error: unknown) => unknown;
 }
 
 // TODO remove this shim when we can
@@ -60,7 +63,7 @@ const { test, run } = suite_with_variants<SSRTest, 'sync' | 'async', CompileOpti
 		};
 
 		if (!config.load_compiled) {
-			await compile_directory(test_dir, 'server', compile_options);
+			await compile_directory_cached(test_dir, 'server', compile_options);
 		}
 
 		return compile_options;
@@ -74,12 +77,19 @@ const { test, run } = suite_with_variants<SSRTest, 'sync' | 'async', CompileOpti
 
 		let rendered;
 		let errored = false;
+		let body: SyncRenderOutput['body'];
+		let head: SyncRenderOutput['head'];
+		let hashes: SyncRenderOutput['hashes'];
 		try {
 			const render_result = render(Component, {
 				props: config.props || {},
-				idPrefix: config.id_prefix
+				idPrefix: config.id_prefix,
+				csp: config.csp,
+				transformError: config.transformError
 			});
 			rendered = is_async ? await render_result : render_result;
+			// we need to access these inside the try-catch otherwise errors in the script tag are not caught
+			({ body, head, hashes } = rendered);
 		} catch (error) {
 			errored = true;
 			if (config.error) {
@@ -93,8 +103,6 @@ const { test, run } = suite_with_variants<SSRTest, 'sync' | 'async', CompileOpti
 		if (config.error && !errored) {
 			assert.fail('Expected an error to be thrown, but rendering succeeded.');
 		}
-
-		const { body, head } = rendered;
 
 		fs.writeFileSync(
 			`${test_dir}/_output/${is_async ? 'async_rendered.html' : 'rendered.html'}`,
@@ -139,6 +147,10 @@ const { test, run } = suite_with_variants<SSRTest, 'sync' | 'async', CompileOpti
 					throw error;
 				}
 			}
+		}
+
+		if (config.script_hashes !== undefined) {
+			assert.deepEqual(hashes.script, config.script_hashes);
 		}
 	}
 );

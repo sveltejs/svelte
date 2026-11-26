@@ -4,6 +4,8 @@ import { block } from '../../reactivity/effects.js';
 import { hydrate_next, hydrating } from '../hydration.js';
 import { BranchManager } from './branches.js';
 
+const NAN = Symbol('NaN');
+
 /**
  * @template V
  * @param {TemplateNode} node
@@ -22,6 +24,11 @@ export function key(node, get_key, render_fn) {
 
 	block(() => {
 		var key = get_key();
+
+		// NaN !== NaN, hence we do this workaround to not trigger remounts unnecessarily
+		if (key !== key) {
+			key = /** @type {any} */ (NAN);
+		}
 
 		// key blocks in Svelte <5 had stupid semantics
 		if (legacy && key !== null && typeof key === 'object') {

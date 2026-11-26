@@ -30,13 +30,15 @@ export class Template {
 	/**
 	 * @param {string} name
 	 * @param {number} start
+	 * @param {boolean} is_html
 	 */
-	push_element(name, start) {
+	push_element(name, start, is_html) {
 		this.#element = {
 			type: 'element',
 			name,
 			attributes: {},
 			children: [],
+			is_html,
 			start
 		};
 
@@ -100,7 +102,7 @@ function stringify(item) {
 	for (const key in item.attributes) {
 		const value = item.attributes[key];
 
-		str += ` ${key}`;
+		str += ` ${item.is_html ? key.toLowerCase() : key}`;
 		if (value !== undefined) str += `="${escape_html(value, true)}"`;
 	}
 
@@ -135,7 +137,7 @@ function objectify(item) {
 		attributes.properties.push(
 			b.prop(
 				'init',
-				b.key(fix_attribute_casing(key)),
+				b.key(item.is_html ? fix_attribute_casing(key) : key),
 				value === undefined ? b.void0 : b.literal(value)
 			)
 		);

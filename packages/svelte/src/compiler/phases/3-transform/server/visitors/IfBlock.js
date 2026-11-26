@@ -1,39 +1,48 @@
-/** @import { BlockStatement, Expression, Statement } from 'estree' */
+/** @import { BlockStatement, Expression, IfStatement } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext } from '../types.js' */
 import * as b from '#compiler/builders';
-import { block_close, block_open, block_open_else, create_async_block } from './shared/utils.js';
+import { block_close, create_child_block, prepend_block_marker } from './shared/utils.js';
 
 /**
  * @param {AST.IfBlock} node
  * @param {ComponentContext} context
  */
 export function IfBlock(node, context) {
-	const test = /** @type {Expression} */ (context.visit(node.test));
 	const consequent = /** @type {BlockStatement} */ (context.visit(node.consequent));
+	prepend_block_marker(consequent, `<!--[0-->`);
 
-	const alternate = node.alternate
-		? /** @type {BlockStatement} */ (context.visit(node.alternate))
-		: b.block([]);
+	/** @type {IfStatement} */
+	let if_statement = b.if(/** @type {Expression} */ (context.visit(node.test)), consequent);
 
-	consequent.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), block_open)));
+	let index = 1;
+	let current_if = if_statement;
+	let alt = node.alternate;
 
-	alternate.body.unshift(b.stmt(b.call(b.id('$$renderer.push'), block_open_else)));
+	// Walk the else-if chain, flattening branches
+	for (const elseif of node.metadata.flattened ?? []) {
+		const branch = /** @type {BlockStatement} */ (context.visit(elseif.consequent));
+		prepend_block_marker(branch, `<!--[${index++}-->`);
 
-	/** @type {Statement} */
-	let statement = b.if(test, consequent, alternate);
-
-	const is_async = node.metadata.expression.is_async();
-
-	const has_await = node.metadata.expression.has_await;
-
-	if (is_async || has_await) {
-		statement = create_async_block(
-			b.block([statement]),
-			node.metadata.expression.blockers(),
-			!!has_await
+		current_if = current_if.alternate = b.if(
+			/** @type {Expression} */ (context.visit(elseif.test)),
+			branch
 		);
+		alt = elseif.alternate;
 	}
 
-	context.state.template.push(statement, block_close);
+	// Handle final else (or remaining async chain)
+	const final_alternate = alt ? /** @type {BlockStatement} */ (context.visit(alt)) : b.block([]);
+
+	prepend_block_marker(final_alternate, `<!--[-1-->`);
+	current_if.alternate = final_alternate;
+
+	context.state.template.push(
+		...create_child_block(
+			[if_statement],
+			node.metadata.expression.blockers(),
+			node.metadata.expression.has_await
+		),
+		block_close
+	);
 }

@@ -100,6 +100,85 @@ test('map.get(...)', () => {
 	cleanup();
 });
 
+test('map.getOrInsert(...)', () => {
+	const map = new SvelteMap([
+		[2, 2],
+		[3, 3]
+	]);
+
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push('get 1', map.getOrInsert(1, 1));
+		});
+
+		render_effect(() => {
+			log.push('get 2', map.getOrInsert(2, 2));
+		});
+
+		render_effect(() => {
+			log.push('get 3', map.getOrInsert(3, 4));
+		});
+	});
+
+	flushSync(() => {
+		map.delete(2);
+	});
+
+	flushSync(() => {
+		map.set(2, 2);
+	});
+
+	assert.deepEqual(log, ['get 1', 1, 'get 2', 2, 'get 3', 3, 'get 2', 2]);
+
+	cleanup();
+});
+
+test('map.getOrInsertComputed(...)', () => {
+	const map = new SvelteMap([
+		[2, 2],
+		[3, 3]
+	]);
+
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(
+				'get 1',
+				map.getOrInsertComputed(1, (k) => k)
+			);
+		});
+
+		render_effect(() => {
+			log.push(
+				'get 2',
+				map.getOrInsertComputed(2, (k) => k)
+			);
+		});
+
+		render_effect(() => {
+			log.push(
+				'get 3',
+				map.getOrInsertComputed(3, () => 4)
+			);
+		});
+	});
+
+	flushSync(() => {
+		map.delete(2);
+	});
+
+	flushSync(() => {
+		map.set(2, 2);
+	});
+
+	assert.deepEqual(log, ['get 1', 1, 'get 2', 2, 'get 3', 3, 'get 2', 2]);
+
+	cleanup();
+});
+
 test('map.has(...)', () => {
 	const map = new SvelteMap([
 		[1, 1],
@@ -203,6 +282,75 @@ test('map handling of undefined values', () => {
 	});
 
 	assert.deepEqual(log, [undefined, undefined, 1]);
+
+	cleanup();
+});
+
+test('map.has() and map.get() with undefined values', () => {
+	const map = new SvelteMap<string, undefined | string>([['foo', undefined]]);
+
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push('has', map.has('foo'));
+		});
+
+		render_effect(() => {
+			log.push('get', map.get('foo'));
+		});
+
+		flushSync(() => {
+			map.delete('foo');
+		});
+
+		flushSync(() => {
+			map.set('bar', undefined);
+		});
+	});
+
+	assert.deepEqual(log, [
+		'has',
+		true,
+		'get',
+		undefined,
+		'has',
+		false,
+		'get',
+		undefined,
+		// set('bar') bumps version, causing has('foo')/get('foo') effects to re-run
+		'has',
+		false,
+		'get',
+		undefined
+	]);
+
+	assert.equal(map.has('bar'), true);
+	assert.equal(map.get('bar'), undefined);
+
+	cleanup();
+});
+
+test('map.delete() triggers size reactivity for keys without per-key sources', () => {
+	const map = new SvelteMap([
+		[1, 'a'],
+		[2, 'b']
+	]);
+
+	const log: any = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(map.size);
+		});
+
+		// delete key 2 which was never individually read (no per-key source)
+		flushSync(() => {
+			map.delete(2);
+		});
+	});
+
+	assert.deepEqual(log, [2, 1]);
 
 	cleanup();
 });

@@ -33,13 +33,15 @@ const no_compiler_imports = {
 	}
 };
 
-/** @type {import('eslint').Linter.FlatConfig[]} */
+/** @type {import('eslint').Linter.Config[]} */
 export default [
 	...svelte_config,
 	{
 		languageOptions: {
 			parserOptions: {
-				projectService: true,
+				projectService: {
+					allowDefaultProject: ['vitest-reporter.js']
+				},
 				tsconfigRootDir: import.meta.dirname
 			}
 		},
@@ -85,11 +87,27 @@ export default [
 		}
 	},
 	{
+		files: ['packages/svelte/src/internal/client/**/*'],
+		rules: {
+			'no-restricted-syntax': [
+				'error',
+				{
+					// with a custom renderer, anchors must be comments so that every text node is content
+					selector:
+						"CallExpression[callee.name='create_text'][arguments.length=0], CallExpression[callee.name='create_text'][arguments.0.value='']",
+					message:
+						'Use `create_anchor()` to mark a position, or `create_hydration_text()` for an empty text node while hydrating'
+				}
+			]
+		}
+	},
+	{
 		ignores: [
 			'**/*.d.ts',
 			'**/tests',
 			'packages/svelte/scripts/process-messages/templates/*.js',
 			'packages/svelte/scripts/_bundle.js',
+			'packages/svelte/scripts/_baseline/**',
 			'packages/svelte/src/compiler/errors.js',
 			'packages/svelte/src/internal/client/errors.js',
 			'packages/svelte/src/internal/client/warnings.js',
@@ -102,6 +120,7 @@ export default [
 			'playgrounds/sandbox/**',
 			// exclude top level config files
 			'*.config.js',
+			'vitest-xhtml-environment.ts',
 			// documentation can contain invalid examples
 			'documentation',
 			'tmp/**'

@@ -1,5 +1,6 @@
 import { escape_html } from '../../escaping.js';
 import { clsx as _clsx } from 'clsx';
+import { has_own_property } from './utils.js';
 
 /**
  * `<div translate={false}>` should be rendered as `<div translate="no">` and _not_
@@ -26,9 +27,11 @@ export function attr(name, value, is_boolean = false) {
 	if (name === 'hidden' && value !== 'until-found') {
 		is_boolean = true;
 	}
-	if (value == null || (!value && is_boolean)) return '';
-	const normalized = (name in replacements && replacements[name].get(value)) || value;
-	const assignment = is_boolean ? '' : `="${escape_html(normalized, true)}"`;
+	// `''` is a present boolean attribute, as it is in markup and on the client
+	if (value == null || (is_boolean && !value && value !== '')) return '';
+	const normalized =
+		(has_own_property.call(replacements, name) && replacements[name].get(value)) || value;
+	const assignment = is_boolean ? `=""` : `="${escape_html(normalized, true)}"`;
 	return ` ${name}${assignment}`;
 }
 
@@ -61,7 +64,7 @@ export function to_class(value, hash, directives) {
 	}
 
 	if (directives) {
-		for (var key in directives) {
+		for (var key of Object.keys(directives)) {
 			if (directives[key]) {
 				classname = classname ? classname + ' ' + key : key;
 			} else if (classname.length) {
@@ -96,7 +99,7 @@ function append_styles(styles, important = false) {
 	var separator = important ? ' !important;' : ';';
 	var css = '';
 
-	for (var key in styles) {
+	for (var key of Object.keys(styles)) {
 		var value = styles[key];
 		if (value != null && value !== '') {
 			css += ' ' + key + ': ' + value + separator;
@@ -140,8 +143,9 @@ export function to_style(value, styles) {
 		}
 
 		if (value) {
+			// strip comments; surrounding whitespace is handled by the trims below (which is much faster than doing it through regex)
 			value = String(value)
-				.replaceAll(/\s*\/\*.*?\*\/\s*/g, '')
+				.replaceAll(/\/\*.*?\*\//g, '')
 				.trim();
 
 			/** @type {boolean | '"' | "'"} */

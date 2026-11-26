@@ -17,12 +17,13 @@ import {
 } from '../shared/utils.js';
 import {
 	state as source,
-	set,
-	increment,
+	check_mutation,
+	unchecked_set,
+	unchecked_increment,
 	flush_eager_effects,
 	set_eager_effects_deferred
 } from './reactivity/sources.js';
-import { PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
+import { COMPONENT_SYMBOL, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
 import { tag } from './dev/tracing.js';
@@ -38,8 +39,13 @@ const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
  * @returns {T}
  */
 export function proxy(value) {
-	// if non-proxyable, or is already a proxy, return `value`
-	if (typeof value !== 'object' || value === null || STATE_SYMBOL in value) {
+	// if non-proxyable, a component instance, or already a proxy, return `value`
+	if (
+		typeof value !== 'object' ||
+		value === null ||
+		STATE_SYMBOL in value ||
+		COMPONENT_SYMBOL in value
+	) {
 		return value;
 	}
 
@@ -124,9 +130,12 @@ export function proxy(value) {
 				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy/Proxy/getOwnPropertyDescriptor#invariants
 				e.state_descriptors_fixed();
 			}
+
+			check_mutation(version);
+
 			var s = sources.get(prop);
 			if (s === undefined) {
-				s = with_parent(() => {
+				with_parent(() => {
 					var s = source(descriptor.value, stack);
 					sources.set(prop, s);
 					if (DEV && typeof prop === 'string') {
@@ -135,28 +144,30 @@ export function proxy(value) {
 					return s;
 				});
 			} else {
-				set(s, descriptor.value, true);
+				unchecked_set(s, descriptor.value, true);
 			}
 
 			return true;
 		},
 
 		deleteProperty(target, prop) {
+			check_mutation(version);
+
 			var s = sources.get(prop);
 
 			if (s === undefined) {
 				if (prop in target) {
 					const s = with_parent(() => source(UNINITIALIZED, stack));
 					sources.set(prop, s);
-					increment(version);
+					unchecked_increment(version);
 
 					if (DEV) {
 						tag(s, get_label(path, prop));
 					}
 				}
 			} else {
-				set(s, UNINITIALIZED);
-				increment(version);
+				unchecked_set(s, UNINITIALIZED);
+				unchecked_increment(version);
 			}
 
 			return true;
@@ -199,16 +210,21 @@ export function proxy(value) {
 		},
 
 		getOwnPropertyDescriptor(target, prop) {
+			this.has?.(target, prop);
+
 			var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
+			var s = sources.get(prop);
 
-			if (descriptor && 'value' in descriptor) {
-				var s = sources.get(prop);
-				if (s) descriptor.value = get(s);
-			} else if (descriptor === undefined) {
-				var source = sources.get(prop);
-				var value = source?.v;
+			if (s !== undefined) {
+				var value = get(s);
 
-				if (source !== undefined && value !== UNINITIALIZED) {
+				if (value === UNINITIALIZED) {
+					return undefined;
+				}
+
+				if (descriptor && 'value' in descriptor) {
+					descriptor.value = value;
+				} else {
 					return {
 						enumerable: true,
 						configurable: true,
@@ -231,7 +247,8 @@ export function proxy(value) {
 
 			if (
 				s !== undefined ||
-				(active_effect !== null && (!has || get_descriptor(target, prop)?.writable))
+				((active_effect !== null || active_reaction !== null) &&
+					(!has || get_descriptor(target, prop)?.writable))
 			) {
 				if (s === undefined) {
 					s = with_parent(() => {
@@ -258,6 +275,8 @@ export function proxy(value) {
 		},
 
 		set(target, prop, value, receiver) {
+			check_mutation(version);
+
 			var s = sources.get(prop);
 			var has = prop in target;
 
@@ -266,7 +285,7 @@ export function proxy(value) {
 				for (var i = value; i < /** @type {Source<number>} */ (s).v; i += 1) {
 					var other_s = sources.get(i + '');
 					if (other_s !== undefined) {
-						set(other_s, UNINITIALIZED);
+						unchecked_set(other_s, UNINITIALIZED);
 					} else if (i in target) {
 						// If the item exists in the original, we need to create an uninitialized source,
 						// else a later read of the property would result in a source being created with
@@ -292,7 +311,7 @@ export function proxy(value) {
 					if (DEV) {
 						tag(s, get_label(path, prop));
 					}
-					set(s, proxy(value));
+					unchecked_set(s, proxy(value));
 
 					sources.set(prop, s);
 				}
@@ -300,7 +319,7 @@ export function proxy(value) {
 				has = s.v !== UNINITIALIZED;
 
 				var p = with_parent(() => proxy(value));
-				set(s, p);
+				unchecked_set(s, p);
 			}
 
 			var descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
@@ -320,11 +339,11 @@ export function proxy(value) {
 					var n = Number(prop);
 
 					if (Number.isInteger(n) && n >= ls.v) {
-						set(ls, n + 1);
+						unchecked_set(ls, n + 1);
 					}
 				}
 
-				increment(version);
+				unchecked_increment(version);
 			}
 
 			return true;

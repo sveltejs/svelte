@@ -1,5 +1,5 @@
 import { DEV } from 'esm-env';
-import { set, state } from '../internal/client/reactivity/sources.js';
+import { state, check_mutation, unchecked_set } from '../internal/client/reactivity/sources.js';
 import { tag } from '../internal/client/dev/tracing.js';
 import { get } from '../internal/client/runtime.js';
 import { REPLACE, SvelteURLSearchParams } from './url-search-params.js';
@@ -79,8 +79,9 @@ export class SvelteURL extends URL {
 	}
 
 	set hash(value) {
+		check_mutation(this.#hash);
 		super.hash = value;
-		set(this.#hash, super.hash);
+		unchecked_set(this.#hash, super.hash);
 	}
 
 	get host() {
@@ -90,9 +91,10 @@ export class SvelteURL extends URL {
 	}
 
 	set host(value) {
+		check_mutation(this.#hostname);
 		super.host = value;
-		set(this.#hostname, super.hostname);
-		set(this.#port, super.port);
+		unchecked_set(this.#hostname, super.hostname);
+		unchecked_set(this.#port, super.port);
 	}
 
 	get hostname() {
@@ -100,8 +102,9 @@ export class SvelteURL extends URL {
 	}
 
 	set hostname(value) {
+		check_mutation(this.#hostname);
 		super.hostname = value;
-		set(this.#hostname, super.hostname);
+		unchecked_set(this.#hostname, super.hostname);
 	}
 
 	get href() {
@@ -117,15 +120,16 @@ export class SvelteURL extends URL {
 	}
 
 	set href(value) {
+		check_mutation(this.#protocol);
 		super.href = value;
-		set(this.#protocol, super.protocol);
-		set(this.#username, super.username);
-		set(this.#password, super.password);
-		set(this.#hostname, super.hostname);
-		set(this.#port, super.port);
-		set(this.#pathname, super.pathname);
-		set(this.#hash, super.hash);
-		set(this.#search, super.search);
+		unchecked_set(this.#protocol, super.protocol);
+		unchecked_set(this.#username, super.username);
+		unchecked_set(this.#password, super.password);
+		unchecked_set(this.#hostname, super.hostname);
+		unchecked_set(this.#port, super.port);
+		unchecked_set(this.#pathname, super.pathname);
+		unchecked_set(this.#hash, super.hash);
+		unchecked_set(this.#search, super.search);
 		this.#searchParams[REPLACE](super.searchParams);
 	}
 
@@ -134,8 +138,9 @@ export class SvelteURL extends URL {
 	}
 
 	set password(value) {
+		check_mutation(this.#password);
 		super.password = value;
-		set(this.#password, super.password);
+		unchecked_set(this.#password, super.password);
 	}
 
 	get pathname() {
@@ -143,8 +148,9 @@ export class SvelteURL extends URL {
 	}
 
 	set pathname(value) {
+		check_mutation(this.#pathname);
 		super.pathname = value;
-		set(this.#pathname, super.pathname);
+		unchecked_set(this.#pathname, super.pathname);
 	}
 
 	get port() {
@@ -152,8 +158,9 @@ export class SvelteURL extends URL {
 	}
 
 	set port(value) {
+		check_mutation(this.#port);
 		super.port = value;
-		set(this.#port, super.port);
+		unchecked_set(this.#port, super.port);
 	}
 
 	get protocol() {
@@ -161,8 +168,11 @@ export class SvelteURL extends URL {
 	}
 
 	set protocol(value) {
+		check_mutation(this.#protocol);
 		super.protocol = value;
-		set(this.#protocol, super.protocol);
+		unchecked_set(this.#protocol, super.protocol);
+		// changing the protocol can clear the port when it matches the new scheme's default
+		unchecked_set(this.#port, super.port);
 	}
 
 	get search() {
@@ -170,8 +180,9 @@ export class SvelteURL extends URL {
 	}
 
 	set search(value) {
+		check_mutation(this.#search);
 		super.search = value;
-		set(this.#search, value);
+		unchecked_set(this.#search, super.search);
 		this.#searchParams[REPLACE](super.searchParams);
 	}
 
@@ -180,8 +191,9 @@ export class SvelteURL extends URL {
 	}
 
 	set username(value) {
+		check_mutation(this.#username);
 		super.username = value;
-		set(this.#username, super.username);
+		unchecked_set(this.#username, super.username);
 	}
 
 	get origin() {

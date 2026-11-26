@@ -4,9 +4,9 @@
 /** @import { Visitors, ComponentClientTransformState, ClientTransformState } from './types' */
 import { walk } from 'zimmerframe';
 import * as b from '#compiler/builders';
-import { build_getter, is_state_source } from './utils.js';
+import { build_getter, get_transform } from './utils.js';
 import { render_stylesheet } from '../css/index.js';
-import { dev, filename } from '../../../state.js';
+import { dev, filename, custom_renderer } from '../../../state.js';
 import { AnimateDirective } from './visitors/AnimateDirective.js';
 import { ArrowFunctionExpression } from './visitors/ArrowFunctionExpression.js';
 import { AssignmentExpression } from './visitors/AssignmentExpression.js';
@@ -22,6 +22,7 @@ import { ClassBody } from './visitors/ClassBody.js';
 import { Comment } from './visitors/Comment.js';
 import { Component } from './visitors/Component.js';
 import { ConstTag } from './visitors/ConstTag.js';
+import { DeclarationTag } from './visitors/DeclarationTag.js';
 import { DebugTag } from './visitors/DebugTag.js';
 import { EachBlock } from './visitors/EachBlock.js';
 import { ExportNamedDeclaration } from './visitors/ExportNamedDeclaration.js';
@@ -44,6 +45,7 @@ import { RenderTag } from './visitors/RenderTag.js';
 import { SlotElement } from './visitors/SlotElement.js';
 import { SnippetBlock } from './visitors/SnippetBlock.js';
 import { SpreadAttribute } from './visitors/SpreadAttribute.js';
+import { StaticBlock } from './visitors/StaticBlock.js';
 import { SvelteBody } from './visitors/SvelteBody.js';
 import { SvelteComponent } from './visitors/SvelteComponent.js';
 import { SvelteDocument } from './visitors/SvelteDocument.js';
@@ -66,20 +68,7 @@ const visitors = {
 		const scope = state.scopes.get(node);
 
 		if (scope && scope !== state.scope) {
-			const transform = { ...state.transform };
-
-			for (const [name, binding] of scope.declarations) {
-				if (
-					binding.kind === 'normal' ||
-					// Reads of `$state(...)` declarations are not
-					// transformed if they are never reassigned
-					(binding.kind === 'state' && !is_state_source(binding, state.analysis))
-				) {
-					delete transform[name];
-				}
-			}
-
-			next({ ...state, transform, scope });
+			next({ ...state, transform: get_transform(scope, state), scope });
 		} else {
 			next();
 		}
@@ -99,6 +88,7 @@ const visitors = {
 	Comment,
 	Component,
 	ConstTag,
+	DeclarationTag,
 	DebugTag,
 	EachBlock,
 	ExportNamedDeclaration,
@@ -121,6 +111,7 @@ const visitors = {
 	SlotElement,
 	SnippetBlock,
 	SpreadAttribute,
+	StaticBlock,
 	SvelteBody,
 	SvelteComponent,
 	SvelteDocument,
@@ -152,6 +143,7 @@ export function client_component(analysis, options) {
 		scopes: analysis.module.scopes,
 		is_instance: false,
 		hoisted: [b.import_all('$', 'svelte/internal/client'), ...analysis.instance_body.hoisted],
+		templates: new Map(),
 		node: /** @type {any} */ (null), // populated by the root node
 		legacy_reactive_imports: [],
 		legacy_reactive_statements: new Map(),
@@ -166,10 +158,12 @@ export function client_component(analysis, options) {
 		in_constructor: false,
 		instance_level_snippets: [],
 		module_level_snippets: [],
+		is_standalone: false,
 
 		// these are set inside the `Fragment` visitor, and cannot be used until then
 		init: /** @type {any} */ (null),
 		consts: /** @type {any} */ (null),
+		snippets: /** @type {any} */ (null),
 		let_directives: /** @type {any} */ (null),
 		update: /** @type {any} */ (null),
 		after_update: /** @type {any} */ (null),
@@ -255,11 +249,11 @@ export function client_component(analysis, options) {
 	}
 
 	for (const [node] of analysis.reactive_statements) {
-		const statement = [...state.legacy_reactive_statements].find(([n]) => n === node);
+		const statement = state.legacy_reactive_statements.get(node);
 		if (statement === undefined) {
 			throw new Error('Could not find reactive statement');
 		}
-		instance.body.push(statement[1]);
+		instance.body.push(statement);
 	}
 
 	if (analysis.reactive_statements.size > 0) {
@@ -350,7 +344,7 @@ export function client_component(analysis, options) {
 			)
 		);
 	} else if (dev) {
-		component_returned_object.push(b.spread(b.call(b.id('$.legacy_api'))));
+		component_returned_object.unshift(b.spread(b.call(b.id('$.legacy_api'))));
 	}
 
 	const push_args = [b.id('$$props'), b.literal(analysis.runes)];
@@ -519,14 +513,9 @@ export function client_component(analysis, options) {
 
 	if (options.hmr) {
 		const id = b.id(analysis.name);
-		const HMR = b.id('$.HMR');
-
-		const existing = b.member(id, HMR, true);
-		const incoming = b.member(b.id('module.default'), HMR, true);
 
 		const accept_fn_body = [
-			b.stmt(b.assignment('=', b.member(incoming, 'source'), b.member(existing, 'source'))),
-			b.stmt(b.call('$.set', b.member(existing, 'source'), b.member(incoming, 'original')))
+			b.stmt(b.call(b.member(b.member(id, b.id('$.HMR'), true), 'update'), b.id('module.default')))
 		];
 
 		if (analysis.css.hash) {
@@ -535,8 +524,7 @@ export function client_component(analysis, options) {
 		}
 
 		const hmr = b.block([
-			b.stmt(b.assignment('=', id, b.call('$.hmr', id, b.thunk(b.member(existing, 'source'))))),
-
+			b.stmt(b.assignment('=', id, b.call('$.hmr', id))),
 			b.stmt(b.call('import.meta.hot.accept', b.arrow([b.id('module')], b.block(accept_fn_body))))
 		]);
 
@@ -569,6 +557,19 @@ export function client_component(analysis, options) {
 	if (options.discloseVersion) {
 		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
 	}
+	// this needs to be !== undefined because we want to enable the flag even if the custom renderer is null (which is a valid value meaning "no renderer")
+	if (custom_renderer !== undefined) {
+		body.unshift(b.imports([], 'svelte/internal/flags/custom-renderer'));
+	}
+
+	if (custom_renderer) {
+		body.unshift(b.imports([['$renderer', '$renderer', true]], custom_renderer));
+	} else {
+		// DOM components set up the DOM operations (prototype caches etc) by importing this module, rather
+		// than `mount`/`hydrate` doing it, so that apps that only use custom renderers don't bundle it
+		// (or touch `window` etc, which might not exist). It only runs once however many components import it
+		body.unshift(b.imports([], 'svelte/internal/init-operations'));
+	}
 
 	if (options.compatibility.componentApi === 4) {
 		body.unshift(b.imports([['createClassComponent', '$$_createClassComponent']], 'svelte/legacy'));
@@ -593,13 +594,67 @@ export function client_component(analysis, options) {
 		component_block.body.unshift(b.const(analysis.props_id, b.call('$.props_id')));
 	}
 
+	if (custom_renderer !== undefined) {
+		// when the custom renderer feature is enabled every component pushes a renderer: components
+		// with a renderer module push `$renderer`, DOM components push `null`
+		const renderer = custom_renderer ? b.id('$renderer') : b.literal(null);
+		const params = should_inject_props ? [b.id('$$anchor'), b.id('$$props')] : [b.id('$$anchor')];
+
+		/** @type {ESTree.Expression} */
+		let is_crossing = b.call('$.is_crossing', renderer);
+
+		if (options.compatibility.componentApi === 4) {
+			// `new Component(options)` is handled by the legacy wrapper inside the body
+			is_crossing = b.logical('&&', b.unary('!', b.id('new.target')), is_crossing);
+		}
+
+		/** @type {ESTree.Expression} */
+		let component = b.id(analysis.name);
+
+		if (options.hmr) {
+			// with HMR, the component's binding is reassigned to the HMR wrapper, which is what
+			// called us. Call the unwrapped component, so the guest isn't wrapped a second time
+			component = b.logical(
+				'??',
+				/** @type {ESTree.Expression} */ ({
+					type: 'ChainExpression',
+					expression: b.member(b.member(component, b.member_id('$.HMR'), true), 'fn', false, true)
+				}),
+				component
+			);
+		}
+
+		component_block.body = [
+			// if the component is rendered inside content that belongs to a different renderer,
+			// render it across the boundary (which calls the component again, with its own renderer)
+			b.if(
+				is_crossing,
+				b.return(
+					b.call(
+						'$.cross',
+						renderer,
+						b.id('$$anchor'),
+						b.arrow([b.id('$$anchor')], b.call(component, ...params))
+					)
+				)
+			),
+			b.var('$$previous_renderer', b.call('$.push_renderer', renderer)),
+			{
+				type: 'TryStatement',
+				block: b.block(component_block.body),
+				handler: null,
+				finalizer: b.block([b.stmt(b.call('$.pop_renderer', b.id('$$previous_renderer')))])
+			}
+		];
+	}
+
 	if (state.events.size > 0) {
 		body.push(
 			b.stmt(b.call('$.delegate', b.array(Array.from(state.events).map((name) => b.literal(name)))))
 		);
 	}
 
-	const ce = options.customElementOptions ?? options.customElement;
+	const ce = analysis.custom_element;
 
 	if (ce) {
 		const ce_props = typeof ce === 'boolean' ? {} : ce.props || {};
@@ -643,7 +698,16 @@ export function client_component(analysis, options) {
 		const accessors_str = b.array(
 			analysis.exports.map(({ name, alias }) => b.literal(alias ?? name))
 		);
-		const use_shadow_dom = typeof ce === 'boolean' || ce.shadow !== 'none' ? true : false;
+
+		/** @type {ESTree.ObjectExpression | undefined} */
+		let shadow_root_init;
+		if (typeof ce === 'boolean' || ce.shadow === 'open' || ce.shadow === undefined) {
+			shadow_root_init = b.object([b.init('mode', b.literal('open'))]);
+		} else if (ce.shadow === 'none') {
+			shadow_root_init = undefined;
+		} else {
+			shadow_root_init = ce.shadow;
+		}
 
 		const create_ce = b.call(
 			'$.create_custom_element',
@@ -651,7 +715,7 @@ export function client_component(analysis, options) {
 			b.object(props_str),
 			slots_str,
 			accessors_str,
-			b.literal(use_shadow_dom),
+			shadow_root_init,
 			/** @type {any} */ (typeof ce !== 'boolean' ? ce.extend : undefined)
 		);
 

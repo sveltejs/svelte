@@ -1,9 +1,10 @@
 /** @import { ArrayExpression, Expression, Literal, ObjectExpression } from 'estree' */
 /** @import { AST } from '#compiler' */
 /** @import { ComponentContext, ComponentServerTransformState } from '../../types.js' */
+/** @import { ExpressionMetadata } from '../../../../nodes.js' */
 import { is_event_attribute, is_text_attribute } from '../../../../../utils/ast.js';
 import { binding_properties } from '../../../../bindings.js';
-import { create_attribute, ExpressionMetadata, is_custom_element_node } from '../../../../nodes.js';
+import { is_custom_element_node } from '../../../../nodes.js';
 import { regex_starts_with_newline } from '../../../../patterns.js';
 import * as b from '#compiler/builders';
 import {
@@ -22,6 +23,11 @@ import { escape_html } from '../../../../../../escaping.js';
 const WHITESPACE_INSENSITIVE_ATTRIBUTES = ['class', 'style'];
 
 /**
+ * @typedef {{ type: 'transformed', name: string, expression: Expression }} TransformedAttribute
+ * An attribute whose expression has already been transformed and must not be visited again.
+ */
+
+/**
  * Writes the output to the template output. Some elements may have attributes on them that require the
  * their output to be the child content instead. In this case, an object is returned.
  * @param {AST.RegularElement | AST.SvelteElement} node
@@ -29,7 +35,7 @@ const WHITESPACE_INSENSITIVE_ATTRIBUTES = ['class', 'style'];
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
  */
 export function build_element_attributes(node, context, transform) {
-	/** @type {Array<AST.Attribute | AST.SpreadAttribute>} */
+	/** @type {Array<AST.Attribute | AST.SpreadAttribute | TransformedAttribute>} */
 	const attributes = [];
 
 	/** @type {AST.ClassDirective[]} */
@@ -75,6 +81,14 @@ export function build_element_attributes(node, context, transform) {
 				) {
 					events_to_capture.add(attribute.name);
 				}
+			} else if (
+				node.type === 'RegularElement' &&
+				node.name === 'input' &&
+				(attribute.name === 'defaultValue' || attribute.name === 'defaultChecked')
+			) {
+				attributes.push(attribute);
+				// deopt to spread at runtime, where we can handle interaction of value/defaultValue etc
+				has_spread = true;
 				// the defaultValue/defaultChecked properties don't exist as attributes
 			} else if (attribute.name !== 'defaultValue' && attribute.name !== 'defaultChecked') {
 				if (attribute.name === 'class') {
@@ -123,9 +137,13 @@ export function build_element_attributes(node, context, transform) {
 
 			expression = transform(expression, attribute.metadata.expression);
 
-			if (is_content_editable_binding(attribute.name)) {
+			if (attribute.name === 'innerHTML') {
+				// innerHTML is the only binding we don't escape
 				content = expression;
-			} else if (attribute.name === 'value' && node.name === 'textarea') {
+			} else if (
+				is_content_editable_binding(attribute.name) ||
+				(attribute.name === 'value' && node.name === 'textarea')
+			) {
 				content = b.call('$.escape', expression);
 			} else if (attribute.name === 'group' && attribute.expression.type !== 'SequenceExpression') {
 				const value_attribute = /** @type {AST.Attribute | undefined} */ (
@@ -141,42 +159,26 @@ export function build_element_attributes(node, context, transform) {
 						attr.value[0].data === 'checkbox'
 				);
 
-				attributes.push(
-					create_attribute('checked', null, -1, -1, [
-						{
-							type: 'ExpressionTag',
-							start: -1,
-							end: -1,
-							expression: is_checkbox
-								? b.call(
-										b.member(attribute.expression, 'includes'),
-										build_attribute_value(value_attribute.value, context, transform)
-									)
-								: b.binary(
-										'===',
-										attribute.expression,
-										build_attribute_value(value_attribute.value, context, transform)
-									),
-							metadata: {
-								expression: new ExpressionMetadata()
-							}
-						}
-					])
-				);
+				attributes.push({
+					type: 'transformed',
+					name: 'checked',
+					expression: is_checkbox
+						? b.call(
+								b.member(expression, 'includes'),
+								build_attribute_value(value_attribute.value, context, transform)
+							)
+						: b.binary(
+								'===',
+								expression,
+								build_attribute_value(value_attribute.value, context, transform)
+							)
+				});
 			} else {
-				attributes.push(
-					create_attribute(attribute.name, null, -1, -1, [
-						{
-							type: 'ExpressionTag',
-							start: -1,
-							end: -1,
-							expression,
-							metadata: {
-								expression: new ExpressionMetadata()
-							}
-						}
-					])
-				);
+				attributes.push({
+					type: 'transformed',
+					name: get_attribute_name(node, attribute),
+					expression
+				});
 			}
 		} else if (attribute.type === 'SpreadAttribute') {
 			attributes.push(attribute);
@@ -213,7 +215,21 @@ export function build_element_attributes(node, context, transform) {
 	} else {
 		const css_hash = node.metadata.scoped ? context.state.analysis.css.hash : null;
 
-		for (const attribute of /** @type {AST.Attribute[]} */ (attributes)) {
+		for (const attribute of /** @type {Array<AST.Attribute | TransformedAttribute>} */ (
+			attributes
+		)) {
+			if (attribute.type === 'transformed') {
+				context.state.template.push(
+					b.call(
+						'$.attr',
+						b.literal(attribute.name),
+						attribute.expression,
+						is_boolean_attribute(attribute.name) && b.true
+					)
+				);
+				continue;
+			}
+
 			const name = get_attribute_name(node, attribute);
 			const can_use_literal =
 				(name !== 'class' || class_directives.length === 0) &&
@@ -235,13 +251,7 @@ export function build_element_attributes(node, context, transform) {
 
 				if (name !== 'class' || literal_value) {
 					context.state.template.push(
-						b.literal(
-							` ${attribute.name}${
-								is_boolean_attribute(name) && literal_value === true
-									? ''
-									: `="${literal_value === true ? '' : String(literal_value)}"`
-							}`
-						)
+						b.literal(` ${name}="${literal_value === true ? '' : String(literal_value)}"`)
 					);
 				}
 
@@ -300,15 +310,19 @@ function get_attribute_name(element, attribute) {
 
 /**
  * @param {AST.RegularElement | AST.SvelteElement} element
- * @param {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} attributes
+ * @param {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective | TransformedAttribute>} attributes
  * @param {ComponentContext} context
  * @param {(expression: Expression, metadata: ExpressionMetadata) => Expression} transform
  */
 export function build_spread_object(element, attributes, context, transform) {
+	const is_select = element.type === 'RegularElement' && element.name === 'select';
 	const object = b.object(
 		attributes.map((attribute) => {
-			if (attribute.type === 'Attribute') {
-				const name = get_attribute_name(element, attribute);
+			if (attribute.type === 'transformed') {
+				return b.prop('init', b.key(attribute.name), attribute.expression);
+			} else if (attribute.type === 'Attribute') {
+				let name = get_attribute_name(element, attribute);
+				if (is_select && name === 'defaultvalue') name = 'defaultValue';
 				const value = build_attribute_value(
 					attribute.value,
 					context,
@@ -319,10 +333,9 @@ export function build_spread_object(element, attributes, context, transform) {
 				return b.prop('init', b.key(name), value);
 			} else if (attribute.type === 'BindDirective') {
 				const name = get_attribute_name(element, attribute);
+				const expression = /** @type {Expression} */ (context.visit(attribute.expression));
 				const value =
-					attribute.expression.type === 'SequenceExpression'
-						? b.call(attribute.expression.expressions[0])
-						: /** @type {Expression} */ (context.visit(attribute.expression));
+					expression.type === 'SequenceExpression' ? b.call(expression.expressions[0]) : expression;
 
 				return b.prop('init', b.key(name), value);
 			}
@@ -342,7 +355,7 @@ export function build_spread_object(element, attributes, context, transform) {
 /**
  *
  * @param {AST.RegularElement | AST.SvelteElement} element
- * @param {Array<AST.Attribute | AST.SpreadAttribute>} attributes
+ * @param {Array<AST.Attribute | AST.SpreadAttribute | TransformedAttribute>} attributes
  * @param {AST.StyleDirective[]} style_directives
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
@@ -358,7 +371,7 @@ function build_element_spread_attributes(
 ) {
 	const args = prepare_element_spread(
 		element,
-		/** @type {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} */ (attributes),
+		attributes,
 		style_directives,
 		class_directives,
 		context,
@@ -412,7 +425,7 @@ export function prepare_element_spread_object(element, context, transform) {
 /**
  * Prepare args for $.attributes(...): compute object, css_hash, classes, styles and flags.
  * @param {AST.RegularElement | AST.SvelteElement} element
- * @param {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective>} attributes
+ * @param {Array<AST.Attribute | AST.SpreadAttribute | AST.BindDirective | TransformedAttribute>} attributes
  * @param {AST.StyleDirective[]} style_directives
  * @param {AST.ClassDirective[]} class_directives
  * @param {ComponentContext} context
@@ -544,7 +557,7 @@ function build_attr_style(style_directives, expression, context, transform) {
 				name = name.toLowerCase();
 			}
 
-			const property = b.init(directive.name, expression);
+			const property = b.init(name, expression);
 			if (directive.modifiers.includes('important')) {
 				important_properties.push(property);
 			} else {

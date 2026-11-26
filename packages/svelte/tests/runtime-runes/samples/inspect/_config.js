@@ -12,6 +12,6 @@ export default test({
 		b2.click();
 		await Promise.resolve();
 
-		assert.deepEqual(normalise_inspect_logs(logs), [0, 1, 'at HTMLButtonElement.<anonymous>']);
+		assert.deepEqual(normalise_inspect_logs(logs), [0, 1, 'at HTMLButtonElement.click']);
 	}
 });

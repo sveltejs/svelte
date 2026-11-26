@@ -6,11 +6,11 @@ import { decode_character_references } from '../utils/html.js';
 export default function text(parser) {
 	const start = parser.index;
 
-	let data = '';
-
 	while (parser.index < parser.template.length && !parser.match('<') && !parser.match('{')) {
-		data += parser.template[parser.index++];
+		parser.index++;
 	}
+
+	const data = parser.template.slice(start, parser.index);
 
 	/** @type {AST.Text} */
 	parser.append({
