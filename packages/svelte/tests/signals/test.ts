@@ -4,6 +4,7 @@ import * as $ from '../../src/internal/client/runtime';
 import { push, pop } from '../../src/internal/client/context';
 import {
 	block,
+	destroy_effect,
 	branch,
 	effect,
 	effect_root,
@@ -25,7 +26,7 @@ import { derived } from '../../src/internal/client/reactivity/deriveds';
 import { Batch, source_stacks } from '../../src/internal/client/reactivity/batch';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
-import { CONNECTED, DESTROYED } from '../../src/internal/client/constants';
+import { CLEAN, CONNECTED, DESTROYED } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
 
@@ -2121,6 +2122,87 @@ describe('signals', () => {
 			pop();
 		}
 	});
+
+	for (const cached of [false, true]) {
+		it(`reconnecting a derived in a batch view caches its parent globally (cached ${cached})`, () => {
+			enable_async_mode_flag();
+			push({}, true);
+			const value = state(0);
+			let key!: Derived<number>;
+			let next!: Derived<{ key: number }>;
+			let first!: { key: number };
+			let destroy_reader = noop;
+			const destroy_owner = effect_root(() => {
+				key = derived(() => $.get(value));
+				$.untrack(() => $.get(key));
+			});
+			pop();
+			flushSync();
+
+			const pending = fork(() => {
+				destroy_reader = effect_root(() => {
+					if (cached) {
+						const reader = block(() => $.get(key));
+						destroy_effect(reader);
+					}
+					next = derived(() => ({ key: $.get(key) }));
+					block(() => {
+						first = $.get(next);
+					});
+				});
+			});
+
+			try {
+				assert.notEqual(next.dv, null);
+				assert.equal(key.f & CLEAN, CLEAN);
+				assert.equal($.get(next), first);
+			} finally {
+				pending.discard();
+				destroy_reader();
+				destroy_owner();
+				flushSync();
+				disable_async_mode_flag();
+			}
+		});
+	}
+
+	for (const depth of [1, 2]) {
+		it(`reusing a global run in an older view does not mark a stale derived clean (depth ${depth})`, () => {
+			enable_async_mode_flag();
+			push({}, true);
+			const value = state(0);
+			let result!: Derived<number>;
+			const destroy = effect_root(() => {
+				const key = derived(() => $.get(value));
+				result = depth === 1 ? key : derived(() => $.get(key));
+				block(() => $.get(result));
+			});
+			pop();
+			flushSync();
+
+			const earlier = new Batch();
+			const later = new Batch();
+			later.activate();
+			set(value, 1);
+			later.deactivate();
+
+			try {
+				earlier.activate();
+				assert.equal($.get(result), 0);
+				assert.equal(result.f & CLEAN, 0);
+				earlier.deactivate();
+				later.flush();
+				assert.equal($.get(result), 1);
+			} finally {
+				earlier.deactivate();
+				earlier.discard();
+				later.discard();
+				destroy();
+				flushSync();
+				disable_async_mode_flag();
+			}
+		});
+	}
 
 	it('prunes the edges of a block effect once the batches that ran it commit', () => {
 		enable_async_mode_flag();
