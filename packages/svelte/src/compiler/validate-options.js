@@ -1,4 +1,4 @@
-/** @import { ModuleCompileOptions, ValidatedModuleCompileOptions, CompileOptions, ValidatedCompileOptions } from '#compiler' */
+/** @import { ModuleCompileOptions, ValidatedModuleCompileOptions, CompileOptions, ValidatedCompileOptions, CssHashGetter } from '#compiler' */
 import * as e from './errors.js';
 import * as w from './warnings.js';
 
@@ -120,9 +120,34 @@ const component_options = {
 		}
 	),
 
-	cssHash: fun(({ css, filename, hash }) => {
-		return `svelte-${hash(filename === '(unknown)' ? css : (filename ?? css))}`;
-	}),
+	cssHash: validator(
+		/** @type {CssHashGetter} */ (
+			({ css, filename, hash }) => {
+				return `svelte-${hash(filename === '(unknown)' ? css : (filename ?? css))}`;
+			}
+		),
+		(input, keypath) => {
+			if (typeof input !== 'function') {
+				throw_error(`${keypath} should be a function, if specified`);
+			}
+
+			return (/** @type {Parameters<CssHashGetter>[0]} */ options) => {
+				const result = input(options);
+
+				// the result is used as-is in selectors and keyframe names, so it must not need escaping
+				if (
+					typeof result !== 'string' ||
+					!/^(?:--|-?[a-zA-Z_\u0080-￿])[\w\u0080-￿-]*$/.test(result)
+				) {
+					throw_error(
+						`${keypath} must return a valid CSS class name that does not need escaping (received ${JSON.stringify(result)})`
+					);
+				}
+
+				return result;
+			};
+		}
+	),
 
 	// TODO this is a sourcemap option, would be good to put under a sourcemap namespace
 	cssOutputFilename: string(undefined),
