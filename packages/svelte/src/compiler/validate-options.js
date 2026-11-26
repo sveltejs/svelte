@@ -137,7 +137,7 @@ const component_options = {
 				// the result is used as-is in selectors and keyframe names, so it must not need escaping
 				if (
 					typeof result !== 'string' ||
-					!/^(?:--|-?[a-zA-Z_\u0080-￿])[\w\u0080-￿-]*$/.test(result)
+					!/^(?:--|-?[a-zA-Z_\u0080-\uffff])[\w\u0080-\uffff-]*$/.test(result)
 				) {
 					throw_error(
 						`${keypath} must return a valid CSS class name that does not need escaping (received ${JSON.stringify(result)})`
