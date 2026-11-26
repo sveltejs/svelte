@@ -37,7 +37,8 @@ import {
 	CONNECTED,
 	MANAGED_EFFECT,
 	DESTROYING,
-	PAUSED
+	PAUSED,
+  STRICT_REACTION
 } from '#client/constants';
 import { invoke_error_boundary } from '../error-handling.js';
 import * as e from '../errors.js';
@@ -258,7 +259,7 @@ export function user_pre_effect(fn) {
 
 /** @param {() => void | (() => void)} fn */
 export function eager_effect(fn) {
-	return create_effect(EAGER_EFFECT, fn);
+	return create_effect(EAGER_EFFECT | STRICT_REACTION, fn);
 }
 
 /**
@@ -374,7 +375,7 @@ export function legacy_pre_effect_reset() {
  * @returns {Effect}
  */
 export function async_effect(fn) {
-	return create_effect(ASYNC | EFFECT_PRESERVED, fn);
+	return create_effect(ASYNC | STRICT_REACTION | EFFECT_PRESERVED, fn);
 }
 
 /**
@@ -393,7 +394,7 @@ export function render_effect(fn, flags = 0) {
  */
 export function template_effect(fn, sync = [], async = [], blockers = []) {
 	flatten(blockers, sync, async, (values) => {
-		create_effect(RENDER_EFFECT, () => {
+		create_effect(RENDER_EFFECT | STRICT_REACTION, () => {
 			fn(...values.map(get));
 		});
 	});
@@ -417,7 +418,7 @@ export function deferred_template_effect(fn, sync = [], async = [], blockers = [
  * @param {number} flags
  */
 export function block(fn, flags = 0) {
-	var effect = create_effect(BLOCK_EFFECT | flags, fn);
+	var effect = create_effect(BLOCK_EFFECT | STRICT_REACTION | flags, fn);
 	if (DEV) {
 		effect.dev_stack = dev_stack;
 	}

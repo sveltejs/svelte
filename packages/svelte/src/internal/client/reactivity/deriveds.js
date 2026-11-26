@@ -12,7 +12,8 @@ import {
 	CONNECTED,
 	ASSIGNED,
 	ERROR_VALUE,
-	HAS_ABORT_CONTROLLER
+	HAS_ABORT_CONTROLLER,
+    STRICT_REACTION
 } from '#client/constants';
 import {
 	active_reaction,
@@ -69,7 +70,7 @@ export const recent_async_deriveds = new Set();
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(fn) {
-	var flags = DERIVED | DIRTY;
+	var flags = DERIVED | DIRTY | STRICT_REACTION;
 
 	if (active_effect !== null) {
 		// Since deriveds are evaluated lazily, any effects created inside them are
