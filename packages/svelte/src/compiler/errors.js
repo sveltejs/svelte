@@ -511,6 +511,15 @@ export function state_field_invalid_assignment(node) {
 }
 
 /**
+ * Cannot assign to state inside a template expression
+ * @param {null | number | NodeLike} node
+ * @returns {never}
+ */
+export function state_invalid_assignment(node) {
+	e(node, 'state_invalid_assignment', `Cannot assign to state inside a template expression\nhttps://svelte.dev/e/state_invalid_assignment`);
+}
+
+/**
  * Cannot export state from a module if it is reassigned. Either export a function returning the state value or only mutate the state value's properties
  * @param {null | number | NodeLike} node
  * @returns {never}

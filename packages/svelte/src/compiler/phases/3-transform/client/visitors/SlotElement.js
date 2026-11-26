@@ -29,17 +29,15 @@ export function SlotElement(node, context) {
 
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'SpreadAttribute') {
-			const expression = /** @type {Expression} */ (context.visit(attribute));
-			const memoized = memoizer.add(expression, attribute.metadata.expression);
-			spreads.push(b.thunk(expression !== memoized ? b.call('$.get', memoized) : expression));
+			spreads.push(b.thunk(/** @type {Expression} */ (context.visit(attribute))));
 		} else if (attribute.type === 'Attribute') {
 			const { value, has_state } = build_attribute_value(
 				attribute.value,
 				context,
-				(value, metadata) => {
-					const memoized = memoizer.add(value, metadata);
-					return value !== memoized ? b.call('$.get', memoized) : value;
-				}
+				(value, metadata) =>
+					metadata.has_call || metadata.has_await
+						? b.call('$.get', memoizer.add(value, metadata))
+						: value
 			);
 
 			if (attribute.name === 'name') {

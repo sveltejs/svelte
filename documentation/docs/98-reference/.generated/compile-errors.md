@@ -1015,6 +1015,12 @@ class Counter {
 Cannot assign to a state field before its declaration
 ```
 
+### state_invalid_assignment
+
+```
+Cannot assign to state inside a template expression
+```
+
 ### state_invalid_export
 
 ```

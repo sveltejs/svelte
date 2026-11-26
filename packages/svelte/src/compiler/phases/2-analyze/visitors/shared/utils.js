@@ -22,6 +22,38 @@ import { get_name } from '../../../nodes.js';
 export function validate_assignment(node, argument, context) {
 	validate_no_const_assignment(node, argument, context.state.scope, node.type === 'BindDirective');
 
+	if (
+		node.type !== 'BindDirective' &&
+		context.state.analysis.runes &&
+		context.state.ast_type === 'template' &&
+		context.state.expression &&
+		!context.path.some(
+			(parent, i) =>
+				parent.type === 'ArrowFunctionExpression' ||
+				parent.type === 'FunctionExpression' ||
+				parent.type === 'FunctionDeclaration' ||
+				parent.type === 'BindDirective' ||
+				// Instance field initializers are deferred, unlike computed keys and static fields.
+				(parent.type === 'PropertyDefinition' &&
+					!parent.static &&
+					parent.value === (context.path[i + 1] ?? node))
+		)
+	) {
+		for (const id of extract_identifiers(/** @type {Pattern} */ (argument))) {
+			const binding = context.state.scope.get(id.name);
+
+			if (
+				binding?.kind === 'state' ||
+				binding?.kind === 'raw_state' ||
+				binding?.kind === 'derived' ||
+				binding?.kind === 'prop' ||
+				binding?.kind === 'bindable_prop'
+			) {
+				e.state_invalid_assignment(node);
+			}
+		}
+	}
+
 	if (argument.type === 'Identifier') {
 		const binding = context.state.scope.get(argument.name);
 

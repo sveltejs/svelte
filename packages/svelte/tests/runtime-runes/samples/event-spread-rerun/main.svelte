@@ -1,12 +1,9 @@
 <script>
-	import { onMount } from 'svelte';
+	import { untrack } from 'svelte';
 
 	let rest = $state(undefined);
-
-	// Rerun the attribute spread after mounting, before dispatching the input event.
-	onMount(() => {
-		rest = {};
-	});
 </script>
 
 <input {...rest} oninput={() => console.log('hi')}>
+<!-- after input and inside template so that attribute spread reruns immediately -->
+{!rest ? untrack(() => (rest = {})) : false}
