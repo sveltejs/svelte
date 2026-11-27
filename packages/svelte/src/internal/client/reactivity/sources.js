@@ -22,11 +22,10 @@ import {
 	BRANCH_EFFECT,
 	EAGER_EFFECT,
 	MAYBE_DIRTY,
-	BLOCK_EFFECT,
 	ROOT_EFFECT,
-	ASYNC,
 	ASSIGNED,
-	ERROR_VALUE
+	ERROR_VALUE,
+	STRICT_REACTION
 } from '#client/constants';
 import * as e from '../errors.js';
 import { legacy_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -152,7 +151,7 @@ export function check_mutation(source) {
 		// to ensure we error if state is set inside an inspect effect
 		(!untracking || (active_reaction.f & EAGER_EFFECT) !== 0) &&
 		is_runes() &&
-		(active_reaction.f & (DERIVED | BLOCK_EFFECT | ASYNC | EAGER_EFFECT)) !== 0 &&
+		(active_reaction.f & STRICT_REACTION) !== 0 &&
 		(current_sources === null || !current_sources.has(source))
 	) {
 		e.state_unsafe_mutation();
