@@ -256,8 +256,18 @@ export function user_pre_effect(fn) {
 	return create_effect(RENDER_EFFECT | USER_EFFECT, fn);
 }
 
+/**
+ * Whether an eager effect (`$inspect`, `$state.eager`) was ever created. Until then no reaction
+ * has the `EAGER_EFFECT` flag, so code that handles eager effects can be skipped. Since this is only
+ * assigned in `eager_effect`, bundlers treat it as `false` when that isn't bundled, and remove
+ * the eager-effect handling it guards from apps that use neither `$state.eager` nor `$inspect`.
+ * It must be the first operand of those guards so that they can be folded away
+ */
+export let eager_effects_used = false;
+
 /** @param {() => void | (() => void)} fn */
 export function eager_effect(fn) {
+	eager_effects_used = true;
 	return create_effect(EAGER_EFFECT, fn);
 }
 
