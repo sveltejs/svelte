@@ -55,7 +55,7 @@ export class SvelteMap extends Map {
 	#sources = new Map();
 	#version = state(0);
 	#size = state(0);
-	#update_version = update_version || -1;
+	#update_version = update_version;
 
 	/**
 	 * @param {Iterable<readonly [K, V]> | null | undefined} [value]

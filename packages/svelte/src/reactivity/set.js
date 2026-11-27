@@ -49,7 +49,7 @@ export class SvelteSet extends Set {
 	#sources = new Map();
 	#version = state(0);
 	#size = state(0);
-	#update_version = update_version || -1;
+	#update_version = update_version;
 
 	/**
 	 * @param {Iterable<T> | null | undefined} [value]
