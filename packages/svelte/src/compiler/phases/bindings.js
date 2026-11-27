@@ -215,7 +215,7 @@ export const binding_properties = {
 	open: {
 		event: 'toggle',
 		bidirectional: true,
-		valid_elements: ['details']
+		valid_elements: ['details', 'dialog']
 	},
 	value: {
 		valid_elements: ['input', 'textarea', 'select'],

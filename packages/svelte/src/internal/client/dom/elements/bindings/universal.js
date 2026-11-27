@@ -64,6 +64,44 @@ export function bind_property(property, event_name, element, set, get) {
 }
 
 /**
+ * Uses `show()` and `close()` to update the dialog, so that it is opened and closed
+ * the same way as when calling those methods directly
+ * @param {HTMLDialogElement} dialog
+ * @param {() => unknown} get
+ * @param {(value: unknown) => void} set
+ * @returns {void}
+ */
+export function bind_dialog_open(dialog, get, set = get) {
+	var handler = () => set(dialog.open);
+
+	dialog.addEventListener('toggle', handler);
+	// browsers without the toggle event for dialogs still fire close
+	dialog.addEventListener('close', handler);
+
+	var initial = true;
+
+	render_effect(() => {
+		var value = !!get();
+
+		if (value === dialog.open) {
+			initial = false;
+			return;
+		}
+
+		// The first value is applied like SSR's `open` attribute. `show()` would run before the
+		// dialog is in the document and fire a `toggle` event that hydration doesn't
+		if (initial) {
+			initial = false;
+			dialog.toggleAttribute('open', value);
+		} else if (value) {
+			dialog.show();
+		} else {
+			dialog.close();
+		}
+	});
+}
+
+/**
  * @param {HTMLElement} element
  * @param {(value: unknown) => void} set
  * @returns {void}
