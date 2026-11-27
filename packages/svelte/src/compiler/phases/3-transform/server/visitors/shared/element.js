@@ -277,6 +277,14 @@ export function build_element_attributes(node, context, transform) {
 				);
 			} else if (name === 'style') {
 				context.state.template.push(build_attr_style(style_directives, value, context, transform));
+			} else if (
+				is_boolean_attribute(name) &&
+				node.type === 'RegularElement' &&
+				!is_custom_element_node(node)
+			) {
+				context.state.template.push(
+					b.call('$.attr', b.literal(name), b.unary('!', b.unary('!', value)), b.true)
+				);
 			} else {
 				context.state.template.push(
 					b.call('$.attr', b.literal(name), value, is_boolean_attribute(name) && b.true)
