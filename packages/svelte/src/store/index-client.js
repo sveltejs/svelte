@@ -50,10 +50,6 @@ export function toStore(get, set) {
 	var init_value = get();
 
 	const store = writable(init_value, (set) => {
-		// If the value has changed before we call subscribe, then
-		// we need to treat the value as already having run
-		var ran = init_value !== get();
-
 		// TODO do we need a different implementation on the server?
 		var teardown;
 		// Apply the reaction and effect at the time of toStore being called
@@ -65,16 +61,15 @@ export function toStore(get, set) {
 		try {
 			teardown = effect_root(() => {
 				render_effect(() => {
-					const value = get();
-					if (ran) set(value);
+					// the store may hold a value from an earlier subscription, so
+					// always sync it, even if `get()` equals the initial value
+					set(get());
 				});
 			});
 		} finally {
 			set_active_reaction(previous_reaction);
 			set_active_effect(previous_effect);
 		}
-
-		ran = true;
 
 		return teardown;
 	});
