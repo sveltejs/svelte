@@ -52,6 +52,10 @@ export function decode_character_references(html, is_attribute_value) {
 			// Handle named entities
 			if (entity[0] !== '#') {
 				code = entities[entity];
+
+				if (Array.isArray(code)) {
+					return String.fromCodePoint(...code);
+				}
 			} else if (entity[1] === 'x' || entity[1] === 'X') {
 				code = parseInt(entity.substring(2), 16);
 			} else {
