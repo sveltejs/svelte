@@ -347,7 +347,14 @@ export default function element(parser) {
 				// We take advantage of the fact that the root will never have leadingComments set,
 				// and set the previous comment to it so that the warning mechanism can later
 				// inspect the root and see if there was a html comment before it silencing specific warnings.
-				content.content.leadingComments = [{ type: 'Line', value: prev_comment.data }];
+				content.content.leadingComments = [
+					/** @type {import('estree').Comment} */ ({
+						type: 'Line',
+						value: prev_comment.data,
+						start: prev_comment.start,
+						end: prev_comment.end
+					})
+				];
 			}
 
 			if (content.context === 'module') {
