@@ -109,7 +109,7 @@ export const OBSOLETE = Symbol('obsolete');
  * @param {() => V | Promise<V>} fn
  * @param {string} [label]
  * @param {string} [location] If provided, print a warning if the value is not read immediately after update
- * @param {(error: unknown) => void} [onready] Called when the first result is captured; receives its error, if any
+ * @param {(error: unknown) => void} [onready] Called when the first result is captured or the expression is destroyed; receives its error, if any
  * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
@@ -143,7 +143,8 @@ export function async_expression(fn, label, location, onready) {
 	 * @param {boolean} [continued]
 	 */
 	function flush_waiting(continued = false) {
-		var fns = /** @type {Array<() => void>} */ (waiting);
+		var fns = waiting;
+		if (fns === null) return;
 		waiting = continued ? null : [];
 		if (continued) resolver = null;
 		for (const fn of fns) fn();
@@ -302,9 +303,17 @@ export function async_expression(fn, label, location, onready) {
 	});
 
 	teardown(() => {
+		// Unlike a superseded run, a destroyed expression cannot supply a first value.
+		onready?.(OBSOLETE);
+		onready = undefined;
+
 		for (const d of deferreds) {
 			d.reject(OBSOLETE);
 		}
+
+		// Settled results may still be waiting for the initialization script to continue.
+		// Release them outside the teardown's batch view, like the rejected runs above.
+		if (waiting !== null) queueMicrotask(() => flush_waiting(true));
 	});
 
 	return signal;
