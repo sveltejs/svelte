@@ -25,7 +25,7 @@ import { derived } from '../../src/internal/client/reactivity/deriveds';
 import { Batch, source_stacks } from '../../src/internal/client/reactivity/batch';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
-import { CONNECTED, DESTROYED } from '../../src/internal/client/constants';
+import { CLEAN, CONNECTED, DESTROYED } from '../../src/internal/client/constants';
 import { noop } from 'svelte/internal/client';
 import { disable_async_mode_flag, enable_async_mode_flag } from '../../src/internal/flags';
 
@@ -63,6 +63,56 @@ test.skip = (text: string, fn: (runes: boolean) => any) => {
 	it.skip(`${text} (legacy mode)`, run_test(false, fn));
 	it.skip(`${text} (runes mode)`, run_test(true, fn));
 };
+
+/** Each layer shares its predecessor through a diamond, with only three new bodies. */
+function create_diamond_chain(input: Source<number>, depth: number) {
+	const values: Derived<number>[] = [];
+	const runs: number[] = [];
+
+	function create(fn: () => number) {
+		const index = values.length;
+		runs.push(0);
+		const value = derived(() => {
+			runs[index]++;
+			return fn();
+		});
+		values.push(value);
+		return value;
+	}
+
+	let value = create(() => $.get(input));
+	for (let i = 0; i < depth; i++) {
+		const previous = value;
+		const left = create(() => $.get(previous));
+		const right = create(() => $.get(previous));
+		value = create(() => ($.get(left) + $.get(right)) / 2);
+	}
+
+	return { value, values, runs };
+}
+
+/** Count actual dependency-version comparisons, not elapsed time or derived executions. */
+function count_dependency_checks(values: Derived<number>[], oncheck?: () => void) {
+	const checks = { count: 0 };
+	for (const value of values) {
+		const dv = value.dv!;
+		for (let i = 0; i < dv.length; i++) {
+			let version = dv[i];
+			Object.defineProperty(dv, i, {
+				configurable: true,
+				get() {
+					checks.count++;
+					oncheck?.();
+					return version;
+				},
+				set(value) {
+					version = value;
+				}
+			});
+		}
+	}
+	return checks;
+}
 
 describe('signals', () => {
 	for (const [async, render] of [
@@ -1299,6 +1349,433 @@ describe('signals', () => {
 
 			assert.deepEqual(log, ['init', 'update', 'update']);
 		};
+	});
+
+	for (const depth of [18, 20]) {
+		for (const changed of [false, true]) {
+			test(`reconnecting derived validation bounds diamond work (depth ${depth}, ${changed ? 'changed' : 'unchanged'})`, () => {
+				return () => {
+					const input = state(0);
+					const chain = create_diamond_chain(input, depth);
+					let seen = -1;
+					const mount = () =>
+						effect_root(() => {
+							render_effect(() => {
+								seen = $.get(chain.value);
+							});
+						});
+
+					// Run while connected first, then leave the previously run graph disconnected.
+					mount()();
+					assert.equal(input.reactions, null);
+					const checks = count_dependency_checks(chain.values);
+					if (changed) flushSync(() => set(input, 1));
+
+					for (let read = 0; read < 2; read++) {
+						checks.count = 0;
+						const destroy = mount();
+						try {
+							assert.equal(seen, Number(changed));
+							assert.deepEqual(
+								chain.runs,
+								chain.values.map(() => 1 + Number(changed))
+							);
+							// Allow the lazy 100000-check prefix, followed by linear validation work.
+							assert.isBelow(checks.count, 100_000 + 100 * chain.values.length);
+							assert.isAbove(checks.count, 100_000 - 10 * chain.values.length);
+							if (read === 1) {
+								// No intervening write: the first read's memo must already have expired.
+								assert.isAbove(checks.count, 100_000);
+								flushSync(() => set(input, 2));
+								assert.equal(seen, 2);
+								assert.deepEqual(
+									chain.runs,
+									chain.values.map(() => 2 + Number(changed))
+								);
+							}
+						} finally {
+							destroy();
+						}
+						assert.equal(input.reactions, null);
+						assert.isTrue(chain.values.every((value) => value.reactions === null));
+					}
+				};
+			});
+		}
+	}
+
+	for (const changed of [false, true]) {
+		test(`nonreactive derived validation bounds diamond work (${changed ? 'changed' : 'unchanged'})`, () => {
+			return () => {
+				const input = state(0);
+				const chain = create_diamond_chain(input, 20);
+				assert.equal($.active_reaction, null);
+				assert.equal($.get(chain.value), 0);
+				const checks = count_dependency_checks(chain.values);
+				if (changed) set(input, 1);
+
+				for (let read = 0; read < 2; read++) {
+					checks.count = 0;
+					assert.equal($.get(chain.value), Number(changed));
+					assert.deepEqual(
+						chain.runs,
+						chain.values.map(() => 1 + Number(changed))
+					);
+					assert.isBelow(checks.count, 100_000 + 100 * chain.values.length);
+					// Even two reads in the same handler need separate, lazily allocated memos.
+					assert.isAbove(checks.count, 100_000 - 10 * chain.values.length);
+					assert.equal(input.reactions, null);
+					assert.isTrue(
+						chain.values.every((value) => value.reactions === null && (value.f & CONNECTED) === 0)
+					);
+				}
+
+				set(input, 2);
+				assert.equal($.get(chain.value), 2);
+				assert.deepEqual(
+					chain.runs,
+					chain.values.map(() => 2 + Number(changed))
+				);
+				assert.equal(input.reactions, null);
+			};
+		});
+	}
+
+	test('nonreactive derived validation also bounds untracked reads inside effects', () => {
+		const input = state(0);
+		const chain = create_diamond_chain(input, 18);
+		$.get(chain.value);
+		const checks = count_dependency_checks(chain.values);
+
+		return () => {
+			let seen = -1;
+			const destroy = effect_root(() => {
+				render_effect(() => {
+					seen = $.untrack(() => $.get(chain.value));
+				});
+			});
+			try {
+				assert.equal(seen, 0);
+				assert.isBelow(checks.count, 100_000 + 100 * chain.values.length);
+				assert.isAbove(checks.count, 100_000);
+				assert.equal(input.reactions, null);
+				assert.isTrue(
+					chain.values.every((value) => value.reactions === null && (value.f & CONNECTED) === 0)
+				);
+			} finally {
+				destroy();
+			}
+		};
+	});
+
+	for (const [during, forked] of [
+		[false, false],
+		[true, false],
+		[false, true]
+	]) {
+		test(`reconnecting derived validation invalidates memo on ${forked ? 'fork commits' : 'writes'} ${during ? 'during' : 'between'} cached checks`, () => {
+			return () => {
+				if (forked) enable_async_mode_flag();
+				const input = state(0);
+				const trigger = state(0);
+				const chain = create_diamond_chain(input, 18);
+				let pending: ReturnType<typeof fork> | undefined;
+				let checks_at_write = 0;
+				let checks: { count: number };
+				const writer = derived(() => {
+					if ($.get(trigger)) {
+						checks_at_write = checks.count;
+						if (forked) void pending!.commit();
+						else internal_set(input, 1);
+					}
+					return 0; // The writer's own result version must not change.
+				});
+				const checked = during
+					? derived(() => {
+							const value = $.get(chain.value);
+							$.get(writer);
+							return value;
+						})
+					: chain.value;
+				const again = derived(() => $.get(checked));
+				const result = derived(() => {
+					$.get(checked);
+					if (!during) $.get(writer);
+					return $.get(again);
+				});
+				let seen = -1;
+				const mount = () =>
+					effect_root(() => {
+						render_effect(() => {
+							seen = $.get(result);
+						});
+					});
+
+				mount()();
+				checks = count_dependency_checks(chain.values);
+				if (forked) pending = fork(() => set(input, 1));
+				flushSync(() => set(trigger, 1));
+				const destroy = mount();
+				try {
+					assert.isAbove(checks_at_write, 100_000);
+					assert.equal(seen, 1);
+					assert.deepEqual(
+						chain.runs,
+						chain.values.map(() => 2)
+					);
+				} finally {
+					destroy();
+					pending?.discard();
+					if (forked) disable_async_mode_flag();
+				}
+				assert.equal(input.reactions, null);
+				assert.equal(trigger.reactions, null);
+			};
+		});
+	}
+
+	test('reconnecting derived validation invalidates memo when a dependency is aborted', () => {
+		return () => {
+			const input = state(0);
+			const trigger = state(0);
+			const chain = create_diamond_chain(input, 18);
+			let runs = 0;
+			const leaf = derived(() => {
+				$.get_abort_signal($.active_reaction!);
+				return ++runs;
+			});
+			const a = derived(() => $.get(leaf));
+			const destroy_listener = effect_root(() => {
+				render_effect(() => {
+					$.get(leaf);
+				});
+			});
+			let checks_at_abort = 0;
+			let checks: { count: number };
+			const abort = derived(() => {
+				if ($.get(trigger)) {
+					checks_at_abort = checks.count;
+					destroy_listener();
+				}
+				return 0;
+			});
+			const c = derived(() => $.get(a));
+			const result = derived(() => {
+				$.get(chain.value);
+				$.get(a);
+				$.get(abort);
+				return $.get(c);
+			});
+			let seen = -1;
+			const mount = () =>
+				effect_root(() => {
+					render_effect(() => {
+						seen = $.get(result);
+					});
+				});
+
+			mount()();
+			checks = count_dependency_checks(chain.values);
+			flushSync(() => set(trigger, 1));
+			const destroy = mount();
+			try {
+				assert.isAbove(checks_at_abort, 100_000);
+				assert.equal(seen, 2);
+				assert.equal(runs, 2);
+			} finally {
+				destroy();
+				destroy_listener();
+			}
+			assert.equal(input.reactions, null);
+			assert.equal(trigger.reactions, null);
+		};
+	});
+
+	test('reconnecting derived validation marks a cached dependency clean when it connects', () => {
+		const input = state(0);
+		const trigger = state(0);
+		const chain = create_diamond_chain(input, 18);
+		const a = derived(() => $.get(input));
+		const b = derived(() => {
+			if ($.get(trigger)) render_effect(() => void $.get(a));
+			return 0;
+		});
+		const c = derived(() => $.get(a));
+		const result = derived(() => {
+			$.get(chain.value);
+			return $.get(a) + $.get(b) + $.get(c);
+		});
+		let seen = -1;
+		const mount = () =>
+			effect_root(() => {
+				render_effect(() => {
+					seen = $.get(result);
+				});
+			});
+
+		return () => {
+			mount()();
+			const checks = count_dependency_checks(chain.values);
+			flushSync(() => set(trigger, 1));
+			const destroy = mount();
+			try {
+				assert.isAbove(checks.count, 100_000);
+				assert.equal(seen, 0);
+				assert.equal(a.f & CONNECTED, CONNECTED);
+				assert.equal(a.f & CLEAN, CLEAN);
+			} finally {
+				destroy();
+			}
+		};
+	});
+
+	test('reconnecting derived validation expires memo after an exception', () => {
+		return () => {
+			const input = state(0);
+			const chain = create_diamond_chain(input, 18);
+			let seen = -1;
+			let caught: unknown;
+			const mount = () =>
+				effect_root(() => {
+					render_effect(() => {
+						try {
+							seen = $.get(chain.value);
+						} catch (error) {
+							caught = error;
+						}
+					});
+				});
+			mount()();
+
+			const error = new Error('validation failed');
+			let fail = true;
+			const checks = count_dependency_checks(chain.values, () => {
+				// Throw from validation itself, after the lazy memo has been allocated.
+				if (fail && checks.count === 100_001) throw error;
+			});
+			mount()();
+			assert.equal(caught, error);
+			assert.equal(input.reactions, null);
+
+			fail = false;
+			caught = undefined;
+			checks.count = 0;
+			const destroy = mount();
+			try {
+				assert.equal(caught, undefined);
+				assert.equal(seen, 0);
+				// No write clears the memo for us: the throwing read must do so in finally.
+				assert.isAbove(checks.count, 100_000);
+				assert.isBelow(checks.count, 100_000 + 100 * chain.values.length);
+				flushSync(() => set(input, 1));
+				assert.equal(seen, 1);
+			} finally {
+				destroy();
+			}
+			assert.equal(input.reactions, null);
+		};
+	});
+
+	it('nonreactive derived validation bounds diamond work in a batch view', () => {
+		enable_async_mode_flag();
+		try {
+			const input = source(0);
+			const chain = create_diamond_chain(input, 20);
+			// Run in the real world first, so that the view checks the global runs.
+			assert.equal($.get(chain.value), 0);
+			const checks = count_dependency_checks(chain.values);
+
+			const f = fork(() => {
+				for (let read = 0; read < 2; read++) {
+					checks.count = 0;
+					assert.equal($.get(chain.value), 0);
+					assert.deepEqual(
+						chain.runs,
+						chain.values.map(() => 1)
+					);
+					assert.isBelow(checks.count, 100_000 + 100 * chain.values.length);
+					// Each read has its own, lazily allocated memo.
+					assert.isAbove(checks.count, 100_000 - 10 * chain.values.length);
+				}
+			});
+			f.discard();
+			assert.equal(input.reactions, null);
+			assert.isTrue(chain.values.every((value) => (value.f & CONNECTED) === 0));
+		} finally {
+			disable_async_mode_flag();
+		}
+	});
+
+	for (const same of [false, true]) {
+		it(`batch view validation memo is invalidated by ${same ? 'writing the real value' : 'a write'} during the read`, () => {
+			enable_async_mode_flag();
+			try {
+				const input = source(0);
+				const other = source(0);
+				const trigger = source(0);
+				const chain = create_diamond_chain(input, 18);
+				const value = derived(() => $.get(other));
+				let checks_at_write = 0;
+				let checks: { count: number };
+				const result = derived(() => {
+					$.get(trigger);
+					// Checking the chain allocates the memo...
+					$.get(chain.value);
+					// ...which then holds what the view resolved for `value`.
+					const before = $.get(value);
+					if ($.get(trigger)) {
+						checks_at_write = checks.count;
+						// Writing the real value doesn't allocate a version, but changes what the view holds.
+						$.untrack(() => set(other, same ? 0 : 2));
+					}
+					return [before, $.get(value)];
+				});
+
+				assert.deepEqual($.get(result), [0, 0]);
+				checks = count_dependency_checks(chain.values);
+
+				const f = fork(() => {
+					if (same) set(other, 1);
+					set(trigger, 1);
+					assert.deepEqual($.get(result), same ? [1, 0] : [0, 2]);
+					assert.isAbove(checks_at_write, 100_000);
+				});
+				f.discard();
+				assert.deepEqual($.get(result), [0, 0]);
+			} finally {
+				disable_async_mode_flag();
+			}
+		});
+	}
+
+	it('batch view validation memo expires after an exception', () => {
+		enable_async_mode_flag();
+		try {
+			const input = source(0);
+			const chain = create_diamond_chain(input, 18);
+			assert.equal($.get(chain.value), 0);
+
+			const error = new Error('validation failed');
+			let fail = true;
+			const checks = count_dependency_checks(chain.values, () => {
+				// Throw from validation itself, after the lazy memo has been allocated.
+				if (fail && checks.count === 100_001) throw error;
+			});
+
+			const f = fork(() => {
+				assert.throws(() => $.get(chain.value), 'validation failed');
+
+				fail = false;
+				checks.count = 0;
+				assert.equal($.get(chain.value), 0);
+				// No write clears the memo for us: the throwing read must do so in finally.
+				assert.isAbove(checks.count, 100_000);
+				assert.isBelow(checks.count, 100_000 + 100 * chain.values.length);
+			});
+			f.discard();
+		} finally {
+			disable_async_mode_flag();
+		}
 	});
 
 	test('unowned deriveds are not added as reactions', () => {

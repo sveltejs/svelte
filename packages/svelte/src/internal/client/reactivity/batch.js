@@ -31,6 +31,7 @@ import {
 	active_reaction,
 	get,
 	increment_write_version,
+	invalidate_derived_checks,
 	is_destroying_effect,
 	is_dirty,
 	is_outdated,
@@ -1035,6 +1036,9 @@ export class Batch {
 		// are only captured while no view is active, see `async_derived`)
 		batch_values?.set(source, entry);
 
+		// (a write of the real value doesn't allocate a version, but it can still change what the active view holds)
+		if (same) invalidate_derived_checks();
+
 		// an assignment replaces the value of a derived that the active view of the world holds
 		view_cache?.delete(/** @type {Derived} */ (source));
 
@@ -1852,6 +1856,8 @@ function later_writer(batch, source) {
  * @param {BatchValue} entry
  */
 function apply(source, entry) {
+	// Fork commits apply existing versions, rather than allocating new ones.
+	invalidate_derived_checks();
 	source.v = entry.v;
 	source.wv = entry.wv;
 	source.f = entry.e ? source.f | ERROR_VALUE : source.f & ~ERROR_VALUE;

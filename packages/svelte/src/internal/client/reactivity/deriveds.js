@@ -31,7 +31,11 @@ import {
 	is_dirty,
 	abort_all,
 	abort_controller,
-	get
+	get,
+	derived_checks_version,
+	get_view_check,
+	set_view_check,
+	derived_checks
 } from '../runtime.js';
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
@@ -500,7 +504,8 @@ export function update_derived(signal) {
  * assigned value that holds, or a run of it whose versions are what the view holds — a record in the
  * batch, or the derived itself (i.e. its global state) — or else a new run. Results are cached for the
  * lifetime of the view (see `view_cache`), unless the derived is disconnected, in which case nothing
- * would remove them from the cache when they become stale.
+ * would remove them from the cache when they become stale — they are only reused within one derived read,
+ * until the next explicit write (see `get_view_check`).
  * @param {Derived} derived
  * @returns {Derived | DerivedRecord | BatchValue}
  */
@@ -510,6 +515,13 @@ export function get_view(derived) {
 
 	if (entry !== undefined) return entry;
 
+	// (only allocated once checks get expensive, see `is_current`)
+	if (derived_checks !== null && (derived.f & CONNECTED) === 0) {
+		entry = get_view_check(derived);
+		if (entry !== undefined) return entry;
+	}
+
+	var checks_version = derived_checks_version;
 	var batch = /** @type {Batch} */ (view_batch);
 
 	// What the view holds for the derived is a write to it — an assignment (in this batch, or made while it commits),
@@ -543,6 +555,8 @@ export function get_view(derived) {
 
 	if ((derived.f & CONNECTED) !== 0) {
 		cache.set(derived, entry);
+	} else if (derived_checks !== null) {
+		set_view_check(derived, entry, checks_version);
 	}
 
 	return entry;
