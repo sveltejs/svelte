@@ -70,6 +70,10 @@ export function SnippetBlock(node, context) {
 	const block = /** @type {BlockStatement} */ (context.visit(node.body, child_state)).body;
 	body = b.block([
 		dev ? b.stmt(b.call('$.validate_snippet_args', b.spread(b.id('arguments')))) : b.empty,
+		// the `bind:group` groups that depend on the snippet's declarations, one per render
+		...Array.from(node.metadata.binding_groups.values(), (group) =>
+			b.const(group.name, b.array([]))
+		),
 		...declarations,
 		...block
 	]);
