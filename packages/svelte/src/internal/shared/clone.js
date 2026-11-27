@@ -59,18 +59,54 @@ function clone(value, cloned, path, paths, original = null, no_tojson = false) {
 		var unwrapped = cloned.get(value);
 		if (unwrapped !== undefined) return unwrapped;
 
-		if (value instanceof Map) return /** @type {Snapshot<T>} */ (new Map(value));
-		if (value instanceof Set) return /** @type {Snapshot<T>} */ (new Set(value));
-
-		if (is_array(value)) {
-			var copy = /** @type {Snapshot<any>} */ (Array(value.length));
+		if (value instanceof Map) {
+			var copy = /** @type {Snapshot<any>} */ (new Map());
 			cloned.set(value, copy);
 
 			if (original !== null) {
 				cloned.set(original, copy);
 			}
 
-			for (var i = 0; i < value.length; i += 1) {
+			var i = 0;
+			for (var [key, entry] of value) {
+				copy.set(
+					clone(key, cloned, DEV ? `${path}.entries()[${i}][0]` : path, paths, null, no_tojson),
+					clone(entry, cloned, DEV ? `${path}.entries()[${i}][1]` : path, paths, null, no_tojson)
+				);
+				i += 1;
+			}
+
+			return copy;
+		}
+
+		if (value instanceof Set) {
+			copy = new Set();
+			cloned.set(value, copy);
+
+			if (original !== null) {
+				cloned.set(original, copy);
+			}
+
+			i = 0;
+			for (entry of value) {
+				copy.add(
+					clone(entry, cloned, DEV ? `${path}.values()[${i}]` : path, paths, null, no_tojson)
+				);
+				i += 1;
+			}
+
+			return copy;
+		}
+
+		if (is_array(value)) {
+			copy = Array(value.length);
+			cloned.set(value, copy);
+
+			if (original !== null) {
+				cloned.set(original, copy);
+			}
+
+			for (i = 0; i < value.length; i += 1) {
 				var element = value[i];
 				if (i in value) {
 					copy[i] = clone(element, cloned, DEV ? `${path}[${i}]` : path, paths, null, no_tojson);
@@ -89,7 +125,7 @@ function clone(value, cloned, path, paths, original = null, no_tojson = false) {
 				cloned.set(original, copy);
 			}
 
-			for (var key of Object.keys(value)) {
+			for (key of Object.keys(value)) {
 				copy[key] = clone(
 					// @ts-expect-error
 					value[key],

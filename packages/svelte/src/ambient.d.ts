@@ -74,9 +74,9 @@ declare namespace $state {
 	type NonReactive<T> = T extends Date
 		? Date
 		: T extends Map<infer K, infer V>
-			? Map<K, V>
+			? Map<Snapshot<K>, Snapshot<V>>
 			: T extends Set<infer K>
-				? Set<K>
+				? Set<Snapshot<K>>
 				: T;
 
 	type Snapshot<T> = T extends Primitive
