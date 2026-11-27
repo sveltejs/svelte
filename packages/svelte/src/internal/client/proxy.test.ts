@@ -1,4 +1,6 @@
 import { proxy } from './proxy';
+import { render_effect, effect_root } from './reactivity/effects.js';
+import { flushSync } from '../../index-client.js';
 import { assert, test } from 'vitest';
 
 test('does not mutate the original object', () => {
@@ -130,4 +132,56 @@ test('handles array length mutation', () => {
 	assert.deepEqual(state.length, 0);
 	assert.deepEqual(state, []);
 	assert.deepEqual(state[0], undefined);
+});
+
+test('notifies key readers when a property is added with Object.defineProperty', () => {
+	const state: Record<string, number> = proxy({ a: 1 });
+	const log: string[] = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(Object.keys(state).join());
+		});
+	});
+
+	flushSync(() => {
+		Object.defineProperty(state, 'b', {
+			value: 2,
+			writable: true,
+			enumerable: true,
+			configurable: true
+		});
+	});
+
+	assert.deepEqual(log, ['a', 'a,b']);
+
+	cleanup();
+});
+
+test('notifies key readers when a deleted property is restored with Object.defineProperty', () => {
+	const state: Record<string, number> = proxy({ a: 1, b: 2 });
+	const log: string[] = [];
+
+	const cleanup = effect_root(() => {
+		render_effect(() => {
+			log.push(JSON.stringify(state));
+		});
+	});
+
+	flushSync(() => {
+		delete state.b;
+	});
+
+	flushSync(() => {
+		Object.defineProperty(state, 'b', {
+			value: 3,
+			writable: true,
+			enumerable: true,
+			configurable: true
+		});
+	});
+
+	assert.deepEqual(log, ['{"a":1,"b":2}', '{"a":1}', '{"a":1,"b":3}']);
+
+	cleanup();
 });
