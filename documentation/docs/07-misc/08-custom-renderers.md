@@ -237,13 +237,13 @@ mount(Scene, {
 
 ## What's supported
 
-Custom renderer components support most of Svelte, including runes, props, [snippets](snippet), components, [context](context), [`{#if}`](if), [`{#each}`](each), [`{#key}`](key) and [`{#await}`](await) blocks, [`<svelte:boundary>`](svelte-boundary), [`<svelte:element>`](svelte-element), [attachments](@attach), [`await` expressions](await-expressions), and `bind:` on components.
+Custom renderer components support most of Svelte, including runes, props, [snippets](snippet), components, [context](context), [`{#if}`](if), [`{#each}`](each), [`{#key}`](key) and [`{#await}`](await) blocks, [`<svelte:boundary>`](svelte-boundary), [`<svelte:element>`](svelte-element), [attachments](@attach), [`await` expressions](await-expressions), `bind:` on components and `bind:this` on elements (which gives you the renderer's element node).
 
 Attributes, including `class`, `style`, `class:` and `style:`, are passed to the renderer as attributes (see [Writing a renderer](#Writing-a-renderer)). Event attributes like `onclick` are passed to the renderer's `addEventListener`.
 
 Some features only make sense with the DOM, and cause a compile error in custom renderer components:
 
-- `bind:` on elements
+- `bind:` on elements, other than `bind:this`
 - [transitions](transition) (`transition:`, `in:` and `out:`) and [animations](animate) (`animate:`)
 - the legacy [`on:`](legacy-on) directive
 - [`{@html ...}`](@html)
