@@ -8,8 +8,10 @@ import { current_batch, view_batch } from '../../../reactivity/batch.js';
 import {
 	has_attribute,
 	remove_attribute,
-	set_attribute as set_attribute_op
+	set_attribute as set_attribute_op,
+	set_renderer_property
 } from '../../operations.js';
+import { current_renderer } from '../../../custom-renderer/state.js';
 
 /**
  * Sets the `selected` attribute on an option so form reset can restore it.
@@ -17,6 +19,11 @@ import {
  * @param {boolean} selected
  */
 export function set_selected(option, selected) {
+	if (current_renderer) {
+		set_renderer_property(current_renderer, option, 'selected', selected);
+		return;
+	}
+
 	if (selected) {
 		// The selected option could've changed via user selection, and
 		// setting the value without this check would set it back.
