@@ -484,7 +484,15 @@ export class Batch {
 			// skip effects that are destroyed, or that already ran (e.g. because
 			// they were reached by the traversal that preceded a drain iteration,
 			// or because they were scheduled twice)
-			if ((effect.f & DESTROYED) !== 0 || (effect.f & (DIRTY | MAYBE_DIRTY)) === 0) continue;
+			if (
+				(effect.f & DESTROYED) !== 0 ||
+				(effect.f & (DIRTY | MAYBE_DIRTY)) === 0 ||
+				// Do not mark paths that traversal cannot visit in this batch's view.
+				// Otherwise the next batch mistakes the leftover markers for a collected root.
+				(async_mode_flag && this.is_skipped(effect))
+			) {
+				continue;
+			}
 
 			var e = effect;
 			var covered = false;
