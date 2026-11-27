@@ -2,15 +2,15 @@
 import { DEV } from 'esm-env';
 import { get_descriptors, get_prototype_of, includes, index_of } from '../shared/utils.js';
 import {
+	attach_effects,
 	destroy_block_effect_children,
-	destroy_effect,
 	destroy_effect_children,
+	destroy_effects,
 	destroy_record_effects,
 	effect_tracking,
 	execute_effect_teardown,
-	push_effect,
 	recorded_effects,
-	recorded_parent,
+	recorded_owner,
 	set_recorded_effects
 } from './reactivity/effects.js';
 import {
@@ -867,6 +867,7 @@ function update_dependencies(reaction, flags, value, error) {
 		dv !== null &&
 		length === deps?.length &&
 		reaction.edges === deps &&
+		recorded_effects === null &&
 		(flags & (BLOCK_EFFECT | ASYNC)) === 0
 	) {
 		// The run saw what its dependencies hold now — a write during the run after it read
@@ -1062,9 +1063,6 @@ function update_record(reaction, flags, length, value, error) {
 
 				if (recorded_effects.length > 0) {
 					derived.effects = recorded_effects;
-					if (derived.parent !== null) {
-						push_effects(recorded_effects, derived.parent);
-					}
 				}
 
 				set_recorded_effects(null);
@@ -1217,7 +1215,7 @@ export function promote_record(reaction, record) {
 				derived.effects = record.effects;
 				record.effects = null;
 				if (derived.parent !== null) {
-					push_effects(derived.effects, derived.parent);
+					attach_effects(derived.effects, derived.parent);
 				}
 			}
 		}
@@ -1234,7 +1232,7 @@ export function promote_record(reaction, record) {
 		record.teardown = null;
 
 		if (record.effects != null) {
-			push_effects(record.effects, effect);
+			attach_effects(record.effects, effect, null);
 			record.effects = null;
 		}
 	}
@@ -1390,16 +1388,6 @@ export function remove_reactions(signal) {
 }
 
 /**
- * @param {Effect[]} effects
- * @param {Effect} parent
- */
-function push_effects(effects, parent) {
-	for (var i = 0; i < effects.length; i++) {
-		push_effect(effects[i], parent);
-	}
-}
-
-/**
  * Destroy an effect's non-branch child effects and invoke its own teardown.
  * @param {Effect} effect
  */
@@ -1428,7 +1416,7 @@ export function update_effect(effect) {
 
 	var previous_effect = active_effect;
 	var previous_recorded_effects = recorded_effects;
-	var previous_recorded_parent = recorded_parent;
+	var previous_recorded_owner = recorded_owner;
 	var recorded = async_mode_flag && is_recorded_effect(flags);
 
 	active_effect = effect;
@@ -1488,12 +1476,10 @@ export function update_effect(effect) {
 		}
 	} finally {
 		if (recorded && recorded_effects !== null) {
-			for (var i = 0; i < recorded_effects.length; i++) {
-				destroy_effect(recorded_effects[i]);
-			}
+			destroy_effects(recorded_effects);
 		}
 
-		set_recorded_effects(previous_recorded_effects, previous_recorded_parent);
+		set_recorded_effects(previous_recorded_effects, previous_recorded_owner);
 		active_effect = previous_effect;
 
 		if (custom_renderers_flag) pop_renderer(previous_renderer);

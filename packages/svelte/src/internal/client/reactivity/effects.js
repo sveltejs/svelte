@@ -67,19 +67,75 @@ import { async_mode_flag, custom_renderers_flag } from '../../flags/index.js';
 export let recorded_effects = null;
 
 /**
- * The parent `Effect` whose direct and `DEV`-reparented `EAGER_EFFECT` children belong in
- * `recorded_effects` (nested non-recorded effects push onto their own parent instead).
- * @type {Effect | null}
+ * The `Reaction` (`Effect` during a recorded `update_effect`, or `Derived` during `execute_derived`)
+ * whose direct (and `DEV`-reparented `EAGER_EFFECT`) child effects belong in `recorded_effects`.
+ * @type {Reaction | null}
  */
-export let recorded_parent = null;
+export let recorded_owner = null;
 
 /**
  * @param {Effect[] | null} effects
- * @param {Effect | null} [parent]
+ * @param {Reaction | null} [owner]
  */
-export function set_recorded_effects(effects, parent = null) {
+export function set_recorded_effects(effects, owner = null) {
 	recorded_effects = effects;
-	recorded_parent = parent;
+	recorded_owner = owner;
+}
+
+/**
+ * Return the active recording bucket for `owner` (`recorded_effects` if `owner` is currently
+ * executing a recorded run, or `view_batch`'s `record.effects` array if `owner` has an
+ * unpromoted record in the active batch view), or `null` if effects on `owner` attach globally.
+ * @param {Effect} owner
+ * @param {boolean} [create]
+ * @returns {Effect[] | null}
+ */
+export function get_recorded_effects(owner, create = true) {
+	if (recorded_effects !== null && owner === recorded_owner) {
+		return recorded_effects;
+	}
+
+	if (view_batch !== null && view_batch === current_batch) {
+		var record = view_batch.records?.get(owner);
+		if (record !== undefined) {
+			return create ? (record.effects ??= []) : (record.effects ?? null);
+		}
+	}
+
+	return null;
+}
+
+/**
+ * Abort and destroy each non-destroyed effect in `effects`.
+ * @param {Effect[]} effects
+ */
+export function destroy_effects(effects) {
+	for (var i = 0; i < effects.length; i++) {
+		var e = effects[i];
+		if ((e.f & DESTROYED) === 0) {
+			abort_all(e);
+			destroy_effect(e);
+		}
+	}
+}
+
+/**
+ * Attach child `effects` either directly to `parent`, or to `bucket` when `parent`'s
+ * own run is currently recorded and has not yet promoted onto `parent`.
+ * @param {Effect[]} effects
+ * @param {Effect} parent
+ * @param {Effect[] | null} [bucket]
+ */
+export function attach_effects(effects, parent, bucket = get_recorded_effects(parent)) {
+	if (bucket !== null) {
+		for (var i = 0; i < effects.length; i++) {
+			bucket.push(effects[i]);
+		}
+	} else {
+		for (var j = 0; j < effects.length; j++) {
+			push_effect(effects[j], parent);
+		}
+	}
 }
 
 /**
@@ -197,24 +253,20 @@ function create_effect(type, fn) {
 	if (e !== null) {
 		e.parent = parent;
 
-		if (
-			async_mode_flag &&
-			(type & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 &&
-			((recorded_effects !== null && parent === recorded_parent) ||
-				(active_reaction !== null &&
-					parent === active_reaction &&
-					view_batch !== null &&
-					view_batch === current_batch &&
-					view_batch.records?.has(active_reaction)))
-		) {
-			if (recorded_effects !== null) {
-				recorded_effects.push(e);
-			} else {
-				var record = /** @type {BatchRecord} */ (
-					view_batch?.records?.get(/** @type {Reaction} */ (active_reaction))
-				);
-				(record.effects ??= []).push(e);
+		var bucket = null;
+		if (async_mode_flag && (type & (BRANCH_EFFECT | ROOT_EFFECT)) === 0) {
+			if (
+				recorded_effects !== null &&
+				(recorded_owner === parent || recorded_owner === active_reaction)
+			) {
+				bucket = recorded_effects;
+			} else if (parent !== null && parent === active_reaction) {
+				bucket = get_recorded_effects(parent);
 			}
+		}
+
+		if (bucket !== null) {
+			bucket.push(e);
 		} else {
 			if (parent !== null) {
 				push_effect(e, parent);
@@ -548,12 +600,7 @@ export function destroy_record_effects(record, owner = null) {
 	if (record.effects != null) {
 		var effects = record.effects;
 		record.effects = null;
-		for (var i = 0; i < effects.length; i++) {
-			var e = effects[i];
-			if ((e.f & DESTROYED) === 0) {
-				destroy_effect(e);
-			}
-		}
+		destroy_effects(effects);
 	}
 
 	var teardown = record.teardown;

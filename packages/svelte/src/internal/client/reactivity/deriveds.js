@@ -43,10 +43,13 @@ import * as e from '../errors.js';
 import * as w from '../warnings.js';
 import {
 	async_effect,
+	attach_effects,
 	destroy_effect,
 	destroy_effect_children,
+	destroy_effects,
+	get_recorded_effects,
 	recorded_effects,
-	recorded_parent,
+	recorded_owner,
 	set_recorded_effects,
 	teardown
 } from './effects.js';
@@ -441,7 +444,7 @@ let stack = [];
 export function execute_derived(derived) {
 	var prev_active_effect = active_effect;
 	var prev_recorded_effects = recorded_effects;
-	var prev_recorded_parent = recorded_parent;
+	var prev_recorded_owner = recorded_owner;
 	var parent = derived.parent;
 
 	if (
@@ -464,8 +467,14 @@ export function execute_derived(derived) {
 	}
 
 	set_active_effect(parent);
-	var collecting = async_mode_flag && batch_values !== null;
-	set_recorded_effects(collecting ? [] : null, collecting ? parent : null);
+	var owner_is_recorded_effect = prev_recorded_effects !== null && parent === prev_recorded_owner;
+	var collecting =
+		async_mode_flag &&
+		(batch_values !== null ||
+			owner_is_recorded_effect ||
+			(parent !== null && get_recorded_effects(parent, false) !== null));
+	var effects = collecting ? [] : null;
+	set_recorded_effects(effects, collecting ? derived : null);
 
 	var prev_eager_effects = eager_effects;
 
@@ -484,15 +493,20 @@ export function execute_derived(derived) {
 			}
 		}
 
-		return update_reaction(derived);
-	} finally {
-		if (recorded_effects !== null) {
-			for (var i = 0; i < recorded_effects.length; i++) {
-				destroy_effect(recorded_effects[i]);
-			}
+		var value = update_reaction(derived);
+
+		if (effects !== null && effects.length > 0 && parent !== null && derived.effects === effects) {
+			var bucket = owner_is_recorded_effect ? prev_recorded_effects : get_recorded_effects(parent);
+			attach_effects(effects, parent, bucket);
 		}
 
-		set_recorded_effects(prev_recorded_effects, prev_recorded_parent);
+		return value;
+	} finally {
+		if (recorded_effects !== null) {
+			destroy_effects(recorded_effects);
+		}
+
+		set_recorded_effects(prev_recorded_effects, prev_recorded_owner);
 		set_active_effect(prev_active_effect);
 
 		if (DEV) {
