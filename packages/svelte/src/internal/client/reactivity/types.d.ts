@@ -103,6 +103,10 @@ export interface BatchRecord {
 	e?: boolean;
 	/** The AbortController of the run's signal, if any (see `getAbortSignal`) */
 	ac?: null | AbortController;
+	/** Non-branch child effects created by this recorded run */
+	effects?: null | Effect[];
+	/** Teardown returned by this recorded effect run */
+	teardown?: null | (() => void);
 }
 
 /** A record of a derived, which — unlike the record of an effect — has a value */

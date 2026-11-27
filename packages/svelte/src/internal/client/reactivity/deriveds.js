@@ -31,6 +31,7 @@ import {
 	is_dirty,
 	abort_all,
 	abort_controller,
+	abort_record,
 	get,
 	derived_checks_version,
 	get_view_check,
@@ -40,7 +41,15 @@ import {
 import { equals, safe_equals } from './equality.js';
 import * as e from '../errors.js';
 import * as w from '../warnings.js';
-import { async_effect, destroy_effect, destroy_effect_children, teardown } from './effects.js';
+import {
+	async_effect,
+	destroy_effect,
+	destroy_effect_children,
+	recorded_effects,
+	recorded_parent,
+	set_recorded_effects,
+	teardown
+} from './effects.js';
 import { eager_effects, set_eager_effects, source } from './sources.js';
 import { get_error, invariant } from '../../shared/dev.js';
 import { async_mode_flag, tracing_mode_flag } from '../../flags/index.js';
@@ -431,6 +440,8 @@ let stack = [];
  */
 export function execute_derived(derived) {
 	var prev_active_effect = active_effect;
+	var prev_recorded_effects = recorded_effects;
+	var prev_recorded_parent = recorded_parent;
 	var parent = derived.parent;
 
 	if (
@@ -453,6 +464,8 @@ export function execute_derived(derived) {
 	}
 
 	set_active_effect(parent);
+	var collecting = async_mode_flag && batch_values !== null;
+	set_recorded_effects(collecting ? [] : null, collecting ? parent : null);
 
 	var prev_eager_effects = eager_effects;
 
@@ -462,9 +475,24 @@ export function execute_derived(derived) {
 	}
 
 	try {
-		destroy_derived_effects(derived);
+		if (!collecting) {
+			destroy_derived_effects(derived);
+		} else if (view_batch !== null) {
+			var prev_record = view_batch.records?.get(derived);
+			if (prev_record !== undefined) {
+				abort_record(derived, prev_record, true);
+			}
+		}
+
 		return update_reaction(derived);
 	} finally {
+		if (recorded_effects !== null) {
+			for (var i = 0; i < recorded_effects.length; i++) {
+				destroy_effect(recorded_effects[i]);
+			}
+		}
+
+		set_recorded_effects(prev_recorded_effects, prev_recorded_parent);
 		set_active_effect(prev_active_effect);
 
 		if (DEV) {

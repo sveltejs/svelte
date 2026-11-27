@@ -1,4 +1,4 @@
-/** @import { ComponentContext, ComponentContextLegacy, Derived, Effect, TemplateNode, TransitionManager } from '#client' */
+/** @import { BatchRecord, ComponentContext, ComponentContextLegacy, Derived, Effect, Reaction, TemplateNode, TransitionManager } from '#client' */
 /** @import { Blocker } from './async.js' */
 import {
 	is_dirty,
@@ -45,11 +45,42 @@ import { DEV } from 'esm-env';
 import { define_property } from '../../shared/utils.js';
 import { get_next_sibling, remove_node, append_child } from '../dom/operations.js';
 import { component_context, dev_current_component_function, dev_stack } from '../context.js';
-import { Batch, collected_effects, set_teardown_context, teardown_context } from './batch.js';
+import {
+	Batch,
+	collected_effects,
+	current_batch,
+	first_batch,
+	set_teardown_context,
+	teardown_context,
+	view_batch
+} from './batch.js';
 import { flatten } from './async.js';
 import { set_signal_status } from './status.js';
 import { push_renderer, current_renderer, pop_renderer } from '../custom-renderer/state.js';
-import { custom_renderers_flag } from '../../flags/index.js';
+import { async_mode_flag, custom_renderers_flag } from '../../flags/index.js';
+
+/**
+ * Non-branch child effects created by the active recorded run (`update_effect` or `execute_derived`),
+ * kept separate from the reaction's committed global children until the record is promoted.
+ * @type {Effect[] | null}
+ */
+export let recorded_effects = null;
+
+/**
+ * The parent `Effect` whose direct and `DEV`-reparented `EAGER_EFFECT` children belong in
+ * `recorded_effects` (nested non-recorded effects push onto their own parent instead).
+ * @type {Effect | null}
+ */
+export let recorded_parent = null;
+
+/**
+ * @param {Effect[] | null} effects
+ * @param {Effect | null} [parent]
+ */
+export function set_recorded_effects(effects, parent = null) {
+	recorded_effects = effects;
+	recorded_parent = parent;
+}
 
 /**
  * @param {'$effect' | '$effect.pre' | '$inspect'} rune
@@ -72,7 +103,7 @@ export function validate_effect(rune) {
  * @param {Effect} effect
  * @param {Effect} parent_effect
  */
-function push_effect(effect, parent_effect) {
+export function push_effect(effect, parent_effect) {
 	var parent_last = parent_effect.last;
 	if (parent_last === null) {
 		parent_effect.last = parent_effect.first = effect;
@@ -166,18 +197,38 @@ function create_effect(type, fn) {
 	if (e !== null) {
 		e.parent = parent;
 
-		if (parent !== null) {
-			push_effect(e, parent);
-		}
-
-		// if we're in a derived, add the effect there too
 		if (
-			active_reaction !== null &&
-			(active_reaction.f & DERIVED) !== 0 &&
-			(type & ROOT_EFFECT) === 0
+			async_mode_flag &&
+			(type & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 &&
+			((recorded_effects !== null && parent === recorded_parent) ||
+				(active_reaction !== null &&
+					parent === active_reaction &&
+					view_batch !== null &&
+					view_batch === current_batch &&
+					view_batch.records?.has(active_reaction)))
 		) {
-			var derived = /** @type {Derived} */ (active_reaction);
-			(derived.effects ??= []).push(e);
+			if (recorded_effects !== null) {
+				recorded_effects.push(e);
+			} else {
+				var record = /** @type {BatchRecord} */ (
+					view_batch?.records?.get(/** @type {Reaction} */ (active_reaction))
+				);
+				(record.effects ??= []).push(e);
+			}
+		} else {
+			if (parent !== null) {
+				push_effect(e, parent);
+			}
+
+			// if we're in a derived, add the effect there too
+			if (
+				active_reaction !== null &&
+				(active_reaction.f & DERIVED) !== 0 &&
+				(type & ROOT_EFFECT) === 0
+			) {
+				var derived = /** @type {Derived} */ (active_reaction);
+				(derived.effects ??= []).push(e);
+			}
 		}
 	}
 
@@ -454,29 +505,61 @@ export function branch(fn) {
 }
 
 /**
+ * @param {() => void} teardown
+ * @param {Effect | null} parent
+ */
+function run_teardown(teardown, parent) {
+	const previously_destroying_effect = is_destroying_effect;
+	const previous_teardown_version = teardown_version;
+	const previous_teardown_context = teardown_context;
+	const previous_reaction = active_reaction;
+	set_is_destroying_effect(true);
+	set_active_reaction(null);
+	try {
+		teardown.call(null);
+	} catch (error) {
+		// Route teardown errors through the boundary system so that a live
+		// ancestor <svelte:boundary> can handle them. Boundaries that are
+		// themselves mid-teardown are skipped by invoke_error_boundary.
+		invoke_error_boundary(error, parent);
+	} finally {
+		set_is_destroying_effect(previously_destroying_effect, previous_teardown_version);
+		set_teardown_context(previous_teardown_context);
+		set_active_reaction(previous_reaction);
+	}
+}
+
+/**
  * @param {Effect} effect
  */
 export function execute_effect_teardown(effect) {
 	var teardown = effect.teardown;
 	if (teardown !== null) {
-		const previously_destroying_effect = is_destroying_effect;
-		const previous_teardown_version = teardown_version;
-		const previous_teardown_context = teardown_context;
-		const previous_reaction = active_reaction;
-		set_is_destroying_effect(true);
-		set_active_reaction(null);
-		try {
-			teardown.call(null);
-		} catch (error) {
-			// Route teardown errors through the boundary system so that a live
-			// ancestor <svelte:boundary> can handle them. Boundaries that are
-			// themselves mid-teardown are skipped by invoke_error_boundary.
-			invoke_error_boundary(error, effect.parent);
-		} finally {
-			set_is_destroying_effect(previously_destroying_effect, previous_teardown_version);
-			set_teardown_context(previous_teardown_context);
-			set_active_reaction(previous_reaction);
+		run_teardown(teardown, effect.parent);
+	}
+}
+
+/**
+ * Destroy child effects and run the teardown owned by a batch record.
+ * @param {BatchRecord} record
+ * @param {Effect | Derived | null} [owner]
+ */
+export function destroy_record_effects(record, owner = null) {
+	if (record.effects != null) {
+		var effects = record.effects;
+		record.effects = null;
+		for (var i = 0; i < effects.length; i++) {
+			var e = effects[i];
+			if ((e.f & DESTROYED) === 0) {
+				destroy_effect(e);
+			}
 		}
+	}
+
+	var teardown = record.teardown;
+	if (teardown != null) {
+		record.teardown = null;
+		run_teardown(teardown, owner !== null ? owner.parent : null);
 	}
 }
 
@@ -507,14 +590,15 @@ export function destroy_effect_children(signal, remove_dom = false) {
 
 /**
  * @param {Effect} signal
+ * @param {number} [skip_flags]
  * @returns {void}
  */
-export function destroy_block_effect_children(signal) {
+export function destroy_block_effect_children(signal, skip_flags = BRANCH_EFFECT) {
 	var effect = signal.first;
 
 	while (effect !== null) {
 		var next = effect.next;
-		if ((effect.f & BRANCH_EFFECT) === 0) {
+		if ((effect.f & skip_flags) === 0) {
 			destroy_effect(effect);
 		}
 		effect = next;
@@ -544,6 +628,16 @@ export function destroy_effect(effect, remove_dom = true) {
 		effect.f |= DESTROYING;
 		destroy_effect_children(effect, remove_dom && !removed);
 		remove_reactions(effect);
+
+		if (async_mode_flag && first_batch !== null) {
+			for (var b = /** @type {Batch | null} */ (first_batch); b !== null; b = b.next) {
+				var record = b.records?.get(effect);
+				if (record !== undefined) {
+					b.records?.delete(effect);
+					destroy_record_effects(record, effect);
+				}
+			}
+		}
 
 		var transitions = effect.nodes && effect.nodes.t;
 

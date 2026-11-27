@@ -3,9 +3,15 @@ import { DEV } from 'esm-env';
 import { get_descriptors, get_prototype_of, includes, index_of } from '../shared/utils.js';
 import {
 	destroy_block_effect_children,
+	destroy_effect,
 	destroy_effect_children,
+	destroy_record_effects,
 	effect_tracking,
-	execute_effect_teardown
+	execute_effect_teardown,
+	push_effect,
+	recorded_effects,
+	recorded_parent,
+	set_recorded_effects
 } from './reactivity/effects.js';
 import {
 	DIRTY,
@@ -18,6 +24,7 @@ import {
 	BLOCK_EFFECT,
 	ROOT_EFFECT,
 	CONNECTED,
+	EAGER_EFFECT,
 	REACTION_IS_UPDATING,
 	STALE_REACTION,
 	ERROR_VALUE,
@@ -28,6 +35,7 @@ import {
 	ASSIGNED
 } from './constants.js';
 import {
+	destroy_derived_effects,
 	reactivity_loss_tracker,
 	execute_derived,
 	freeze_derived_effects,
@@ -507,7 +515,11 @@ function abort_signal(controller) {
  * and the batches that the new run supersedes still hold the record then, but don't count
  */
 export function abort_record(reaction, record, rerun = false) {
-	if (!abort_signals_used || !record?.ac) return;
+	if (!record) return;
+
+	var has_ac = abort_signals_used && record.ac;
+	var has_effects = async_mode_flag && (record.effects != null || record.teardown != null);
+	if (!has_ac && !has_effects) return;
 
 	for (var b = first_batch; b !== null; b = b.next) {
 		if (
@@ -518,8 +530,14 @@ export function abort_record(reaction, record, rerun = false) {
 		}
 	}
 
-	abort_signal(record.ac);
-	record.ac = null;
+	if (has_ac) {
+		abort_signal(record.ac);
+		record.ac = null;
+	}
+
+	if (has_effects) {
+		destroy_record_effects(record, /** @type {Effect | Derived} */ (reaction));
+	}
 }
 
 /**
@@ -957,8 +975,9 @@ function update_record(reaction, flags, length, value, error) {
 	var keep = should_record || has_batch_record(reaction);
 	var tracking = effect_tracking() && (reaction.f & CONNECTED) !== 0;
 	var edges = reaction.edges;
+	var prev_record = should_record ? view_batch?.records?.get(reaction) : undefined;
 
-	if (should_record && edges !== null) {
+	if (should_record && edges !== null && prev_record === undefined) {
 		if (new_deps !== null) {
 			// the edges may be a run's `deps` as well, see `update_dependencies`
 			reaction.edges = edges = edges.slice();
@@ -983,10 +1002,14 @@ function update_record(reaction, flags, length, value, error) {
 		reaction.edges = read;
 	} else {
 		// The edges can include some that were retained for runs no batch holds anymore:
-		// only those that this run or a record that a batch holds read remain
+		// only those that this run, the global run, or a record that another batch holds read remain
 		var added = new Set(read);
+		if (should_record && deps !== null) {
+			for (dep of deps) added.add(dep);
+		}
 		if (keep) {
 			for (var b = first_batch; b !== null; b = b.next) {
+				if (should_record && b === view_batch) continue;
 				for (dep of b.records?.get(reaction)?.deps ?? []) added.add(dep);
 			}
 		}
@@ -1006,6 +1029,11 @@ function update_record(reaction, flags, length, value, error) {
 
 	if (should_record) {
 		var batch = /** @type {Batch} */ (view_batch);
+		var effects =
+			async_mode_flag && recorded_effects !== null && recorded_effects.length > 0
+				? recorded_effects
+				: null;
+		if (async_mode_flag) set_recorded_effects(null);
 
 		(batch.records ??= new Map()).set(
 			reaction,
@@ -1016,9 +1044,10 @@ function update_record(reaction, flags, length, value, error) {
 						v: value,
 						e: error,
 						wv: derived_version(/** @type {Derived} */ (reaction), batch, value, error),
-						ac: abort_controller
+						ac: abort_controller,
+						effects
 					}
-				: { deps: read, dv, ac: abort_controller }
+				: { deps: read, dv, ac: abort_controller, effects }
 		);
 	} else {
 		reaction.deps = read;
@@ -1026,12 +1055,31 @@ function update_record(reaction, flags, length, value, error) {
 		if (abort_signals_used && (reaction.ac || abort_controller)) set_global_signal(reaction);
 
 		if ((flags & DERIVED) !== 0) {
-			set_derived_value(/** @type {Derived} */ (reaction), value, error);
+			var derived = /** @type {Derived} */ (reaction);
+
+			if (async_mode_flag && recorded_effects !== null) {
+				destroy_derived_effects(derived);
+
+				if (recorded_effects.length > 0) {
+					derived.effects = recorded_effects;
+					if (derived.parent !== null) {
+						push_effects(recorded_effects, derived.parent);
+					}
+				}
+
+				set_recorded_effects(null);
+			}
+
+			set_derived_value(derived, value, error);
 
 			// A record of the derived in the active batch is outdated now. (Effects never have one at this point:
 			// their runs only become global outside of processing, on their first run, or once the batch commits,
 			// whose records are promoted by then)
-			view_batch?.records?.delete(reaction);
+			var stale = view_batch?.records?.get(reaction);
+			if (stale !== undefined) {
+				view_batch?.records?.delete(reaction);
+				abort_record(reaction, stale);
+			}
 		}
 	}
 }
@@ -1162,10 +1210,33 @@ export function promote_record(reaction, record) {
 	if ((reaction.f & DERIVED) !== 0) {
 		var derived = /** @type {Derived} */ (reaction);
 
+		if (async_mode_flag) {
+			destroy_derived_effects(derived);
+
+			if (record.effects != null) {
+				derived.effects = record.effects;
+				record.effects = null;
+				if (derived.parent !== null) {
+					push_effects(derived.effects, derived.parent);
+				}
+			}
+		}
+
 		derived.v = record.v;
 		derived.wv = /** @type {number} */ (record.wv);
 		derived.f = (record.e ? derived.f | ERROR_VALUE : derived.f & ~ERROR_VALUE) & ~ASSIGNED;
 		update_derived_status(derived);
+	} else if (async_mode_flag) {
+		var effect = /** @type {Effect} */ (reaction);
+
+		clear_effect_run(effect);
+		effect.teardown = record.teardown ?? null;
+		record.teardown = null;
+
+		if (record.effects != null) {
+			push_effects(record.effects, effect);
+			record.effects = null;
+		}
 	}
 
 	// the run's signal replaces the global run's (so that dropping the record doesn't abort it, see `Batch#release_records`)
@@ -1275,8 +1346,26 @@ function remove_reaction(signal, dependency) {
 			// in the real world, and in every batch's view (which would otherwise reuse its record of the derived)
 			set_signal_status(derived, DIRTY);
 			derived.dv = null;
-			for (var b = first_batch; b !== null; b = b.next) b.records?.delete(derived);
+			for (var b = first_batch; b !== null; b = b.next) {
+				var record = b.records?.get(derived);
+				if (record !== undefined) {
+					b.records?.delete(derived);
+					if (async_mode_flag) destroy_record_effects(record, derived);
+				}
+			}
 			view_cache?.delete(derived);
+		} else if (async_mode_flag && first_batch !== null) {
+			for (b = first_batch; b !== null; b = b.next) {
+				record = b.records?.get(derived);
+				if (record?.effects != null) {
+					invalidate_derived_checks();
+					set_signal_status(derived, DIRTY);
+					derived.dv = null;
+					b.records?.delete(derived);
+					destroy_record_effects(record, derived);
+					view_cache?.delete(derived);
+				}
+			}
 		}
 
 		// freeze any effects inside this derived
@@ -1301,6 +1390,30 @@ export function remove_reactions(signal) {
 }
 
 /**
+ * @param {Effect[]} effects
+ * @param {Effect} parent
+ */
+function push_effects(effects, parent) {
+	for (var i = 0; i < effects.length; i++) {
+		push_effect(effects[i], parent);
+	}
+}
+
+/**
+ * Destroy an effect's non-branch child effects and invoke its own teardown.
+ * @param {Effect} effect
+ */
+function clear_effect_run(effect) {
+	if ((effect.f & (BLOCK_EFFECT | MANAGED_EFFECT)) !== 0) {
+		destroy_block_effect_children(effect);
+	} else {
+		destroy_effect_children(effect);
+	}
+
+	execute_effect_teardown(effect);
+}
+
+/**
  * @param {Effect} effect
  * @returns {void}
  */
@@ -1314,8 +1427,18 @@ export function update_effect(effect) {
 	set_signal_status(effect, CLEAN);
 
 	var previous_effect = active_effect;
+	var previous_recorded_effects = recorded_effects;
+	var previous_recorded_parent = recorded_parent;
+	var recorded = async_mode_flag && is_recorded_effect(flags);
 
 	active_effect = effect;
+	// EAGER_EFFECT keeps its caller's recording context so DEV-reparented children (e.g.
+	// `createSubscriber` effects inside `$state.eager`) stay isolated in the parent's record.
+	if (recorded) {
+		set_recorded_effects([], effect);
+	} else if ((flags & EAGER_EFFECT) === 0) {
+		set_recorded_effects(null, null);
+	}
 
 	var previous_renderer = custom_renderers_flag ? push_renderer(effect.r) : null;
 
@@ -1328,15 +1451,26 @@ export function update_effect(effect) {
 	}
 
 	try {
-		if ((flags & (BLOCK_EFFECT | MANAGED_EFFECT)) !== 0) {
-			destroy_block_effect_children(effect);
+		if (recorded) {
+			var prev_record = view_batch?.records?.get(effect);
+			if (prev_record !== undefined) {
+				destroy_record_effects(prev_record, effect);
+			}
 		} else {
-			destroy_effect_children(effect);
+			clear_effect_run(effect);
 		}
 
-		execute_effect_teardown(effect);
 		var teardown = update_reaction(effect);
-		effect.teardown = typeof teardown === 'function' ? teardown : null;
+		var teardown_fn = typeof teardown === 'function' ? teardown : null;
+
+		if (recorded) {
+			var next_record = view_batch?.records?.get(effect);
+			if (next_record !== undefined) {
+				next_record.teardown = teardown_fn;
+			}
+		} else {
+			effect.teardown = teardown_fn;
+		}
 
 		// Whether an effect is dirty is determined by the exact versions of its dependencies (see
 		// `update_dependencies`) — this only marks when it last ran, which `$inspect.trace` uses
@@ -1353,6 +1487,13 @@ export function update_effect(effect) {
 			}
 		}
 	} finally {
+		if (recorded && recorded_effects !== null) {
+			for (var i = 0; i < recorded_effects.length; i++) {
+				destroy_effect(recorded_effects[i]);
+			}
+		}
+
+		set_recorded_effects(previous_recorded_effects, previous_recorded_parent);
 		active_effect = previous_effect;
 
 		if (custom_renderers_flag) pop_renderer(previous_renderer);
