@@ -227,18 +227,27 @@ function withProps<TComponent extends Component<any>>(
 withProps(MyComponent, { foo: 'bar' });
 ```
 
-To declare that a variable expects the constructor or instance type of a component:
+Use `typeof MyComponent` for the type of a Svelte 5 component. To type the exports available through [`bind:this`](bind#bind:this), use `ReturnType<typeof MyComponent>`. This works for dynamic components passed as props.
 
 ```svelte
 <script lang="ts">
-	import MyComponent from './MyComponent.svelte';
+	import type { Component } from 'svelte';
 
-	let componentConstructor: typeof MyComponent = MyComponent;
-	let componentInstance: MyComponent;
+	interface Props {
+		DynamicComponent: Component<{ label: string }, { focus: () => void }>;
+	}
+
+	let { DynamicComponent }: Props = $props();
+	let componentInstance: ReturnType<typeof DynamicComponent> | null = $state(null);
 </script>
 
-<MyComponent bind:this={componentInstance} />
+<DynamicComponent label="Name" bind:this={componentInstance} />
+<button onclick={() => componentInstance?.focus()}>Focus input</button>
 ```
+
+The example initializes the binding to `null`. Svelte assigns the instance when the component mounts and clears the binding to `null` when it unmounts.
+
+> [!LEGACY] In Svelte 4, an imported component was a class, so `MyComponent` itself was its instance type.
 
 ## Enhancing built-in DOM types
 
