@@ -9,6 +9,7 @@ import {
 	transform_template
 } from '../transform-template/index.js';
 import { Template } from '../transform-template/template.js';
+import { add_state_transformers } from './shared/declarations.js';
 import { process_children } from './shared/fragment.js';
 import { build_render_statement, Memoizer } from './shared/utils.js';
 
@@ -84,6 +85,12 @@ export function Fragment(node, context) {
 		},
 		async_consts: undefined
 	};
+
+	// a hoisted node such as `<svelte:head>` is visited before a declaration tag
+	// that follows it, and reads what the tag declares, so register its transformers first
+	if (hoisted.some((node) => node.type === 'DeclarationTag')) {
+		add_state_transformers({ ...context, state });
+	}
 
 	for (const node of hoisted) {
 		context.visit(node, state);
