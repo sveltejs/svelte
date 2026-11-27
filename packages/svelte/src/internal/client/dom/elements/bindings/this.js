@@ -5,6 +5,14 @@ import { effect, render_effect } from '../../../reactivity/effects.js';
 import { active_effect, untrack } from '../../../runtime.js';
 
 /**
+ * Elements and components whose binding was taken over by another `bind:this`. A teardown sees the
+ * values from before the writes that caused it, which can include the takeover (e.g. when the element
+ * is replaced while it transitions out), so it can't tell from the bound value alone
+ * @type {WeakSet<object>}
+ */
+var replaced = new WeakSet();
+
+/**
  * @param {any} bound_value
  * @param {Element} element_or_component
  * @returns {boolean}
@@ -45,8 +53,16 @@ export function bind_this(
 			parts = get_parts?.() || [];
 
 			untrack(() => {
-				if (!is_bound_this(get_value(...parts), element_or_component)) {
+				/** @type {any} */
+				var value = get_value(...parts);
+
+				if (!is_bound_this(value, element_or_component)) {
+					if (typeof value === 'object' && value !== null) {
+						replaced.add(value[STATE_SYMBOL] ?? value);
+					}
+
 					update(element_or_component, ...parts);
+					replaced.delete(element_or_component);
 					// If this is an effect rerun (cause: each block context changes), then nullify the binding at
 					// the previous position if it isn't already taken over by a different effect.
 					if (old_parts && is_bound_this(get_value(...old_parts), element_or_component)) {
@@ -67,7 +83,11 @@ export function bind_this(
 				p = p.parent;
 			}
 			const teardown = () => {
-				if (parts && is_bound_this(get_value(...parts), element_or_component)) {
+				if (
+					parts &&
+					!replaced.has(element_or_component) &&
+					is_bound_this(get_value(...parts), element_or_component)
+				) {
 					update(null, ...parts);
 				}
 			};
