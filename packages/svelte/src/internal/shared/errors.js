@@ -23,6 +23,22 @@ If you're using a bundler, add \`svelte-custom-renderer\` to its list of resolve
 }
 
 /**
+ * {#each} only works with iterable values.
+ * @returns {never}
+ */
+export function each_block_not_iterable() {
+	if (DEV) {
+		const error = new Error(`each_block_not_iterable\n{#each} only works with iterable values.\nhttps://svelte.dev/e/each_block_not_iterable`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/each_block_not_iterable`);
+	}
+}
+
+/**
  * Cannot use `%name%(...)` unless the `experimental.async` compiler option is `true`
  * @param {string} name
  * @returns {never}

@@ -275,6 +275,25 @@ export function each(node, flags, get_collection, get_key, render_fn, fallback_f
 	var each_array = derived_safe_equal(() => {
 		var collection = get_collection();
 
+		if (DEV) {
+			// Svelte 4 threw in dev for non-iterable each values; the check was lost in
+			// the Svelte 5 rewrite, so e.g. `{#each {} as item}` silently rendered nothing.
+			// Falsy values stay empty: `{#each cond && [item]}` evaluates to `false`
+			// while the condition is false (see `async-each-derived`)
+			if (
+				collection &&
+				typeof collection !== 'string' &&
+				!(typeof collection === 'object' && 'length' in collection) &&
+				!(
+					typeof Symbol === 'function' &&
+					typeof collection === 'object' &&
+					Symbol.iterator in collection
+				)
+			) {
+				e.each_block_not_iterable();
+			}
+		}
+
 		return /** @type {V[]} */ (
 			is_array(collection) ? collection : collection == null ? [] : array_from(collection)
 		);

@@ -433,6 +433,25 @@ export { await_block as await };
 
 /** @param {any} array_like_or_iterator */
 export function ensure_array_like(array_like_or_iterator) {
+	if (DEV) {
+		// Svelte 4 threw in dev for non-iterable each values; the check was lost in
+		// the Svelte 5 rewrite, so e.g. `{#each {} as item}` silently rendered nothing.
+		// Falsy values stay empty: `{#each cond && [item]}` evaluates to `false`
+		// while the condition is false (see `async-each-derived`)
+		if (
+			array_like_or_iterator &&
+			typeof array_like_or_iterator !== 'string' &&
+			!(typeof array_like_or_iterator === 'object' && 'length' in array_like_or_iterator) &&
+			!(
+				typeof Symbol === 'function' &&
+				typeof array_like_or_iterator === 'object' &&
+				Symbol.iterator in array_like_or_iterator
+			)
+		) {
+			e.each_block_not_iterable();
+		}
+	}
+
 	if (array_like_or_iterator) {
 		return array_like_or_iterator.length !== undefined
 			? array_like_or_iterator
