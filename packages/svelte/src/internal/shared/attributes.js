@@ -20,9 +20,14 @@ const replacements = {
  * @param {string} name
  * @param {V} value
  * @param {boolean} [is_boolean]
+ * @param {boolean} [skip_objects]
  * @returns {string}
  */
-export function attr(name, value, is_boolean = false) {
+export function attr(name, value, is_boolean = false, skip_objects = false) {
+	// Custom element objects are passed as properties on the client, not text attributes.
+	// The style attribute is an exception — it is always stringified, never set as a property.
+	if (skip_objects && typeof value === 'object' && name !== 'style') return '';
+
 	// attribute hidden for values other than "until-found" behaves like a boolean attribute
 	if (name === 'hidden' && value !== 'until-found') {
 		is_boolean = true;
