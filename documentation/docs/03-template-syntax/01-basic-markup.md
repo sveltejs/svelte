@@ -18,6 +18,31 @@ A lowercase tag, like `<div>`, denotes a regular HTML element. A capitalised tag
 </div>
 ```
 
+Dynamic components — including dot notation tags like `<item.component>` — render nothing when the value is `null` or `undefined`:
+
+```svelte
+<script>
+	import Widget from './Widget.svelte';
+
+	let item = $state({ component: null });
+</script>
+
+<button onclick={() => (item.component = Widget)}>show</button>
+<button onclick={() => (item.component = null)}>hide</button>
+
+<!-- renders nothing while `item.component` is nullish -->
+<item.component />
+
+<!-- use an `{#if}` block if you need a fallback -->
+{#if item.component}
+	<item.component />
+{:else}
+	<p>Nothing selected</p>
+{/if}
+```
+
+See [this REPL](https://svelte.dev/playground/hello-world?version=5.47.1#H4sIAAAAAAAC_5WSMU_DMBCF_8phkNpKTbOHNBIbEysDZUiTC7FwzpZ9JaAo_51zU0FTlYHRd997z_LzoKjsUGXqEY2x0FtvarVWjTYYVPYyKP5ycR0HMj_BD85twgcajrN9GfDavLLESCw2Kg-V146LHe1Yd856hmddvyFD420Hi006HU_ixb2AghoBNGMHW7gLXDIuB6is6El8M6CDMTCuBM7T3wDK9wdmS2CpMrp63w7LFWwLWEanzY9cPKfM1ViE1vZ5OsmKfxjEC4i81TWeycXgJknAI9XoA5DlVtMb9C3SUaFDC0kScy4M06N4uNUNzDdjfIxr9JChCTitXfF0SgposGKs89RFJtWNEFII4yerjP0Bx_Ufxc5qmHd7uTqv1xXT9zm2OYExfJ75KqdSm15TrbKmjBf_BtXwEr9-AgAA) for a live example.
+
 ## Element attributes
 
 By default, attributes work exactly like their HTML counterparts.
