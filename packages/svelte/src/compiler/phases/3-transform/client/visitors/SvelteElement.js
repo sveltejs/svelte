@@ -12,6 +12,7 @@ import {
 	build_set_class
 } from './shared/element.js';
 import { build_render_statement, Memoizer } from './shared/utils.js';
+import { NAMESPACE_MATHML } from '../../../../../constants.js';
 
 /**
  * @param {AST.SvelteElement} node
@@ -133,9 +134,11 @@ export function SvelteElement(node, context) {
 				'$.element',
 				context.state.node,
 				get_tag,
-				node.metadata.svg || node.metadata.mathml ? b.true : b.false,
+				node.metadata.svg ? b.true : b.false,
 				inner.length > 0 && b.arrow([element_id, b.id('$$anchor')], b.block(inner)),
-				dynamic_namespace && b.thunk(build_attribute_value(dynamic_namespace, context).value),
+				dynamic_namespace
+					? b.thunk(build_attribute_value(dynamic_namespace, context).value)
+					: node.metadata.mathml && b.thunk(b.literal(NAMESPACE_MATHML)),
 				location && b.array([b.literal(location.line), b.literal(location.column)])
 			)
 		)
