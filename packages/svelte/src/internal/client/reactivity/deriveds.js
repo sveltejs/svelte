@@ -47,7 +47,7 @@ import {
 	destroy_effect,
 	destroy_effect_children,
 	destroy_effects,
-	get_recorded_effects,
+	has_recorded_effects,
 	recorded_effects,
 	recorded_owner,
 	set_recorded_effects,
@@ -467,12 +467,8 @@ export function execute_derived(derived) {
 	}
 
 	set_active_effect(parent);
-	var owner_is_recorded_effect = prev_recorded_effects !== null && parent === prev_recorded_owner;
 	var collecting =
-		async_mode_flag &&
-		(batch_values !== null ||
-			owner_is_recorded_effect ||
-			(parent !== null && get_recorded_effects(parent, false) !== null));
+		async_mode_flag && (batch_values !== null || (parent !== null && has_recorded_effects(parent)));
 	var effects = collecting ? [] : null;
 	set_recorded_effects(effects, collecting ? derived : null);
 
@@ -496,8 +492,7 @@ export function execute_derived(derived) {
 		var value = update_reaction(derived);
 
 		if (effects !== null && effects.length > 0 && parent !== null && derived.effects === effects) {
-			var bucket = owner_is_recorded_effect ? prev_recorded_effects : get_recorded_effects(parent);
-			attach_effects(effects, parent, bucket);
+			attach_effects(effects, parent);
 		}
 
 		return value;

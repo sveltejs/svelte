@@ -16,11 +16,14 @@
 
 	function render_with_local_derived(n) {
 		const sub = make_subscriber(n);
-		const d = $derived.by(() => {
-			sub();
-			return n;
+		const outer = $derived.by(() => {
+			const inner = $derived.by(() => {
+				sub();
+				return n;
+			});
+			return inner;
 		});
-		return d;
+		return outer;
 	}
 
 	function run_fork() {

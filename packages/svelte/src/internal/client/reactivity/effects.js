@@ -74,6 +74,19 @@ export let recorded_effects = null;
 export let recorded_owner = null;
 
 /**
+ * The active recorded `Effect` (`update_effect` with `recorded = true`), preserved across nested
+ * `execute_derived` calls so locally owned deriveds at any depth attach to the enclosing `Effect`'s
+ * recording bucket rather than onto `effect.first` before `promote_record`.
+ * @type {Effect | null}
+ */
+export let recorded_effect = null;
+
+/**
+ * @type {Effect[] | null}
+ */
+export let recorded_effect_effects = null;
+
+/**
  * @param {Effect[] | null} effects
  * @param {Reaction | null} [owner]
  */
@@ -83,22 +96,44 @@ export function set_recorded_effects(effects, owner = null) {
 }
 
 /**
- * Return the active recording bucket for `owner` (`recorded_effects` if `owner` is currently
- * executing a recorded run, or `view_batch`'s `record.effects` array if `owner` has an
- * unpromoted record in the active batch view), or `null` if effects on `owner` attach globally.
+ * @param {Effect | null} effect
+ * @param {Effect[] | null} effects
+ */
+export function set_recorded_effect(effect, effects) {
+	recorded_effect = effect;
+	recorded_effect_effects = effects;
+}
+
+/**
+ * Whether `owner` currently has an active recording bucket or unpromoted `BatchRecord`.
  * @param {Effect} owner
- * @param {boolean} [create]
+ * @returns {boolean}
+ */
+export function has_recorded_effects(owner) {
+	return (
+		(recorded_effect_effects !== null && owner === recorded_effect) ||
+		(view_batch !== null &&
+			view_batch === current_batch &&
+			(view_batch.records?.has(owner) ?? false))
+	);
+}
+
+/**
+ * Return the active recording bucket for `owner` (`recorded_effect_effects` if `owner` is
+ * currently executing a recorded run, or `view_batch`'s `record.effects` array if `owner` has
+ * an unpromoted record in the active batch view), or `null` if effects attach globally.
+ * @param {Effect} owner
  * @returns {Effect[] | null}
  */
-export function get_recorded_effects(owner, create = true) {
-	if (recorded_effects !== null && owner === recorded_owner) {
-		return recorded_effects;
+export function get_recorded_effects(owner) {
+	if (recorded_effect_effects !== null && owner === recorded_effect) {
+		return recorded_effect_effects;
 	}
 
 	if (view_batch !== null && view_batch === current_batch) {
 		var record = view_batch.records?.get(owner);
 		if (record !== undefined) {
-			return create ? (record.effects ??= []) : (record.effects ?? null);
+			return (record.effects ??= []);
 		}
 	}
 

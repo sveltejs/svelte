@@ -9,8 +9,11 @@ import {
 	destroy_record_effects,
 	effect_tracking,
 	execute_effect_teardown,
+	recorded_effect,
+	recorded_effect_effects,
 	recorded_effects,
 	recorded_owner,
+	set_recorded_effect,
 	set_recorded_effects
 } from './reactivity/effects.js';
 import {
@@ -1417,15 +1420,21 @@ export function update_effect(effect) {
 	var previous_effect = active_effect;
 	var previous_recorded_effects = recorded_effects;
 	var previous_recorded_owner = recorded_owner;
+	var previous_recorded_effect = recorded_effect;
+	var previous_recorded_effect_effects = recorded_effect_effects;
 	var recorded = async_mode_flag && is_recorded_effect(flags);
 
 	active_effect = effect;
 	// EAGER_EFFECT keeps its caller's recording context so DEV-reparented children (e.g.
 	// `createSubscriber` effects inside `$state.eager`) stay isolated in the parent's record.
 	if (recorded) {
-		set_recorded_effects([], effect);
+		/** @type {Effect[]} */
+		var recording = [];
+		set_recorded_effects(recording, effect);
+		set_recorded_effect(effect, recording);
 	} else if ((flags & EAGER_EFFECT) === 0) {
 		set_recorded_effects(null, null);
+		set_recorded_effect(null, null);
 	}
 
 	var previous_renderer = custom_renderers_flag ? push_renderer(effect.r) : null;
@@ -1480,6 +1489,7 @@ export function update_effect(effect) {
 		}
 
 		set_recorded_effects(previous_recorded_effects, previous_recorded_owner);
+		set_recorded_effect(previous_recorded_effect, previous_recorded_effect_effects);
 		active_effect = previous_effect;
 
 		if (custom_renderers_flag) pop_renderer(previous_renderer);
