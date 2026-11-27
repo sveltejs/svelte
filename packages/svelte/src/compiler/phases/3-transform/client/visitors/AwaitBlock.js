@@ -3,7 +3,7 @@
 /** @import { ComponentClientTransformState, ComponentContext } from '../types' */
 import { extract_identifiers } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { async_thunk, create_derived } from '../utils.js';
+import { async_thunk, copy_transform, create_derived } from '../utils.js';
 import { get_value } from './shared/declarations.js';
 import { build_expression, add_svelte_meta } from './shared/utils.js';
 
@@ -26,7 +26,7 @@ export function AwaitBlock(node, context) {
 	if (node.then) {
 		const then_context = {
 			...context,
-			state: { ...context.state, transform: { ...context.state.transform } }
+			state: { ...context.state, transform: copy_transform(context.state.transform) }
 		};
 		const argument = node.value && create_derived_block_argument(node.value, then_context);
 

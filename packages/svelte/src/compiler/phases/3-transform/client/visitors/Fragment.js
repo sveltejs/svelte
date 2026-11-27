@@ -11,6 +11,7 @@ import {
 import { Template } from '../transform-template/template.js';
 import { process_children } from './shared/fragment.js';
 import { build_render_statement, Memoizer } from './shared/utils.js';
+import { copy_transform } from '../utils.js';
 
 /**
  * @param {AST.Fragment} node
@@ -77,7 +78,7 @@ export function Fragment(node, context) {
 		after_update: [],
 		memoizer: new Memoizer(),
 		template: new Template(),
-		transform: { ...context.state.transform },
+		transform: copy_transform(context.state.transform),
 		metadata: {
 			namespace,
 			bound_contenteditable: context.state.metadata.bound_contenteditable

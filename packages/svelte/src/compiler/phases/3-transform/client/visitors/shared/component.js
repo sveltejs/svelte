@@ -8,6 +8,7 @@ import { add_svelte_meta, build_bind_this, Memoizer, validate_binding } from '..
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
+import { copy_transform } from '../../utils.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
@@ -34,7 +35,7 @@ export function build_component(node, component_name, loc, context) {
 		default: {
 			...context.state,
 			scope: node.metadata.scopes.default,
-			transform: { ...context.state.transform }
+			transform: copy_transform(context.state.transform)
 		}
 	};
 
@@ -367,7 +368,7 @@ export function build_component(node, component_name, loc, context) {
 					: {
 							...context.state,
 							scope: node.metadata.scopes[slot_name],
-							transform: { ...context.state.transform }
+							transform: copy_transform(context.state.transform)
 						}
 			)
 		);
