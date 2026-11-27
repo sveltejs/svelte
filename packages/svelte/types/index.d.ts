@@ -2663,7 +2663,7 @@ declare module 'svelte/reactivity' {
 	export function createSubscriber(start: (update: () => void) => (() => void) | void): () => void;
 	class ReactiveValue<T> {
 
-		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
+		constructor(fn: () => T, onsubscribe: (update: () => void) => (() => void) | void);
 		get current(): T;
 		#private;
 	}
@@ -2728,7 +2728,7 @@ declare module 'svelte/reactivity/window' {
 	};
 	class ReactiveValue<T> {
 
-		constructor(fn: () => T, onsubscribe: (update: () => void) => void);
+		constructor(fn: () => T, onsubscribe: (update: () => void) => (() => void) | void);
 		get current(): T;
 		#private;
 	}

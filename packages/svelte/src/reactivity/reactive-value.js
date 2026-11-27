@@ -10,7 +10,7 @@ export class ReactiveValue {
 	/**
 	 *
 	 * @param {() => T} fn
-	 * @param {(update: () => void) => void} onsubscribe
+	 * @param {(update: () => void) => (() => void) | void} onsubscribe
 	 */
 	constructor(fn, onsubscribe) {
 		this.#fn = fn;

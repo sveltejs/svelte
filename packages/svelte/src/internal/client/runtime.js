@@ -1258,8 +1258,12 @@ export async function tick() {
 		return new Promise((f) => {
 			// Race them against each other - in almost all cases requestAnimationFrame will fire first,
 			// but e.g. in case the window is not focused or a view transition happens, requestAnimationFrame
-			// will be delayed and setTimeout helps us resolve fast enough in that case
-			requestAnimationFrame(() => f());
+			// will be delayed and setTimeout helps us resolve fast enough in that case.
+			// Custom renderers can run where `requestAnimationFrame` doesn't exist (e.g. Node with
+			// the `svelte-custom-renderer` condition), in which case `setTimeout` alone is enough
+			if (typeof requestAnimationFrame === 'function') {
+				requestAnimationFrame(() => f());
+			}
 			setTimeout(() => f());
 		});
 	}
