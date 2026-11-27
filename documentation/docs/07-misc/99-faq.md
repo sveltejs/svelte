@@ -61,7 +61,9 @@ Note: The `@component` is necessary in the HTML comment which describes your com
 
 ## Does Svelte scale?
 
-There will be a blog post about this eventually, but in the meantime, check out [this issue](https://github.com/sveltejs/svelte/issues/2546).
+Yes. Svelte compiles each component to JavaScript that uses a runtime shared by all components, so the JavaScript in your app is that runtime plus the compiled code of each component. Svelte 5's runtime is larger than Svelte 4's, but it compiles components to less code, so adding more components costs less than it used to.
+
+[SvelteKit](/docs/kit) [only loads the code needed for the current page](/docs/kit/performance), so what a visitor downloads depends on the pages they visit rather than on the size of the whole app. To see what ends up in your bundle, use a bundle visualizer such as [rollup-plugin-visualizer](https://www.npmjs.com/package/rollup-plugin-visualizer).
 
 ## Is there a UI component library?
 
