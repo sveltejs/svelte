@@ -5,6 +5,7 @@ import { is } from '../../../proxy.js';
 import { is_array } from '../../../../shared/utils.js';
 import * as w from '../../../warnings.js';
 import { current_batch, view_batch } from '../../../reactivity/batch.js';
+import { current_renderer } from '../../../custom-renderer/state.js';
 import {
 	has_attribute,
 	remove_attribute,
@@ -17,6 +18,15 @@ import {
  * @param {boolean} selected
  */
 export function set_selected(option, selected) {
+	if (current_renderer) {
+		if (selected == null) {
+			current_renderer.removeAttribute(option, 'selected');
+		} else {
+			current_renderer.setAttribute(option, 'selected', selected);
+		}
+		return;
+	}
+
 	if (selected) {
 		// The selected option could've changed via user selection, and
 		// setting the value without this check would set it back.

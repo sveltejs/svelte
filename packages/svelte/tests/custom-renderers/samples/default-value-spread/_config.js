@@ -50,19 +50,19 @@ export default test({
 		// Direct defaultChecked should appear as a renderer attribute
 		assert.equal(input_direct_chk.attributes['type'], 'checkbox');
 		assert.equal(input_direct_chk.attributes['checked'], '');
-		assert.equal(input_direct_chk.attributes['defaultChecked'], '');
+		assert.equal(input_direct_chk.attributes['defaultChecked'], 'true');
 
 		// Spread defaultChecked should also go through the renderer API.
-		// set_element_default_checked treats true as a boolean attribute (empty string).
+		// The shared test renderer stores the passed-through boolean as a string.
 		assert.equal(input_spread_chk.attributes['type'], 'checkbox');
 		assert.equal(
 			input_spread_chk.attributes['defaultChecked'],
-			'',
+			'true',
 			'defaultChecked via spread should go through renderer.setAttribute, not element.defaultChecked'
 		);
 
 		assert.equal(select.attributes['defaultValue'], 'default_val');
-		assert.equal(selected_option.attributes['selected'], '');
+		assert.equal(selected_option.attributes['selected'], 'true');
 
 		// --- After update ---
 		dispatch_event(button, 'click');
@@ -78,17 +78,17 @@ export default test({
 			'updated defaultValue via spread should go through renderer.setAttribute'
 		);
 
-		// Direct defaultChecked should be removed (false)
-		assert.equal(input_direct_chk.attributes['defaultChecked'], undefined);
+		// Direct defaultChecked should retain false
+		assert.equal(input_direct_chk.attributes['defaultChecked'], 'false');
 
-		// Spread defaultChecked should also be removed via renderer
+		// Spread defaultChecked should also pass false to the renderer
 		assert.equal(
 			input_spread_chk.attributes['defaultChecked'],
-			undefined,
-			'updated defaultChecked=false via spread should go through renderer.removeAttribute'
+			'false',
+			'updated defaultChecked=false via spread should go through renderer.setAttribute'
 		);
 
 		assert.equal(select.attributes['defaultValue'], 'new_default');
-		assert.equal(selected_option.attributes['selected'], undefined);
+		assert.equal(selected_option.attributes['selected'], 'false');
 	}
 });

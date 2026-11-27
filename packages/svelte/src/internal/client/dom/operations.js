@@ -556,7 +556,11 @@ export function get_node_value(node) {
  */
 export function set_element_value(element, value) {
 	if (current_renderer) {
-		current_renderer.setAttribute(element, 'value', value ?? '');
+		if (value == null) {
+			current_renderer.removeAttribute(element, 'value');
+		} else {
+			current_renderer.setAttribute(element, 'value', value);
+		}
 		return;
 	}
 	// @ts-expect-error
@@ -570,10 +574,10 @@ export function set_element_value(element, value) {
  */
 export function set_element_checked(element, checked) {
 	if (current_renderer) {
-		if (checked) {
-			current_renderer.setAttribute(element, 'checked', '');
-		} else {
+		if (checked == null) {
 			current_renderer.removeAttribute(element, 'checked');
+		} else {
+			current_renderer.setAttribute(element, 'checked', checked);
 		}
 		return;
 	}
@@ -583,13 +587,17 @@ export function set_element_checked(element, checked) {
 
 /**
  * Sets the `defaultValue` property on an element without affecting the current `value`.
- * For custom renderers, uses `setAttribute` on `defaultvalue`.
+ * For custom renderers, uses `setAttribute` on `defaultValue`.
  * @param {Element} element
  * @param {string} value
  */
 export function set_element_default_value(element, value) {
 	if (current_renderer) {
-		current_renderer.setAttribute(element, 'defaultValue', value);
+		if (value == null) {
+			current_renderer.removeAttribute(element, 'defaultValue');
+		} else {
+			current_renderer.setAttribute(element, 'defaultValue', value);
+		}
 		return;
 	}
 	// @ts-expect-error
@@ -602,16 +610,16 @@ export function set_element_default_value(element, value) {
 
 /**
  * Sets the `defaultChecked` property on an element without affecting the current `checked` state.
- * For custom renderers, uses `setAttribute` on `defaultchecked`.
+ * For custom renderers, uses `setAttribute` on `defaultChecked`.
  * @param {Element} element
  * @param {boolean} checked
  */
 export function set_element_default_checked(element, checked) {
 	if (current_renderer) {
-		if (checked) {
-			current_renderer.setAttribute(element, 'defaultChecked', '');
-		} else {
+		if (checked == null) {
 			current_renderer.removeAttribute(element, 'defaultChecked');
+		} else {
+			current_renderer.setAttribute(element, 'defaultChecked', checked);
 		}
 		return;
 	}
