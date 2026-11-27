@@ -60,7 +60,8 @@ export function push_element(renderer, tag, line, column) {
 	var parent = context.element;
 	var element = { tag, parent, filename, line, column };
 
-	if (parent !== undefined) {
+	// a `<svelte:element>` without a tag renders nothing, so it cannot be misplaced
+	if (parent !== undefined && tag) {
 		var ancestor = parent.parent;
 		var ancestors = [parent.tag];
 
