@@ -158,7 +158,7 @@
     "templating"
   ],
   "scripts": {
-    "build": "rollup -c && pnpm generate && node scripts/check-treeshakeability.js",
+    "build": "node scripts/build.js",
     "dev": "node scripts/process-messages -w & rollup -cw",
     "check": "tsc --project tsconfig.runtime.json && tsc && cd ./tests/types && tsc",
     "check:tsgo": "tsgo --project tsconfig.runtime.json --skipLibCheck && tsgo --skipLibCheck",

@@ -6,28 +6,39 @@ import virtual from '@rollup/plugin-virtual';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import { compile } from 'svelte/compiler';
 
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+
+/** @type {import('rollup').Plugin} */
+const resolve_svelte = {
+	name: 'resolve-svelte',
+	resolveId(importee) {
+		if (importee.startsWith('svelte')) {
+			const entry = pkg.exports[importee.replace('svelte', '.')];
+			return path.resolve(entry.browser ?? entry.default);
+		}
+	}
+};
+
+const shared_node_resolve = nodeResolve({
+	exportConditions: ['production', 'import', 'browser', 'default']
+});
+
+/** @type {Map<string, import('rollup').RollupCache['modules'][number]>} */
+const cached_modules = new Map();
+
 /**
  * @param {string} entry
  */
 async function bundle_code(entry) {
 	const bundle = await rollup({
 		input: '__entry__',
+		cache: { modules: [...cached_modules.values()] },
 		plugins: [
 			virtual({
 				__entry__: entry
 			}),
-			{
-				name: 'resolve-svelte',
-				resolveId(importee) {
-					if (importee.startsWith('svelte')) {
-						const entry = pkg.exports[importee.replace('svelte', '.')];
-						return path.resolve(entry.browser ?? entry.default);
-					}
-				}
-			},
-			nodeResolve({
-				exportConditions: ['production', 'import', 'browser', 'default']
-			})
+			resolve_svelte,
+			shared_node_resolve
 		],
 		onwarn: (warning, handle) => {
 			if (warning.code !== 'EMPTY_BUNDLE' && warning.code !== 'CIRCULAR_DEPENDENCY') {
@@ -36,7 +47,16 @@ async function bundle_code(entry) {
 		}
 	});
 
+	if (bundle.cache) {
+		for (const mod of bundle.cache.modules) {
+			if (!mod.id.includes('__entry__')) {
+				cached_modules.set(mod.id, mod);
+			}
+		}
+	}
+
 	const { output } = await bundle.generate({});
+	await bundle.close();
 
 	if (output.length > 1) {
 		throw new Error('errr what');
@@ -45,12 +65,13 @@ async function bundle_code(entry) {
 	return output[0].code.trim();
 }
 
-const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-
 let failed = false;
 
 // eslint-disable-next-line no-console
 console.group('checking treeshakeability');
+
+/** @type {Array<{ subpackage: string; type: string; resolved: string }>} */
+const subpackage_entries = [];
 
 for (const key in pkg.exports) {
 	// special cases
@@ -65,8 +86,28 @@ for (const key in pkg.exports) {
 	for (const type of ['browser', 'default']) {
 		if (!pkg.exports[key][type]) continue;
 
-		const subpackage = path.join(pkg.name, key);
-		const resolved = path.resolve(pkg.exports[key][type]);
+		subpackage_entries.push({
+			subpackage: path.join(pkg.name, key),
+			type,
+			resolved: path.resolve(pkg.exports[key][type])
+		});
+	}
+}
+
+// Fast path: bundle all side-effect-free entry points at once. If the combined
+// bundle is empty, every individual entry is treeshakeable; otherwise fall back
+// to checking each entry individually to pinpoint the culprit(s).
+const combined_code = await bundle_code(
+	subpackage_entries.map(({ resolved }) => `import ${JSON.stringify(resolved)};`).join('\n')
+);
+
+if (combined_code === '') {
+	for (const { subpackage, type } of subpackage_entries) {
+		// eslint-disable-next-line no-console
+		console.error(`✅ ${subpackage} (${type})`);
+	}
+} else {
+	for (const { subpackage, type, resolved } of subpackage_entries) {
 		const code = await bundle_code(`import ${JSON.stringify(resolved)}`);
 
 		if (code === '') {

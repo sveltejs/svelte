@@ -31,9 +31,11 @@ fs.writeFileSync(`${dir}/types/compiler/interfaces.d.ts`, "import '../index.js';
 
 await createBundle({
 	output: `${dir}/types/index.d.ts`,
+	include: ['src'],
 	compilerOptions: {
 		// so that types/properties with `@internal` (and its dependencies) are removed from the output
 		stripInternal: true,
+		skipLibCheck: true,
 		paths: Object.fromEntries(
 			Object.entries(pkg.imports).map(
 				/** @param {[string,any]} import */ ([key, value]) => {

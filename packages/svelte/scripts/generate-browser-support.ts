@@ -21,15 +21,14 @@
 //      `baseline-browser-mapping` for year-only resolution.
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
-import { rollup, type OutputChunk } from 'rollup';
-import virtual from '@rollup/plugin-virtual';
-import { nodeResolve } from '@rollup/plugin-node-resolve';
+import { Worker } from 'node:worker_threads';
 import { getCompatibleVersions } from 'baseline-browser-mapping';
 import {
-	detect_features,
+	create_detector,
 	detect_features_in_text,
 	versions_for_feature,
 	baseline_year_for_feature,
@@ -43,6 +42,8 @@ type BindingProperty = import('../src/compiler/phases/bindings.js').BindingPrope
 type PackageExport = string | { browser?: string; default?: string };
 type CompilerFixture = { filename: string; code: string };
 type Feature = { name: string; source: string; kind: 'svelte' | 'js' };
+type BundleJob = { key: string; entry_code: string; silent?: boolean };
+type Detector = ReturnType<typeof create_detector>;
 type BrowserVersions = Record<string, string | null>;
 type RuntimeFloor = number | 'newly';
 type ConditionalRow = {
@@ -108,7 +109,8 @@ const pkg_dir = path.resolve(__dirname, '..');
 const repo_root = path.resolve(pkg_dir, '..', '..');
 const docs_dir = path.join(repo_root, 'documentation/docs/07-misc/.generated');
 const snapshot_dir = path.join(pkg_dir, 'tests/snapshot/samples');
-const tmp_dir = path.join(__dirname, '_baseline');
+const virtual_dir = path.join(__dirname, '_baseline');
+const worker_url = new URL('./browser-support.worker.js', import.meta.url);
 
 const pkg = JSON.parse(fs.readFileSync(path.join(pkg_dir, 'package.json'), 'utf-8')) as {
 	exports: Record<string, PackageExport>;
@@ -281,51 +283,51 @@ function safe_name(importee: string): string {
 }
 
 /**
- * Bundle an entry the way users receive it, so we scan the same code the
- * browser does. Mirrors `check-treeshakeability.js`.
- *
- * `entry_code` is virtual module source: typically `export * from
- * 'svelte/...'` for a runtime entry, or compiled fixture JS for a per-feature
- * scan. `silent` suppresses rollup's circular-dependency warnings — used for
- * fixture bundles where they're known and noisy.
+ * Bundle all runtime and fixture entries in parallel across worker threads,
+ * each reusing an accumulated Rollup module cache so tree-shaking matches
+ * Rollup identically without re-parsing the Svelte runtime for every entry.
  */
-async function bundle(entry_code: string, options: { silent?: boolean } = {}): Promise<string> {
-	const built = await rollup({
-		input: '__entry__',
-		plugins: [
-			virtual({ __entry__: entry_code }),
-			{
-				name: 'resolve-svelte',
-				resolveId(id: string) {
-					if (id.startsWith('svelte')) {
-						const entry = pkg.exports[id.replace('svelte', '.')];
-						if (!entry) return;
-						if (typeof entry === 'string') return path.resolve(pkg_dir, entry);
-						const file = entry.browser ?? entry.default;
-						if (file) return path.resolve(pkg_dir, file);
-					}
-				}
-			},
-			nodeResolve({ exportConditions: ['production', 'import', 'browser', 'default'] })
-		],
-		// Treat optional peers / Node-only branches as external so we only scan
-		// code that actually runs in the browser.
-		external: ['esm-env'],
-		onwarn: options.silent
-			? () => {}
-			: (warning, handler) => {
-					if (warning.code === 'CIRCULAR_DEPENDENCY') return;
-					handler(warning);
-				}
-	});
+async function bundle_all(jobs: BundleJob[]): Promise<Map<string, string>> {
+	const parallelism =
+		typeof os.availableParallelism === 'function' ? os.availableParallelism() : os.cpus().length;
+	const worker_count = Math.max(1, Math.min(parallelism, 6, jobs.length));
 
-	const { output } = await built.generate({ format: 'esm' });
-	await built.close();
+	const buckets: BundleJob[][] = Array.from({ length: worker_count }, () => []);
+	for (let i = 0; i < jobs.length; i++) {
+		buckets[i % worker_count].push(jobs[i]);
+	}
 
-	return output
-		.filter((chunk): chunk is OutputChunk => chunk.type === 'chunk')
-		.map((chunk) => chunk.code)
-		.join('\n');
+	const chunk_results = await Promise.all(
+		buckets.map(
+			(bucket) =>
+				new Promise<Array<{ key: string; code: string | null }>>((resolve, reject) => {
+					const worker = new Worker(worker_url, {
+						workerData: {
+							jobs: bucket,
+							pkg_exports: pkg.exports,
+							pkg_dir
+						}
+					});
+					worker.on('message', (results: Array<{ key: string; code: string | null }>) => {
+						resolve(results);
+					});
+					worker.on('error', reject);
+					worker.on('exit', (code) => {
+						if (code !== 0) {
+							reject(new Error(`browser-support worker exited with code ${code}`));
+						}
+					});
+				})
+		)
+	);
+
+	const bundled = new Map<string, string>();
+	for (const results of chunk_results) {
+		for (const { key, code } of results) {
+			if (code !== null) bundled.set(key, code);
+		}
+	}
+	return bundled;
 }
 
 /**
@@ -416,15 +418,17 @@ function compute_floor(
  * output fixtures, then compute the highest baseline year among the
  * detected features (after subtracting `AGGREGATE_IGNORE`).
  *
- * `runtime_files` are absolute paths to runtime bundle files. Returns the
- * minimum Baseline year the combined code satisfies.
+ * Returns both the minimum Baseline year and the runtime-only detected
+ * feature set (reused by `validate_ignore_features`).
  */
 function find_minimum_target(
+	detector: Detector,
 	runtime_files: string[],
 	compiler_fixtures: CompilerFixture[]
-): number {
+): { target: number; runtime_detected: Set<string> } {
 	// Type-aware walk over the runtime bundles.
-	const detected = detect_features(runtime_files);
+	const runtime_detected = detector.detect(runtime_files);
+	const detected = new Set(runtime_detected);
 
 	// Syntax-only walk over the compiler-output fixtures (text only, no
 	// program context; the bare TS source-file parser handles the syntax
@@ -443,7 +447,7 @@ function find_minimum_target(
 		console.log(`    - ${id}`);
 	}
 
-	return final_year;
+	return { target: final_year, runtime_detected };
 }
 
 /**
@@ -455,16 +459,15 @@ function find_minimum_target(
  * `SAFE_TO_IGNORE` entries are exempt: they're safe to carry regardless
  * of whether the runtime currently uses the API.
  */
-function validate_ignore_features(runtime_files: string[]): void {
+function validate_ignore_features(runtime_detected: Set<string>): void {
 	if (BEHAVIORAL_IGNORE.size === 0) return;
-	const detected = detect_features(runtime_files);
-	const stale = [...BEHAVIORAL_IGNORE].filter((id) => !detected.has(id));
+	const stale = [...BEHAVIORAL_IGNORE].filter((id) => !runtime_detected.has(id));
 	if (stale.length > 0) {
 		throw new Error(
 			`BEHAVIORAL_IGNORE contains entries that the detector does not flag — ` +
 				`they can be removed:\n` +
 				stale.map((id) => `  - ${id}`).join('\n') +
-				`\n\nEdit \`packages/svelte/scripts/generate-browser-support.js\` ` +
+				`\n\nEdit \`packages/svelte/scripts/generate-browser-support.ts\` ` +
 				`and delete the stale entries. If the API was removed from the runtime ` +
 				`as part of this change, that is exactly the intended signal.`
 		);
@@ -560,72 +563,42 @@ function binding_fixture(name: string, props: BindingProperty): string {
 }
 
 /**
- * Compile a `.svelte` fixture to JS (no-op for `.js` fixtures), then
- * bundle the result through the shared `bundle` helper. Fixtures are tiny
- * so circular-dep warnings from the Svelte runtime are silenced.
+ * Compile a `.svelte` fixture to JS (no-op for `.js` fixtures). Returns `null`
+ * if a rare element combo fails to compile.
  */
-async function bundle_fixture(feature: Feature): Promise<string> {
-	const entry_code =
-		feature.kind === 'svelte'
-			? svelte_compile(feature.source, {
-					generate: 'client',
-					filename: 'Fixture.svelte',
-					dev: false
-				}).js.code
-			: feature.source;
-	return bundle(entry_code, { silent: true });
+function compile_fixture(feature: Feature): string | null {
+	if (feature.kind !== 'svelte') return feature.source;
+	try {
+		return svelte_compile(feature.source, {
+			generate: 'client',
+			filename: 'Fixture.svelte',
+			dev: false
+		}).js.code;
+	} catch {
+		return null;
+	}
 }
 
 /**
- * Detect features in a single fixture bundle and report the per-fixture
- * floor year along with the IDs that drove it. Used for the per-feature
- * conditional table.
- *
- * `fixture_file` is the absolute path to the `.ts` bundle.
+ * Scan every pre-bundled feature fixture using the shared `Detector` and
+ * return the rows that need to appear in the conditional-features table.
  */
-function scan_fixture(fixture_file: string): {
-	year: number;
-	driving_ids: string[];
-} {
-	const { year, drivers } = compute_floor(detect_features([fixture_file]), SAFE_TO_IGNORE);
-
-	return {
-		year,
-		driving_ids: [...drivers]
-	};
-}
-
-/**
- * Iterate every feature, bundle its fixture, scan it. Return the rows
- * that need to appear in the conditional-features table.
- */
-async function find_all_conditional_features(
+function find_all_conditional_features(
+	detector: Detector,
 	runtime_floor: RuntimeFloor,
-	subpackage_exports: Record<string, string[]>
-): Promise<ConditionalRow[]> {
+	fixtures: Array<{ name: string; file: string }>
+): ConditionalRow[] {
 	const runtime_year = typeof runtime_floor === 'number' ? runtime_floor : Infinity;
-	const features = enumerate_features(subpackage_exports);
+	const min_year = typeof runtime_floor === 'number' ? runtime_floor : 0;
 	const rows: ConditionalRow[] = [];
 
 	const missing_doc_links: string[] = [];
 
-	for (let i = 0; i < features.length; i++) {
-		const feature = features[i];
-		process.stdout.write(`\r  ${i + 1}/${features.length}  ${feature.name}`.padEnd(80));
-
-		let bundle_code;
-		try {
-			bundle_code = await bundle_fixture(feature);
-		} catch {
-			continue; // some fixtures (rare element combos) may fail to compile
-		}
-
-		// Write the bundle so the type-aware scanner can resolve its types.
-		const fixture_file = path.join(tmp_dir, `fixture_${i}.ts`);
-		fs.writeFileSync(fixture_file, bundle_code);
-
-		const scanned = scan_fixture(fixture_file);
-		const final_year = scanned.year;
+	for (const fixture of fixtures) {
+		const { year: final_year, drivers } = compute_floor(
+			detector.detect([fixture.file], { min_year }),
+			SAFE_TO_IGNORE
+		);
 
 		// Skip features at or below the runtime floor — they don't need a row.
 		if (final_year <= runtime_year || final_year === 0) continue;
@@ -633,7 +606,7 @@ async function find_all_conditional_features(
 		// Use exact per-feature versions where available (from web-features
 		// or supplemental rules), falling back to the conservative year
 		// mapping only if no feature has explicit version data.
-		let versions = versions_from_features(scanned.driving_ids);
+		let versions = versions_from_features(drivers);
 		if (!versions) {
 			try {
 				versions = browser_versions_for(final_year);
@@ -642,20 +615,19 @@ async function find_all_conditional_features(
 			}
 		}
 
-		let doc_link = doc_links[feature.name];
+		let doc_link = doc_links[fixture.name];
 		if (doc_link === undefined) {
 			doc_link = null;
-			missing_doc_links.push(feature.name);
+			missing_doc_links.push(fixture.name);
 		}
 
 		rows.push({
-			name: feature.name,
+			name: fixture.name,
 			doc_link,
 			versions,
 			baseline_year: final_year
 		});
 	}
-	process.stdout.write('\n');
 
 	if (missing_doc_links.length) {
 		throw new Error(`Missing documentation url for some features.
@@ -804,59 +776,93 @@ ${rows.map((row) => `| ${row.join(' | ')} |`).join('\n')}
 }
 
 async function main() {
-	console.log('Preparing scratch directory…');
-	// Wipe and recreate so stale bundles can't leak into the next scan.
-	fs.rmSync(tmp_dir, { recursive: true, force: true });
-	fs.mkdirSync(tmp_dir, { recursive: true });
+	console.log('Enumerating subpackage exports…');
+	const subpackage_exports = await enumerate_subpackage_exports();
+	const total_exports = Object.values(subpackage_exports).reduce((n, list) => n + list.length, 0);
+	console.log(
+		`  ${total_exports} export(s) across ${Object.keys(subpackage_exports).length} subpackage(s)`
+	);
 
-	try {
-		console.log('Bundling runtime entries…');
-		const runtime_files: string[] = [];
-		for (const importee of browser_subpaths().map(importee_for)) {
-			// `import * as` + re-export keeps default and named exports
-			// alive, so flag modules (only a default export) don't produce
-			// empty chunks but their code still ends up in the scan.
-			const code = await bundle(`import * as __ns from '${importee}'; export default __ns;`);
-			const file = path.join(tmp_dir, `${safe_name(importee)}.ts`);
-			fs.writeFileSync(file, code);
-			runtime_files.push(file);
-		}
-
-		console.log('Loading compiler-output fixtures…');
-		const compiler_fixtures = load_compiler_output_fixtures();
-		console.log(`  (${compiler_fixtures.length} fixtures found)`);
-
-		console.log('Searching for the minimum Baseline target (type-aware)…');
-		const target = find_minimum_target(runtime_files, compiler_fixtures);
-
-		console.log('Checking BEHAVIORAL_IGNORE for stale entries…');
-		validate_ignore_features(runtime_files);
-		console.log('  no stale entries');
-
-		console.log('Enumerating subpackage exports…');
-		const subpackage_exports = await enumerate_subpackage_exports();
-		const total_exports = Object.values(subpackage_exports).reduce((n, list) => n + list.length, 0);
-		console.log(
-			`  ${total_exports} export(s) across ${Object.keys(subpackage_exports).length} subpackage(s)`
-		);
-
-		console.log('Scanning per-feature fixtures for conditional requirements…');
-		const conditional_rows = await find_all_conditional_features(target, subpackage_exports);
-		console.log(
-			`  ${conditional_rows.length} feature(s) require browsers newer than the runtime floor`
-		);
-
-		console.log('Resolving browser versions…');
-		const versions = browser_versions_for(target);
-
-		console.log('Rewriting docs page…');
-		generate('browser-support.md', render_browser_table(versions, target));
-		generate('browser-support-features.md', render_conditional_table(conditional_rows, target));
-
-		console.log('Done.');
-	} finally {
-		fs.rmSync(tmp_dir, { recursive: true, force: true });
+	const jobs: BundleJob[] = [];
+	const runtime_keys: string[] = [];
+	for (const importee of browser_subpaths().map(importee_for)) {
+		const key = `runtime_${safe_name(importee)}`;
+		runtime_keys.push(key);
+		// `import * as` + re-export keeps default and named exports
+		// alive, so flag modules (only a default export) don't produce
+		// empty chunks but their code still ends up in the scan.
+		jobs.push({
+			key,
+			entry_code: `import * as __ns from '${importee}'; export default __ns;`
+		});
 	}
+
+	const features = enumerate_features(subpackage_exports);
+	const fixture_entries: Array<{ key: string; name: string }> = [];
+	for (let i = 0; i < features.length; i++) {
+		const entry_code = compile_fixture(features[i]);
+		if (entry_code === null) continue;
+		const key = `fixture_${i}`;
+		fixture_entries.push({ key, name: features[i].name });
+		jobs.push({ key, entry_code, silent: true });
+	}
+
+	console.log(
+		`Bundling ${runtime_keys.length} runtime entries and ${fixture_entries.length} fixtures…`
+	);
+	const bundled = await bundle_all(jobs);
+
+	const virtual_files = new Map<string, string>();
+	const runtime_files: string[] = [];
+	for (const key of runtime_keys) {
+		const code = bundled.get(key);
+		if (code === undefined) continue;
+		const file = path.join(virtual_dir, `${key}.ts`);
+		virtual_files.set(file, code);
+		runtime_files.push(file);
+	}
+
+	const bundled_fixtures: Array<{ name: string; file: string }> = [];
+	for (const { key, name } of fixture_entries) {
+		const code = bundled.get(key);
+		if (code === undefined) continue;
+		const file = path.join(virtual_dir, `${key}.ts`);
+		virtual_files.set(file, code);
+		bundled_fixtures.push({ name, file });
+	}
+
+	console.log('Loading compiler-output fixtures…');
+	const compiler_fixtures = load_compiler_output_fixtures();
+	console.log(`  (${compiler_fixtures.length} fixtures found)`);
+
+	console.log('Building shared TypeScript program for type-aware detection…');
+	const detector = create_detector(virtual_files);
+
+	console.log('Searching for the minimum Baseline target (type-aware)…');
+	const { target, runtime_detected } = find_minimum_target(
+		detector,
+		runtime_files,
+		compiler_fixtures
+	);
+
+	console.log('Checking BEHAVIORAL_IGNORE for stale entries…');
+	validate_ignore_features(runtime_detected);
+	console.log('  no stale entries');
+
+	console.log('Scanning per-feature fixtures for conditional requirements…');
+	const conditional_rows = find_all_conditional_features(detector, target, bundled_fixtures);
+	console.log(
+		`  ${conditional_rows.length} feature(s) require browsers newer than the runtime floor`
+	);
+
+	console.log('Resolving browser versions…');
+	const versions = browser_versions_for(target);
+
+	console.log('Rewriting docs page…');
+	generate('browser-support.md', render_browser_table(versions, target));
+	generate('browser-support-features.md', render_conditional_table(conditional_rows, target));
+
+	console.log('Done.');
 }
 
 function generate(file: string, content: string): void {
