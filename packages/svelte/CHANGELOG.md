@@ -1,5 +1,25 @@
 # svelte
 
+## 5.59.3
+
+### Patch Changes
+
+- fix: preserve function-valued spread attributes with custom renderers ([#19433](https://github.com/sveltejs/svelte/pull/19433))
+
+- fix: make `svelte/internal/init-operations` a noop on the server ([#19449](https://github.com/sveltejs/svelte/pull/19449))
+
+- chore: tree-shake unused async features ([#19453](https://github.com/sveltejs/svelte/pull/19453))
+
+- perf: handle diamond-shaped graphs when checking deriveds for dirtyness ([#19311](https://github.com/sveltejs/svelte/pull/19311))
+
+- fix: keep hydrating after a boundary catches an error from a mismatched block ([#19021](https://github.com/sveltejs/svelte/pull/19021))
+
+- fix: don't re-run deriveds read outside an effect exponentially while another batch is pending ([#19368](https://github.com/sveltejs/svelte/pull/19368))
+
+- perf: tree-shake async-only code out of apps that don't use `experimental.async` ([#19422](https://github.com/sveltejs/svelte/pull/19422))
+
+- fix: prune obsolete global derived dependencies while other batches hold records ([#19461](https://github.com/sveltejs/svelte/pull/19461))
+
 ## 5.59.2
 
 ### Patch Changes
