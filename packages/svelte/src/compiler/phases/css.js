@@ -11,4 +11,5 @@ export function remove_css_prefix(name) {
 }
 
 /** @param {AST.CSS.Atrule} node */
-export const is_keyframes_node = (node) => remove_css_prefix(node.name) === 'keyframes';
+export const is_keyframes_node = (node) =>
+	remove_css_prefix(node.name.toLowerCase()) === 'keyframes';
