@@ -8,6 +8,11 @@ import { add_svelte_meta, build_bind_this, Memoizer, validate_binding } from '..
 import { build_attribute_value } from '../shared/element.js';
 import { build_event_handler } from './events.js';
 import { determine_slot } from '../../../../../utils/slot.js';
+import { Template } from '../../transform-template/template.js';
+import {
+	build_hydration_locations_statement,
+	transform_template
+} from '../../transform-template/index.js';
 
 /**
  * @param {AST.Component | AST.SvelteComponent | AST.SvelteSelf} node
@@ -492,36 +497,55 @@ export function build_component(node, component_name, loc, context) {
 		statements.push(...binding_initializers);
 	}
 
-	if (Object.keys(custom_css_props).length > 0) {
+	memoizer.apply();
+
+	const async_values = memoizer.async_values();
+	const blockers = memoizer.blockers();
+
+	if (custom_css_props.length > 0) {
+		const is_async = async_values || blockers;
+		const state = is_async ? { ...context.state, template: new Template() } : context.state;
+		const wrapper = is_async ? b.id(context.state.scope.generate('css_wrapper')) : anchor;
+
 		if (context.state.metadata.namespace === 'svg') {
 			// this boils down to <g><!></g>
-			context.state.template.push_element('g', node.start, false);
+			state.template.push_element('g', node.start, false);
 		} else {
 			// this boils down to <svelte-css-wrapper style='display: contents'><!></svelte-css-wrapper>
-			context.state.template.push_element('svelte-css-wrapper', node.start, false);
-			context.state.template.set_prop('style', 'display: contents');
+			state.template.push_element('svelte-css-wrapper', node.start, false);
+			state.template.set_prop('style', 'display: contents');
 		}
 
-		context.state.template.push_comment();
-		context.state.template.pop_element();
+		state.template.push_comment();
+		state.template.pop_element();
+
+		const template = is_async ? transform_template(state, 'root') : undefined;
+
+		if (template) {
+			// The async block needs its own anchor. Its wrapper belongs inside the block,
+			// matching the server's hydration markers, rather than in the parent template.
+			context.state.template.push_comment();
+			statements.push(b.var(wrapper, b.call(template)));
+		}
 
 		statements.push(
-			b.stmt(b.call('$.css_props', anchor, b.thunk(b.object(custom_css_props)))),
+			b.stmt(b.call('$.css_props', wrapper, b.thunk(b.object(custom_css_props)))),
 			b.stmt(
-				fn(custom_renderer ? b.call('$.get_last_child', anchor) : b.member(anchor, 'lastChild'))
+				fn(custom_renderer ? b.call('$.get_last_child', wrapper) : b.member(wrapper, 'lastChild'))
 			),
-			b.stmt(b.call('$.reset', anchor))
+			b.stmt(b.call('$.reset', wrapper))
 		);
+
+		if (template) {
+			const locations = build_hydration_locations_statement(state, template, wrapper);
+			if (locations) statements.push(locations);
+			statements.push(b.stmt(b.call('$.append', b.id('$$anchor'), wrapper)));
+		}
 	} else {
 		context.state.template.push_comment();
 
 		statements.push(add_svelte_meta(fn(anchor), node, 'component', { componentTag: node.name }));
 	}
-
-	memoizer.apply();
-
-	const async_values = memoizer.async_values();
-	const blockers = memoizer.blockers();
 
 	if (async_values || blockers) {
 		statements = [
