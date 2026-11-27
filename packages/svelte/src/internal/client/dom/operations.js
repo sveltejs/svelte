@@ -582,6 +582,21 @@ export function set_element_checked(element, checked) {
 }
 
 /**
+ * Input types whose `value` is not user-editable state: for these, updating the default
+ * should also update the current value (the value is the input's submitted payload).
+ */
+const non_editable_value_input_types = [
+	'button',
+	'checkbox',
+	'file',
+	'hidden',
+	'image',
+	'radio',
+	'reset',
+	'submit'
+];
+
+/**
  * Sets the `defaultValue` property on an element without affecting the current `value`.
  * For custom renderers, uses `setAttribute` on `defaultvalue`.
  * @param {Element} element
@@ -590,6 +605,15 @@ export function set_element_checked(element, checked) {
 export function set_element_default_value(element, value) {
 	if (current_renderer) {
 		current_renderer.setAttribute(element, 'defaultValue', value);
+		return;
+	}
+	// For input types whose value is not user-editable state (e.g. hidden, checkbox, radio,
+	// submit), the new default should also become the current value: preserving the previous
+	// value would freeze the payload the input submits with the form.
+	// @ts-expect-error
+	if (non_editable_value_input_types.includes(element.type)) {
+		// @ts-expect-error
+		element.defaultValue = value;
 		return;
 	}
 	// @ts-expect-error
