@@ -1055,7 +1055,7 @@ export class Batch {
 		if (!same) {
 			seen = null;
 			count_deps = 0;
-			this.mark(source, DIRTY, updated_during_traversal);
+			this.mark(source, this.is_fork ? MAYBE_DIRTY : DIRTY, updated_during_traversal);
 			seen = null;
 
 			if (eager_effects_used && eager_effects.size > 0 && !eager_effects_deferred) {
@@ -1416,12 +1416,17 @@ export class Batch {
 					eager_effects.add(/** @type {Effect} */ (reaction));
 				}
 			} else if ((flags & DERIVED) !== 0) {
-				// don't set a DIRTY reaction to MAYBE_DIRTY
-				if (not_dirty) {
-					set_signal_status(reaction, status);
-				}
-
 				var derived = /** @type {Derived} */ (reaction);
+
+				// don't set a DIRTY reaction to MAYBE_DIRTY; if a derived retains edges from
+				// batch records that its global run did not read, mark MAYBE_DIRTY so global reads
+				// verify its actual dependencies instead of re-executing unconditionally
+				if (not_dirty) {
+					set_signal_status(
+						reaction,
+						async_mode_flag && derived.edges !== derived.deps ? MAYBE_DIRTY : status
+					);
+				}
 
 				view_cache?.delete(derived);
 				this.mark(derived, MAYBE_DIRTY, updated_during_traversal);
