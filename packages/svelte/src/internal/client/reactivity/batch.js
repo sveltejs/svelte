@@ -1036,6 +1036,9 @@ export class Batch {
 		// are only captured while no view is active, see `async_derived`)
 		batch_values?.set(source, entry);
 
+		// (a write of the real value doesn't allocate a version, but it can still change what the active view holds)
+		if (same) invalidate_derived_checks();
+
 		// an assignment replaces the value of a derived that the active view of the world holds
 		view_cache?.delete(/** @type {Derived} */ (source));
 

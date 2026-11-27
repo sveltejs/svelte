@@ -1676,6 +1676,108 @@ describe('signals', () => {
 		};
 	});
 
+	it('nonreactive derived validation bounds diamond work in a batch view', () => {
+		enable_async_mode_flag();
+		try {
+			const input = source(0);
+			const chain = create_diamond_chain(input, 20);
+			// Run in the real world first, so that the view checks the global runs.
+			assert.equal($.get(chain.value), 0);
+			const checks = count_dependency_checks(chain.values);
+
+			const f = fork(() => {
+				for (let read = 0; read < 2; read++) {
+					checks.count = 0;
+					assert.equal($.get(chain.value), 0);
+					assert.deepEqual(
+						chain.runs,
+						chain.values.map(() => 1)
+					);
+					assert.isBelow(checks.count, 100_000 + 100 * chain.values.length);
+					// Each read has its own, lazily allocated memo.
+					assert.isAbove(checks.count, 100_000 - 10 * chain.values.length);
+				}
+			});
+			f.discard();
+			assert.equal(input.reactions, null);
+			assert.isTrue(chain.values.every((value) => (value.f & CONNECTED) === 0));
+		} finally {
+			disable_async_mode_flag();
+		}
+	});
+
+	for (const same of [false, true]) {
+		it(`batch view validation memo is invalidated by ${same ? 'writing the real value' : 'a write'} during the read`, () => {
+			enable_async_mode_flag();
+			try {
+				const input = source(0);
+				const other = source(0);
+				const trigger = source(0);
+				const chain = create_diamond_chain(input, 18);
+				const value = derived(() => $.get(other));
+				let checks_at_write = 0;
+				let checks: { count: number };
+				const result = derived(() => {
+					$.get(trigger);
+					// Checking the chain allocates the memo...
+					$.get(chain.value);
+					// ...which then holds what the view resolved for `value`.
+					const before = $.get(value);
+					if ($.get(trigger)) {
+						checks_at_write = checks.count;
+						// Writing the real value doesn't allocate a version, but changes what the view holds.
+						$.untrack(() => set(other, same ? 0 : 2));
+					}
+					return [before, $.get(value)];
+				});
+
+				assert.deepEqual($.get(result), [0, 0]);
+				checks = count_dependency_checks(chain.values);
+
+				const f = fork(() => {
+					if (same) set(other, 1);
+					set(trigger, 1);
+					assert.deepEqual($.get(result), same ? [1, 0] : [0, 2]);
+					assert.isAbove(checks_at_write, 100_000);
+				});
+				f.discard();
+				assert.deepEqual($.get(result), [0, 0]);
+			} finally {
+				disable_async_mode_flag();
+			}
+		});
+	}
+
+	it('batch view validation memo expires after an exception', () => {
+		enable_async_mode_flag();
+		try {
+			const input = source(0);
+			const chain = create_diamond_chain(input, 18);
+			assert.equal($.get(chain.value), 0);
+
+			const error = new Error('validation failed');
+			let fail = true;
+			const checks = count_dependency_checks(chain.values, () => {
+				// Throw from validation itself, after the lazy memo has been allocated.
+				if (fail && checks.count === 100_001) throw error;
+			});
+
+			const f = fork(() => {
+				assert.throws(() => $.get(chain.value), 'validation failed');
+
+				fail = false;
+				checks.count = 0;
+				assert.equal($.get(chain.value), 0);
+				// No write clears the memo for us: the throwing read must do so in finally.
+				assert.isAbove(checks.count, 100_000);
+				assert.isBelow(checks.count, 100_000 + 100 * chain.values.length);
+			});
+			f.discard();
+		} finally {
+			disable_async_mode_flag();
+		}
+	});
+
 	test('unowned deriveds are not added as reactions', () => {
 		var count = state(0);
 

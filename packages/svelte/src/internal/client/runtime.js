@@ -179,16 +179,53 @@ export function set_update_version(value) {
 /** Number of dependency checks in an outermost derived read, or 0 outside one. */
 let checked_deps = 0;
 
-/** @type {Set<Derived> | null} Successfully checked disconnected deriveds, valid only within that read. */
-let derived_checks = null;
+/**
+ * Successfully checked disconnected deriveds, valid only within that read: `null` for a check in the real world,
+ * else what `get_view` resolved in the active view (which doesn't change during a read) — which the view's cache
+ * can't hold, since nothing would remove it when it becomes stale. With the version it had, since it can be the
+ * derived itself (its global state applies), whose run a real-world evaluation can replace
+ * @type {Map<Derived, { entry: Derived | DerivedRecord | BatchValue, wv: number } | null> | null}
+ */
+export let derived_checks = null;
 
 /** Explicit writes can invalidate checks even before the memo is allocated. */
-let derived_checks_version = 0;
+export let derived_checks_version = 0;
 
 export function invalidate_derived_checks() {
 	if (checked_deps !== 0) {
 		derived_checks?.clear();
 		derived_checks_version++;
+	}
+}
+
+/** End an outermost derived read (see `get`) */
+function end_derived_checks() {
+	checked_deps = 0;
+	derived_checks = null;
+}
+
+/**
+ * What `get_view` resolved for a disconnected derived earlier in the current outermost derived read, if anything
+ * @param {Derived} derived
+ * @returns {Derived | DerivedRecord | BatchValue | undefined}
+ */
+export function get_view_check(derived) {
+	if (derived_checks === null) return;
+
+	var check = derived_checks.get(derived);
+	if (check && check.entry.wv === check.wv) return check.entry;
+}
+
+/**
+ * Remember what `get_view` resolved for a disconnected derived, unless an explicit write happened since it
+ * started (`version` is the `derived_checks_version` from then), which may have invalidated what it read
+ * @param {Derived} derived
+ * @param {Derived | DerivedRecord | BatchValue} entry
+ * @param {number} version
+ */
+export function set_view_check(derived, entry, version) {
+	if (derived_checks !== null && version === derived_checks_version) {
+		derived_checks.set(derived, { entry, wv: entry.wv });
 	}
 }
 
@@ -224,6 +261,14 @@ export function version_of(signal) {
  */
 export function is_current(deps, dv) {
 	if (deps !== null) {
+		// Within an outermost derived read in a batch's view, as in `is_dirty` for the real world: only pay
+		// for a memo once repeated paths through the graph might be expensive (see `get_view_check`)
+		if (checked_deps !== 0 && batch_values !== null) {
+			checked_deps += dv.length;
+
+			if (checked_deps > 100000) derived_checks ??= new Map();
+		}
+
 		for (var i = 0; i < dv.length; i++) {
 			if (version_of(deps[i]) !== dv[i]) return false;
 		}
@@ -341,11 +386,14 @@ export function is_dirty(reaction) {
 
 			if (checking) {
 				checked_deps += dv.length;
-				// As in Batch#mark, only pay for a Set once repeated paths through the graph
+				// As in Batch#mark, only pay for a memo once repeated paths through the graph
 				// might be expensive. Small derived reads don't allocate a memo.
 				if (checked_deps > 100000) {
-					derived_checks ??= new Set();
-					if ((flags & CONNECTED) === 0 && derived_checks.has(/** @type {Derived} */ (reaction))) {
+					derived_checks ??= new Map();
+					if (
+						(flags & CONNECTED) === 0 &&
+						derived_checks.get(/** @type {Derived} */ (reaction)) === null
+					) {
 						return false;
 					}
 				}
@@ -368,7 +416,7 @@ export function is_dirty(reaction) {
 			) {
 				// The memo may have been allocated while checking a dependency. Disconnected
 				// deriveds must stay MAYBE_DIRTY, but need not be checked once per path.
-				derived_checks?.add(/** @type {Derived} */ (reaction));
+				derived_checks?.set(/** @type {Derived} */ (reaction), null);
 			}
 		} else if (!is_current(deps, dv)) {
 			return true;
@@ -1474,7 +1522,19 @@ export function get(signal) {
 		}
 
 		if (batch_values !== null) {
-			view = get_view(derived);
+			// The same deduplication applies to disconnected graphs that are checked in a batch's view (see
+			// `get_view_check`, and below). Connected deriveds are in the view's cache anyway
+			if ((flags & CONNECTED) === 0 && !is_new && checked_deps === 0) {
+				checked_deps = 1;
+
+				try {
+					view = get_view(derived);
+				} finally {
+					end_derived_checks();
+				}
+			} else {
+				view = get_view(derived);
+			}
 
 			// the view doesn't cache a disconnected derived, so the run that reads it
 			// remembers which version it saw (see `seen_version`)
@@ -1487,15 +1547,22 @@ export function get(signal) {
 				var seen = (view_read_versions ??= new Map()).get(derived);
 				view_read_versions.set(derived, seen === undefined || seen === view.wv ? view.wv : -1);
 			}
-		} else if (!is_new && checked_deps === 0 && !current_batch?.is_fork) {
-			// Untracked reads need the same deduplication as reads that reconnect the graph.
+		} else if (
+			(flags & CONNECTED) === 0 &&
+			!is_new &&
+			checked_deps === 0 &&
+			!current_batch?.is_fork
+		) {
+			// Untracked reads need the same deduplication as reads that reconnect the graph. Only disconnected
+			// deriveds need it: a derived that was connected before the read only reads connected deriveds, which
+			// are marked clean once checked, so they aren't checked once per path anyway — and reads of connected
+			// deriveds are the hot path, which shouldn't pay for this
 			checked_deps = 1;
 
 			try {
 				update_derived(derived);
 			} finally {
-				checked_deps = 0;
-				derived_checks = null;
+				end_derived_checks();
 			}
 		} else {
 			update_derived(derived);
