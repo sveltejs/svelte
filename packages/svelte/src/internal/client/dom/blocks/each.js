@@ -562,7 +562,11 @@ function reconcile(state, array, anchor, flags, get_key) {
 	var items = state.items;
 	var current = skip_to_branch(state.effect.first);
 
-	/** @type {undefined | Set<Effect>} */
+	/**
+	 * Effects that `current` has moved past, mapped to their index in `stashed`
+	 * (which is stale if `stashed` has been reset since)
+	 * @type {undefined | Map<Effect, number>}
+	 */
 	var seen;
 
 	/** @type {Effect | null} */
@@ -669,20 +673,34 @@ function reconcile(state, array, anchor, flags, get_key) {
 						move(matched[j], start, anchor);
 					}
 
-					for (j = 0; j < stashed.length; j += 1) {
-						seen.delete(stashed[j]);
-					}
-
 					link(state, a.prev, b.next);
 					link(state, prev, a);
 					link(state, b, start);
 
-					current = start;
-					prev = b;
-					i -= 1;
+					var k = /** @type {number} */ (seen.get(effect));
 
-					matched = [];
-					stashed = [];
+					if (stashed[k] === effect) {
+						// the stashed items before `effect` would just be stashed again, so keep them
+						for (j = k; j < stashed.length; j += 1) {
+							seen.delete(stashed[j]);
+						}
+
+						stashed.length = k;
+						matched = [effect];
+						prev = effect;
+						current = skip_to_branch(effect.next);
+					} else {
+						for (j = 0; j < stashed.length; j += 1) {
+							seen.delete(stashed[j]);
+						}
+
+						current = start;
+						prev = b;
+						i -= 1;
+
+						matched = [];
+						stashed = [];
+					}
 				} else {
 					// more efficient to move earlier items to the back
 					seen.delete(effect);
@@ -702,7 +720,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 			stashed = [];
 
 			while (current !== null && current !== effect) {
-				(seen ??= new Set()).add(current);
+				(seen ??= new Map()).set(current, stashed.length);
 				stashed.push(current);
 				current = skip_to_branch(current.next);
 			}
@@ -738,7 +756,7 @@ function reconcile(state, array, anchor, flags, get_key) {
 		var to_destroy = [];
 
 		if (seen !== undefined) {
-			for (effect of seen) {
+			for (effect of seen.keys()) {
 				if ((effect.f & INERT) === 0) {
 					to_destroy.push(effect);
 				}
