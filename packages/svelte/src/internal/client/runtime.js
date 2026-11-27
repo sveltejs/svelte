@@ -381,7 +381,7 @@ export function is_dirty(reaction) {
 		if (dv === null) return true;
 
 		if (batch_values === null) {
-			var checking = checked_deps !== 0 && !current_batch?.is_fork;
+			var checking = checked_deps !== 0;
 			var checks_version = derived_checks_version;
 
 			if (checking) {
@@ -1521,51 +1521,39 @@ export function get(signal) {
 			derived.f |= CONNECTED;
 		}
 
-		if (batch_values !== null) {
-			// The same deduplication applies to disconnected graphs that are checked in a batch's view (see
-			// `get_view_check`, and below). Connected deriveds are in the view's cache anyway
-			if ((flags & CONNECTED) === 0 && !is_new && checked_deps === 0) {
-				checked_deps = 1;
-
-				try {
-					view = get_view(derived);
-				} finally {
-					end_derived_checks();
-				}
-			} else {
-				view = get_view(derived);
-			}
-
-			// the view doesn't cache a disconnected derived, so the run that reads it
-			// remembers which version it saw (see `seen_version`)
-			if (
-				(derived.f & CONNECTED) === 0 &&
-				active_reaction !== null &&
-				!untracking &&
-				(active_reaction.f & REACTION_IS_UPDATING) !== 0
-			) {
-				var seen = (view_read_versions ??= new Map()).get(derived);
-				view_read_versions.set(derived, seen === undefined || seen === view.wv ? view.wv : -1);
-			}
-		} else if (
-			(flags & CONNECTED) === 0 &&
-			!is_new &&
-			checked_deps === 0 &&
-			!current_batch?.is_fork
-		) {
-			// Untracked reads need the same deduplication as reads that reconnect the graph. Only disconnected
-			// deriveds need it: a derived that was connected before the read only reads connected deriveds, which
-			// are marked clean once checked, so they aren't checked once per path anyway — and reads of connected
-			// deriveds are the hot path, which shouldn't pay for this
+		if ((flags & CONNECTED) === 0 && !is_new && checked_deps === 0) {
+			// Untracked reads and reads that reconnect the graph check disconnected deriveds, which aren't marked
+			// clean once checked: deduplicate them, so that they aren't checked once per path (see `derived_checks`).
+			// A derived that was connected before the read only reads connected deriveds, so reads of connected
+			// deriveds — the hot path — don't pay for this
 			checked_deps = 1;
 
 			try {
-				update_derived(derived);
+				if (batch_values === null) {
+					update_derived(derived);
+				} else {
+					view = get_view(derived);
+				}
 			} finally {
 				end_derived_checks();
 			}
-		} else {
+		} else if (batch_values === null) {
 			update_derived(derived);
+		} else {
+			view = get_view(derived);
+		}
+
+		// the view doesn't cache a disconnected derived, so the run that reads it
+		// remembers which version it saw (see `seen_version`)
+		if (
+			view !== undefined &&
+			(derived.f & CONNECTED) === 0 &&
+			active_reaction !== null &&
+			!untracking &&
+			(active_reaction.f & REACTION_IS_UPDATING) !== 0
+		) {
+			var seen = (view_read_versions ??= new Map()).get(derived);
+			view_read_versions.set(derived, seen === undefined || seen === view.wv ? view.wv : -1);
 		}
 
 		if (should_connect && !is_new) {
