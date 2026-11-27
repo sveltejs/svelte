@@ -16,7 +16,8 @@ export function Program(node, context) {
 			body: transform_body(
 				state.analysis.instance_body,
 				b.id('$$renderer.run'),
-				(node) => /** @type {Node} */ (context.visit(node))
+				(node) => /** @type {Node} */ (context.visit(node)),
+				state.analysis.instance.scope
 			)
 		};
 	}

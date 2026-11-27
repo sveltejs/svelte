@@ -12,7 +12,7 @@
 		return initial.promise;
 	}
 
-	function load(value: number) {
+	function load(value: number, ready: void) {
 		console.log(`load ${value}`);
 		return new Promise<number>((resolve) => queue.push(() => resolve(value)));
 	}

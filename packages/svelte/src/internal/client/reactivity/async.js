@@ -321,9 +321,32 @@ export function unset_context(deactivate_batch = true) {
 }
 
 /**
+ * Dev-only waterfall tracking for one step of a `run(...)` call. Async deriveds that are awaited by that step
+ * defer their `await_waterfall` check until the step has finished, as their values can't be read before then.
+ * That way, independent deriveds that are created up front and then awaited in order don't trigger the warning:
+ * `var a = $.async_derived(...); var b = $.async_derived(...); await a; await b;` — `b` resolving first and
+ * waiting for `a` is not a waterfall
+ * @typedef {{ settled: boolean, checks: Array<() => void> }} RunStep
+ */
+
+/**
+ * @param {RunStep} step
+ * @param {boolean} errored
+ */
+function settle_run_step(step, errored) {
+	step.settled = true;
+
+	// no need to look for waterfalls if the script failed
+	if (!errored) {
+		for (const check of step.checks) check();
+	}
+
+	step.checks.length = 0;
+}
+
+/**
  * The script's state while a `run` step executes.
- * Async expressions set `batch` when they deliver their first value. `continued` holds callbacks
- * to run after the script resumes, and `signals` lists the expressions in creation order.
+ * Async expressions call `deliver` when they have their first value, and `signals` lists the expressions in creation order.
  * @type {Runner | null}
  */
 export let current_runner = null;
@@ -341,8 +364,11 @@ class Runner {
 	/** @type {Batch} */
 	#batch;
 
-	/** @type {Array<() => void>} */
-	continued = [];
+	/**
+	 * First values of async deriveds, see `deliver`
+	 * @type {Array<{ step: number, batch: Batch | null, release: () => void }>}
+	 */
+	#delivered = [];
 
 	/**
 	 * Async deriveds created during this run
@@ -352,6 +378,15 @@ class Runner {
 
 	/** Whether the full initialization promise chain is still pending. */
 	running = true;
+
+	/** The index of the step that was started most recently */
+	index = 0;
+
+	/**
+	 * Dev-only, one for each step
+	 * @type {RunStep[]}
+	 */
+	steps = [];
 
 	constructor() {
 		// TODO this should be unnecessary! these should just be class initializers. but
@@ -383,10 +418,16 @@ class Runner {
 	run(thunks) {
 		var active = /** @type {Effect} */ (active_effect);
 
-		var promise = Promise.resolve(this.#invoke(thunks[0]));
+		if (DEV) {
+			this.steps = thunks.map(() => ({ settled: false, checks: [] }));
+		}
+
+		var promise = Promise.resolve(this.#invoke(thunks[0], 0));
 		var blockers = [new Blocker(this, promise)];
 
-		for (const fn of thunks.slice(1)) {
+		for (let i = 1; i < thunks.length; i += 1) {
+			const fn = thunks[i];
+
 			promise = promise.then(() => {
 				if ((active.f & DESTROYED) !== 0) {
 					throw STALE_REACTION;
@@ -394,13 +435,12 @@ class Runner {
 
 				try {
 					this.restore();
-					return this.#invoke(fn);
+					return this.#invoke(fn, i);
 				} finally {
 					// We gotta unset context directly in case the function returns a promise, in which case
 					// unset_context in .finally() would be too late
 					unset_context();
-					// Release buffered results now that the script has used the previous step's first values.
-					this.#continue();
+					this.#started(i);
 				}
 			});
 
@@ -420,7 +460,7 @@ class Runner {
 				}
 			})
 			// The last step has no following step to release its buffered results.
-			.finally(() => this.#continue());
+			.finally(() => this.#started(Infinity));
 
 		async_effect(() => {
 			// Inside an effect so later adopting branches can rerun this
@@ -446,27 +486,74 @@ class Runner {
 	}
 
 	/**
-	 * Switch away from the previous batch (which is now obsolete)
-	 * to another one
+	 * Called when an async derived created during this run has its first value, which it has in the view of `batch`.
+	 * The script consumes it in step `step` (the one that awaits it), so it continues in `batch` from that step on, and
+	 * the derived's results from other batches are buffered until the next step has started, at which point `release`
+	 * is called. For hoisted deriveds, `step` may still be ahead, in which case both have to wait
+	 * @param {number} step
 	 * @param {Batch} batch
+	 * @param {() => void} release
 	 */
-	switch(batch) {
-		this.#batch = batch;
+	deliver(step, batch, release) {
+		if (step <= this.index) {
+			this.#batch = batch;
+			this.#delivered.push({ step, batch: null, release });
+		} else {
+			this.#delivered.push({ step, batch, release });
+		}
 	}
 
-	#continue() {
-		for (const fn of this.continued.splice(0)) fn();
+	/**
+	 * Called once step `index` has been invoked
+	 * @param {number} index
+	 */
+	#started(index) {
+		var delivered = this.#delivered;
+		this.#delivered = [];
+
+		for (const d of delivered) {
+			// this step consumes the first value — continue in its batch from now on
+			if (d.batch !== null && d.step <= index) {
+				this.#batch = d.batch;
+				d.batch = null;
+			}
+		}
+
+		for (const d of delivered) {
+			if (d.step < index) {
+				// the script has used the first value, so release buffered results
+				d.release();
+			} else {
+				this.#delivered.push(d);
+			}
+		}
 	}
 
 	/**
 	 * @param {() => void | Promise<void>} fn
+	 * @param {number} index
 	 */
-	#invoke(fn) {
+	#invoke(fn, index) {
 		var previous_runner = current_runner;
 		current_runner = this;
+		this.index = index;
 
 		try {
-			return fn();
+			if (!DEV) return fn();
+
+			var step = this.steps[index];
+
+			try {
+				var promise = Promise.resolve(fn());
+				promise.then(
+					() => settle_run_step(step, false),
+					() => settle_run_step(step, true)
+				);
+				return promise;
+			} catch (error) {
+				settle_run_step(step, true);
+				throw error;
+			}
 		} finally {
 			current_runner = previous_runner;
 		}

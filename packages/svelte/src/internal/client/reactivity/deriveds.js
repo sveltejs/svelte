@@ -110,10 +110,11 @@ export const OBSOLETE = Symbol('obsolete');
  * @param {string} [label]
  * @param {string} [location] If provided, print a warning if the value is not read immediately after update
  * @param {(error: unknown) => void} [onready] Called when the first result is captured; receives its error, if any
+ * @param {number} [step] The index of the `run(...)` step that awaits the expression, if not the one that creates it
  * @returns {Source<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function async_expression(fn, label, location, onready) {
+export function async_expression(fn, label, location, onready, step) {
 	var signal = source(/** @type {V} */ (UNINITIALIZED));
 	signal.f |= ASYNC;
 
@@ -125,6 +126,12 @@ export function async_expression(fn, label, location, onready) {
 	// `run` continues in the creating batch's view; other batches' results wait until then.
 	// A superseded or obsolete run lets another batch supply the first value.
 	var runner = current_runner;
+
+	// the `run(...)` step (if any) that awaits this derived — its value can't be read before that step
+	if (runner !== null) step ??= runner.index;
+
+	// Dev-only: the value can't be read before the step has finished either
+	var run_step = DEV && runner !== null ? runner.steps[/** @type {number} */ (step)] : null;
 
 	/**
 	 * The batch whose run delivers the first value (`null`: whichever comes first)
@@ -276,9 +283,7 @@ export function async_expression(fn, label, location, onready) {
 
 			if (runner !== null) {
 				// Let the script consume the first value in this batch's view before releasing buffered results.
-				runner.switch(batch);
-
-				runner.continued.push(() => flush_waiting(true));
+				runner.deliver(/** @type {number} */ (step), batch, () => flush_waiting(true));
 
 				runner = null;
 			}
@@ -286,15 +291,24 @@ export function async_expression(fn, label, location, onready) {
 			onready?.(error);
 			onready = undefined;
 
-			if (DEV && location !== undefined && !signal.equals(value)) {
+			// `capture` may already have updated the signal, so use the equality computed before it.
+			if (DEV && location !== undefined && !same && !error) {
 				recent_async_deriveds.add(signal);
 
-				setTimeout(() => {
-					if (recent_async_deriveds.has(signal) && (effect.f & DESTROYED) === 0) {
-						w.await_waterfall(/** @type {string} */ (signal.label), location);
-						recent_async_deriveds.delete(signal);
-					}
-				});
+				const check = () => {
+					setTimeout(() => {
+						if (recent_async_deriveds.has(signal) && (effect.f & DESTROYED) === 0) {
+							w.await_waterfall(/** @type {string} */ (signal.label), location);
+							recent_async_deriveds.delete(signal);
+						}
+					});
+				};
+
+				if (run_step && !run_step.settled) {
+					run_step.checks.push(check);
+				} else {
+					check();
+				}
 			}
 		};
 
@@ -315,10 +329,11 @@ export function async_expression(fn, label, location, onready) {
  * @param {() => V | Promise<V>} fn
  * @param {string} [label]
  * @param {string} [location] If provided, print a warning if the value is not read immediately after update
+ * @param {number} [step] The index of the `run(...)` step that awaits the derived, if it is created in an earlier one
  * @returns {Promise<Source<V>>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function async_derived(fn, label, location) {
+export function async_derived(fn, label, location, step) {
 	if (!current_runner) {
 		e.async_derived_orphan();
 	}
@@ -326,7 +341,7 @@ export function async_derived(fn, label, location) {
 	const runner = current_runner;
 	const batch = /** @type {Batch} */ (current_batch);
 
-	return new Promise((fulfil, reject) => {
+	const result = new Promise((fulfil, reject) => {
 		var source = async_expression(
 			() => {
 				var effect = /** @type {Effect} */ (active_effect);
@@ -356,11 +371,26 @@ export function async_derived(fn, label, location) {
 			(error) => {
 				if (error === undefined) fulfil(/** @type {Source<V>} */ (source));
 				else reject(error);
-			}
+			},
+			step
 		);
 
 		var index = runner.signals.push(source) - 1;
 	});
+
+	return handled(result);
+}
+
+/**
+ * Independent `$derived(await ...)` declarations in a component's `<script>` may be created before
+ * they are awaited, so one of them may reject while an earlier step is still pending.
+ * Mark the promise as handled, so that this isn't reported as an unhandled rejection
+ * @template T
+ * @param {Promise<T>} promise
+ */
+function handled(promise) {
+	promise.catch(noop);
+	return promise;
 }
 
 /**

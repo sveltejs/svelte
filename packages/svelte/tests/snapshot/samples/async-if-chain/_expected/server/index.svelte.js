@@ -10,19 +10,17 @@ export default function Async_if_chain($$renderer) {
 	var blocking;
 	var $$promises = $$renderer.run([async () => blocking = await $.async_derived(() => foo)]);
 
-	$$renderer.async_block([$$promises[0]], ($$renderer) => {
-		if (foo) {
-			$$renderer.push(`<!--[0-->foo`);
-		} else if (bar) {
-			$$renderer.push(`<!--[1-->bar`);
-		} else {
-			$$renderer.push(`<!--[-1-->else`);
-		}
-	});
+	if (foo) {
+		$$renderer.push(`<!--[0-->foo`);
+	} else if (bar) {
+		$$renderer.push(`<!--[1-->bar`);
+	} else {
+		$$renderer.push(`<!--[-1-->else`);
+	}
 
 	$$renderer.push(`<!--]--> `);
 
-	$$renderer.async_block([$$promises[0]], async ($$renderer) => {
+	$$renderer.child_block(async ($$renderer) => {
 		if ((await $.save(foo))()) {
 			$$renderer.push(`<!--[0-->foo`);
 		} else if (bar) {
@@ -44,7 +42,7 @@ export default function Async_if_chain($$renderer) {
 
 	$$renderer.push(`<!--]--> `);
 
-	$$renderer.async_block([$$promises[0]], async ($$renderer) => {
+	$$renderer.child_block(async ($$renderer) => {
 		if ((await $.save(foo))() > 10) {
 			$$renderer.push(`<!--[0-->foo`);
 		} else if (bar) {
@@ -52,7 +50,7 @@ export default function Async_if_chain($$renderer) {
 		} else {
 			$$renderer.push('<!--[-1-->');
 
-			$$renderer.async_block([$$promises[0]], async ($$renderer) => {
+			$$renderer.child_block(async ($$renderer) => {
 				if ((await $.save(foo))() > 5) {
 					$$renderer.push(`<!--[0-->baz`);
 				} else {

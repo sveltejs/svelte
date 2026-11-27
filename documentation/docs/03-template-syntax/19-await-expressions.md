@@ -68,7 +68,30 @@ Svelte will do as much asynchronous work as it can in parallel. For example if y
 
 ...both functions will run at the same time, as they are independent expressions, even though they are _visually_ sequential.
 
-This does not apply to sequential `await` expressions inside your `<script>` or inside async functions — these run like any other asynchronous JavaScript. An exception is that independent `$derived` expressions will update independently, even though they will run sequentially when they are first created:
+This also applies to `$derived(await ...)` expressions inside your `<script>`: each one is created as soon as everything it depends on is available, even if other statements come before it. In the following example, `a` and `b` are created at the same time, so that they run in parallel, while `c` is only created once `b` resolves:
+
+```js
+/** @param {number} x */
+async function one(x) { return x; }
+/** @param {number} y */
+async function two(y) { return y; }
+/** @param {number} z */
+async function three(z) { return z; }
+let x = $state(1);
+let y = $state(2);
+// ---cut---
+// `a` and `b` are created at the same time,
+// even though there is a statement in between...
+let a = $derived(await one(x));
+let doubled = $derived(a * 2);
+let b = $derived(await two(y));
+// ...but `c` has to wait for `b`, because it depends on it.
+// Once created they will all update independently,
+// even if `x` and `y` update simultaneously.
+let c = $derived(await three(b + x));
+```
+
+This does not apply to other `await` expressions inside your `<script>` or inside async functions — these run like any other asynchronous JavaScript. They don't hold up `$derived(await ...)` expressions that don't depend on them, however:
 
 ```js
 /** @param {number} x */
@@ -78,14 +101,48 @@ async function two(y) { return y; }
 let x = $state(1);
 let y = $state(2);
 // ---cut---
-// `b` will not be created until `a` has resolved,
-// but once created they will update independently
-// even if `x` and `y` update simultaneously
-let a = $derived(await one(x));
+let a = await one(x);
+
+// `b` does not depend on `a`, so it is created right away,
+// and `two(y)` runs in parallel with `one(x)`
 let b = $derived(await two(y));
+
+// `c` depends on `a`, so it is only created once `a` has resolved
+let c = $derived(await two(a));
 ```
 
-> [!NOTE] If you write code like this, expect Svelte to give you an [`await_waterfall`](runtime-warnings#Client-warnings-await_waterfall) warning
+For this reason, `$derived` expressions must be pure — they must not have side effects, nor rely on side effects of earlier statements that they don't reference. In this example, `getUser()` may run before `connect()` has finished:
+
+```js
+// @filename: db.js
+export async function connect() {}
+export async function getUser() { return { name: 'Bob' }; }
+
+// @filename: index.js
+// ---cut---
+import { connect, getUser } from './db.js';
+
+await connect();
+let user = $derived(await getUser());
+```
+
+To make sure that the connection is established first, either pass it to the function that needs it...
+
+```js
+// @filename: db.js
+export async function connect() { return {}; }
+/** @param {{}} connection */
+export async function getUser(connection) { return { name: 'Bob' }; }
+
+// @filename: index.js
+// ---cut---
+import { connect, getUser } from './db.js';
+
+const connection = await connect();
+let user = $derived(await getUser(connection));
+```
+
+...or, if it only needs to happen once, use a top-level `await` in the module that provides `getUser` (or in a module it imports), so that it has finished before your component is even loaded.
 
 ## Indicating loading states
 

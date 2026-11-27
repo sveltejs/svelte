@@ -5,8 +5,10 @@
 	} = $props();
 
 	const first = $derived(await push(count + 1));
-	const second = $derived(await push(count + 2));
-	const third = $derived(await push(count + 3));
+	// `count` is never nullish, so the earlier deriveds aren't read, but referencing
+	// them prevents parallel creation and keeps the script continuation in three steps
+	const second = $derived(await push((count ?? first) + 2));
+	const third = $derived(await push((count ?? second) + 3));
 </script>
 
 <p>{first} {second} {third}</p>
