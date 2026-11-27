@@ -6,7 +6,13 @@ import { extract_paths } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
 import * as assert from '../../../../utils/assert.js';
 import { get_rune, should_proxy } from '../../../scope.js';
-import { async_thunk, get_prop_source, is_prop_source, is_state_source } from '../utils.js';
+import {
+	async_thunk,
+	dev_location,
+	get_prop_source,
+	is_prop_source,
+	is_state_source
+} from '../utils.js';
 import { get_value } from './shared/declarations.js';
 
 /**
@@ -90,7 +96,7 @@ export function VariableDeclaration(node, context) {
 								initial = b.call('$.proxy', initial);
 
 								if (dev) {
-									initial = b.call('$.tag_proxy', initial, b.literal(id.name));
+									initial = b.call('$.tag_proxy', initial, b.literal(id.name), dev_location(id));
 								}
 							}
 
@@ -142,7 +148,7 @@ export function VariableDeclaration(node, context) {
 						value = b.call('$.proxy', value);
 
 						if (dev && !is_state) {
-							value = b.call('$.tag_proxy', value, b.literal(id.name));
+							value = b.call('$.tag_proxy', value, b.literal(id.name), dev_location(id));
 						}
 					}
 
@@ -151,7 +157,7 @@ export function VariableDeclaration(node, context) {
 						value = b.call(callee, value);
 
 						if (dev) {
-							value = b.call('$.tag', value, b.literal(id.name));
+							value = b.call('$.tag', value, b.literal(id.name), dev_location(id));
 						}
 					}
 
@@ -179,7 +185,7 @@ export function VariableDeclaration(node, context) {
 
 							if (dev) {
 								const label = `[$state ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`;
-								call = b.call('$.tag', call, b.literal(label));
+								call = b.call('$.tag', call, b.literal(label), dev_location(declarator));
 							}
 
 							return b.declarator(id, call);
@@ -217,7 +223,8 @@ export function VariableDeclaration(node, context) {
 							'$.async_derived',
 							async_thunk(expression, metadata),
 							dev && b.literal(declarator.id.name),
-							location ? b.literal(location) : undefined
+							location ? b.literal(location) : undefined,
+							dev && dev_location(declarator)
 						);
 
 						declarations.push(b.declarator(declarator.id, b.await(call)));
@@ -225,7 +232,9 @@ export function VariableDeclaration(node, context) {
 						if (rune === '$derived') expression = b.thunk(expression);
 
 						let call = b.call('$.derived', expression);
-						if (dev) call = b.call('$.tag', call, b.literal(declarator.id.name));
+						if (dev) {
+							call = b.call('$.tag', call, b.literal(declarator.id.name), dev_location(declarator));
+						}
 
 						declarations.push(b.declarator(declarator.id, call));
 					}
@@ -253,7 +262,8 @@ export function VariableDeclaration(node, context) {
 									b.literal(
 										`[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`
 									),
-								location ? b.literal(location) : undefined
+								location ? b.literal(location) : undefined,
+								dev && dev_location(declarator)
 							);
 
 							call = b.await(call);
@@ -273,7 +283,7 @@ export function VariableDeclaration(node, context) {
 
 						if (dev) {
 							const label = `[$derived ${declarator.id.type === 'ArrayPattern' ? 'iterable' : 'object'}]`;
-							call = b.call('$.tag', call, b.literal(label));
+							call = b.call('$.tag', call, b.literal(label), dev_location(declarator));
 						}
 
 						declarations.push(b.declarator(id, call));
@@ -286,7 +296,12 @@ export function VariableDeclaration(node, context) {
 							b.declarator(
 								path.node,
 								dev
-									? b.call('$.tag', call, b.literal(/** @type {Identifier} */ (path.node).name))
+									? b.call(
+											'$.tag',
+											call,
+											b.literal(/** @type {Identifier} */ (path.node).name),
+											dev_location(path.node)
+										)
 									: call
 							)
 						);
@@ -393,15 +408,15 @@ export function VariableDeclaration(node, context) {
 function create_state_declarators(declarator, context, value) {
 	/**
 	 * @param {Expression} value
-	 * @param {string} name
+	 * @param {Identifier} id
 	 */
-	const mutable_source = (value, name) => {
+	const mutable_source = (value, id) => {
 		const call = b.call('$.mutable_source', value, context.state.analysis.immutable && b.true);
-		return dev ? b.call('$.tag', call, b.literal(name)) : call;
+		return dev ? b.call('$.tag', call, b.literal(id.name), dev_location(id)) : call;
 	};
 
 	if (declarator.id.type === 'Identifier') {
-		return [b.declarator(declarator.id, mutable_source(value, declarator.id.name))];
+		return [b.declarator(declarator.id, mutable_source(value, declarator.id))];
 	}
 
 	const tmp = b.id(context.state.scope.generate('tmp'));
@@ -423,7 +438,7 @@ function create_state_declarators(declarator, context, value) {
 			return b.declarator(
 				path.node,
 				binding?.kind === 'state'
-					? mutable_source(value, /** @type {Identifier} */ (path.node).name)
+					? mutable_source(value, /** @type {Identifier} */ (path.node))
 					: value
 			);
 		})

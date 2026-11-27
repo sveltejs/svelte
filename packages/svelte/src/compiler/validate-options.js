@@ -90,7 +90,18 @@ const common_options = {
 
 				throw_error(`${keypath} should be true, a string or a function, if specified`);
 			}
-		)
+		),
+
+		devtools: validator(/** @type {string[]} */ ([]), (input, keypath) => {
+			if (
+				!Array.isArray(input) ||
+				!input.every((specifier) => typeof specifier === 'string' && specifier !== '')
+			) {
+				throw_error(`${keypath} should be an array of module specifiers`);
+			}
+
+			return input;
+		})
 	})
 };
 

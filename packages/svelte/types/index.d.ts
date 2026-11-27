@@ -1251,6 +1251,23 @@ declare module 'svelte/compiler' {
 			 * A custom renderer module's default export must be an object created with `createRenderer`.
 			 */
 			customRenderer?: true | string | ((options: { filename: string }) => string | null);
+			/**
+			 * Internal: a list of devtools plugin browser runtimes (module specifiers, e.g. `'my-devtools/runtime'`).
+			 * In dev, every compiled client component and module imports each of them before anything else.
+			 * Ignored unless `dev` is `true` and `generate` is `'client'`.
+			 * Specifiers must resolve to files, not virtual modules.
+			 *
+			 * A runtime can be evaluated more than once on the same page. For example, Vite bundles a copy
+			 * of it into the pre-bundled dependencies that contain Svelte files, while the app's own files
+			 * import the original. Each copy has its own module state, and `listen` replaces a plugin with
+			 * the same name, so the copy evaluated last receives all events. Keep the runtime's state on
+			 * `globalThis` and only subscribe from the first copy. With Vite, you can also pass a bare
+			 * specifier and add it to `optimizeDeps.include`, so that the app and the pre-bundled
+			 * dependencies share one copy.
+			 *
+			 * This is an internal option for the official Svelte devtools and has no stability guarantee.
+			 */
+			devtools?: string[];
 		};
 	}
 	/**
@@ -2084,6 +2101,219 @@ declare module 'svelte/easing' {
 	 *
 	 * */
 	export function sineOut(t: number): number;
+
+	export {};
+}
+
+declare module 'svelte/internal/devtools' {
+	// NOTE: this is an internal, DEV-only, observe-only channel for the official Svelte devtools.
+	// It has no stability guarantee and can change in any release.
+
+	const signal_brand: unique symbol;
+	const reaction_brand: unique symbol;
+	const effect_brand: unique symbol;
+	const component_brand: unique symbol;
+	const batch_brand: unique symbol;
+
+	/** A reactive value: `$state`, `$derived`, a property of a `$state` proxy, … */
+	export interface Signal {
+		readonly [signal_brand]: true;
+	}
+
+	/** Something that reads signals and re-runs: an effect or a derived */
+	export interface Reaction {
+		readonly [reaction_brand]: true;
+	}
+
+	/** A derived is both a signal and a reaction */
+	export interface Derived extends Signal, Reaction {}
+
+	export interface Effect extends Reaction {
+		readonly [effect_brand]: true;
+	}
+
+	/** The context of a component instance (`$.push(...)`) */
+	export interface ComponentContext {
+		readonly [component_brand]: true;
+	}
+
+	/** A batch of state changes, possibly a fork */
+	export interface Batch {
+		readonly [batch_brand]: true;
+	}
+
+	export type SignalKind = 'state' | 'derived' | 'async-derived' | 'proxy-prop' | 'proxy-version';
+
+	export type EffectKind =
+		| 'root'
+		| 'branch'
+		| 'block'
+		| 'render'
+		| 'effect'
+		| 'effectPre'
+		| 'managed'
+		| 'async'
+		| 'eager';
+
+	export interface SignalCreatedInfo {
+		kind: SignalKind;
+		/** e.g. `count` for `let count = $state(0)`, or `todos[0].text` for a proxy property */
+		label: string | undefined;
+		/**
+		 * `file:line:column` of the declaration, if known. For `proxy-prop` and `proxy-version`
+		 * signals, that of the `$state` holding the proxy
+		 */
+		location: string | undefined;
+		/**
+		 * The component context active when the signal was created. For `proxy-prop` and
+		 * `proxy-version` signals, the one where the `$state` at `location` was declared, even if the
+		 * signal is created later. It can already be destroyed
+		 */
+		ctx: ComponentContext | null;
+		/** The effect active when the signal was created */
+		effect: Effect | null;
+		/** For `proxy-prop` and `proxy-version` signals: the `$state` proxy owning this signal */
+		proxy?: object;
+		/** For `proxy-prop` signals: the property of `proxy` this signal stores */
+		key?: PropertyKey;
+	}
+
+	export interface SignalWrittenInfo {
+		/** The value before the write. Inside a fork, this is the committed value */
+		old: unknown;
+		value: unknown;
+		/** The batch this write belongs to */
+		batch: Batch;
+	}
+
+	/**
+	 * A devtools plugin. Every method is optional, is called synchronously and untracked,
+	 * and must not write state. Return values are ignored.
+	 */
+	export interface DevtoolsHooks {
+		/** Subscribing with the name of an existing plugin replaces it */
+		name: string;
+
+		// components
+		componentCreated?(ctx: ComponentContext): void;
+		componentInitialized?(ctx: ComponentContext): void;
+		componentDestroyed?(ctx: ComponentContext): void;
+
+		// signals
+		signalCreated?(signal: Signal, info: SignalCreatedInfo): void;
+		signalWritten?(signal: Signal, info: SignalWrittenInfo): void;
+
+		// effects and deriveds
+		effectCreated?(effect: Effect): void;
+		effectDestroyed?(effect: Effect): void;
+		reactionRunStart?(reaction: Reaction): void;
+		reactionRunEnd?(reaction: Reaction): void;
+
+		// batches
+		/**
+		 * A flush started. `batch` is the batch that started it. Other batches can be processed in the
+		 * same flush, e.g. new batches for writes made by effects. A batch can be flushed more than once
+		 * before it ends, e.g. while it waits for async work or is a fork, and flushes can nest
+		 */
+		flushStart?(batch: Batch): void;
+		/** The flush ended. `batch` is the same batch as in the matching `flushStart` */
+		flushEnd?(batch: Batch): void;
+		/**
+		 * A batch ended and its changes were applied. Always called during a flush, but not
+		 * necessarily one started by this batch. A batch gets at most one of `batchCommitted` and
+		 * `batchDiscarded`, or neither if it never ends
+		 */
+		batchCommitted?(batch: Batch): void;
+		/**
+		 * A batch ended without its changes being applied, e.g. a fork that was discarded or replaced
+		 * by a later change. Can be called outside a flush
+		 */
+		batchDiscarded?(batch: Batch): void;
+
+		// misc
+		hmrUpdateStart?(filename: string | undefined): void;
+		hmrUpdateEnd?(filename: string | undefined): void;
+		warningEmitted?(code: string, args: unknown[]): void;
+	}
+	/**
+	 * The committed value of a signal, read without tracking. Deriveds are never executed, so this
+	 * may be stale or `undefined` (see `isUninitialized`). `$state` proxies are returned as-is,
+	 * use `snapshot` to read them without side effects
+	 * */
+	export function signalValue(signal: Signal): unknown;
+	/**
+	 * Whether a signal has no value yet: a derived that never ran, or a deleted proxy property
+	 * */
+	export function isUninitialized(signal: Signal): boolean;
+	/**
+	 * The signals a reaction read during its last run
+	 * */
+	export function deps(reaction: Reaction): Signal[];
+	/**
+	 * The reactions that currently depend on a signal
+	 * */
+	export function reactions(signal: Signal): Reaction[];
+	/**
+	 * The child effects of an effect, in order
+	 * */
+	export function children(effect: Effect): Effect[];
+	/**
+	 * The effect a reaction belongs to: the parent effect of an effect, or the effect a derived was
+	 * created in
+	 * */
+	export function parentEffect(reaction: Reaction): Effect | null;
+
+	export function kind(value: Effect): EffectKind;
+
+	export function kind(value: Signal): SignalKind;
+
+	export function kind(value: Reaction): EffectKind | SignalKind;
+
+	export function isDestroyed(effect: Effect | Reaction): boolean;
+	/**
+	 * The DEV label of a signal, e.g. `count` or `todos[0].text`
+	 * */
+	export function label(signal: Signal): string | undefined;
+	/**
+	 * Where a signal or effect was declared, as `file:line:column`, if known
+	 * */
+	export function location(value: Signal | Reaction): string | undefined;
+	/**
+	 * The component an effect belongs to. `null` once the effect is destroyed
+	 * */
+	export function componentOf(effect: Effect | Reaction): ComponentContext | null;
+	/**
+	 * The component function of a component context. `undefined` for the context `mount`/`hydrate`
+	 * create around the root component
+	 * */
+	export function componentFunction(ctx: ComponentContext): Function | undefined;
+	/**
+	 * The filename of a component, as passed to the compiler
+	 * */
+	export function filename(ctx: ComponentContext): string | undefined;
+	/**
+	 * The parent component in the render tree
+	 * */
+	export function parentComponent(ctx: ComponentContext): ComponentContext | null;
+	/**
+	 * The effect that was active when the component was created. Sibling components may share it
+	 * */
+	export function componentEffect(ctx: ComponentContext): Effect | null;
+
+	export function batchId(batch: Batch): number;
+
+	export function isFork(batch: Batch): boolean;
+	/**
+	 * Read a value, turning `$state` proxies into plain objects and arrays, without going through
+	 * the proxy traps (so nothing is tracked, and no proxy signals are created). Objects that are
+	 * not `$state` proxies are returned as-is
+	 * */
+	export function snapshot<T>(value: T): T;
+	/**
+	 * Subscribe a devtools plugin. Plugins are called synchronously, in the order they subscribed.
+	 * Subscribing with the `name` of an existing plugin replaces it in place.
+	 * */
+	export function listen(plugin: DevtoolsHooks): () => void;
 
 	export {};
 }
@@ -3524,6 +3754,23 @@ declare module 'svelte/types/compiler/interfaces' {
 			 * A custom renderer module's default export must be an object created with `createRenderer`.
 			 */
 			customRenderer?: true | string | ((options: { filename: string }) => string | null);
+			/**
+			 * Internal: a list of devtools plugin browser runtimes (module specifiers, e.g. `'my-devtools/runtime'`).
+			 * In dev, every compiled client component and module imports each of them before anything else.
+			 * Ignored unless `dev` is `true` and `generate` is `'client'`.
+			 * Specifiers must resolve to files, not virtual modules.
+			 *
+			 * A runtime can be evaluated more than once on the same page. For example, Vite bundles a copy
+			 * of it into the pre-bundled dependencies that contain Svelte files, while the app's own files
+			 * import the original. Each copy has its own module state, and `listen` replaces a plugin with
+			 * the same name, so the copy evaluated last receives all events. Keep the runtime's state on
+			 * `globalThis` and only subscribe from the first copy. With Vite, you can also pass a bare
+			 * specifier and add it to `optimizeDeps.include`, so that the app and the pre-bundled
+			 * dependencies share one copy.
+			 *
+			 * This is an internal option for the official Svelte devtools and has no stability guarantee.
+			 */
+			devtools?: string[];
 		};
 	}
 	/**

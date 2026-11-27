@@ -22,6 +22,7 @@ import { DESTROYED, LEGACY_PROPS, STATE_SYMBOL } from '#client/constants';
 import { proxy } from '../proxy.js';
 import { capture_store_binding } from './store.js';
 import { legacy_mode_flag } from '../../flags/index.js';
+import { label_source } from '../dev/tracing.js';
 
 /**
  * @param {((value?: number) => number)} fn
@@ -283,7 +284,11 @@ export function prop(props, key, flags, fallback) {
 
 	var get_fallback = () => {
 		if (lazy && runes) {
-			fallback_signal ??= derived(/** @type {() => V} */ (fallback));
+			if (fallback_signal === undefined) {
+				fallback_signal = derived(/** @type {() => V} */ (fallback));
+				if (DEV) label_source(fallback_signal, `${key} (fallback)`);
+			}
+
 			return get(fallback_signal);
 		}
 
@@ -396,7 +401,7 @@ export function prop(props, key, flags, fallback) {
 	});
 
 	if (DEV) {
-		d.label = key;
+		label_source(d, key);
 	}
 
 	// Capture the initial value if it's bindable

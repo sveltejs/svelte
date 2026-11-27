@@ -44,6 +44,8 @@ import {
 import { proxy } from '../proxy.js';
 import { execute_derived } from './deriveds.js';
 import { set_signal_status } from './status.js';
+import { devtools_depth, devtools_state_write, emit, hooks } from '../dev/devtools.js';
+import { UNINITIALIZED } from '../../../constants.js';
 
 /** @type {Set<Effect>} */
 export let eager_effects = new Set();
@@ -186,7 +188,7 @@ export function unchecked_set(source, value, should_proxy = false) {
 	let new_value = should_proxy ? proxy(value) : value;
 
 	if (DEV) {
-		tag_proxy(new_value, /** @type {string} */ (source.label));
+		tag_proxy(new_value, /** @type {string} */ (source.label), source.location, source.owner);
 	}
 
 	return internal_set(source, new_value, legacy_updates);
@@ -200,11 +202,18 @@ export function unchecked_set(source, value, should_proxy = false) {
  * @returns {V}
  */
 export function internal_set(source, value, updated_during_traversal = null) {
+	if (DEV && devtools_depth > 0) {
+		devtools_state_write();
+	}
+
 	var same = source.equals(value) && (source.f & ERROR_VALUE) === 0;
 	var entry = batch_values?.get(source);
 
 	// A value that equals the real one may still overwrite a different value in the active view.
 	if (!same || (entry !== undefined && (entry.e || !source.equals.call(entry, value)))) {
+		// captured before `capture` updates the value, for devtools
+		var previous_value = DEV ? (entry !== undefined ? entry.v : source.v) : undefined;
+
 		var batch = Batch.ensure();
 
 		// If we are assigning to a dirty derived we eagerly execute it to track the dependencies. (Not if
@@ -217,6 +226,14 @@ export function internal_set(source, value, updated_during_traversal = null) {
 		batch.capture(source, value, same, false, updated_during_traversal);
 
 		if (DEV) {
+			if (hooks.signalWritten !== null) {
+				emit('signalWritten', source, {
+					old: previous_value === UNINITIALIZED ? undefined : previous_value,
+					value: value === UNINITIALIZED ? undefined : value,
+					batch
+				});
+			}
+
 			if (tracing_mode_flag || active_effect !== null) {
 				source.updated ??= new Map();
 				source_stacks.add(source);

@@ -8,6 +8,7 @@ import { FILENAME } from '../../constants.js';
 import { BRANCH_EFFECT, COMPONENT_SYMBOL } from './constants.js';
 import { define_property } from '../shared/utils.js';
 import { create_context, get_or_init_context_map } from '../shared/context.js';
+import { emit, hooks, track_component } from './dev/devtools.js';
 
 /** @type {ComponentContext | null} */
 export let component_context = null;
@@ -186,6 +187,14 @@ export function push(props, runes = false, fn) {
 		// component function
 		component_context.function = fn;
 		dev_current_component_function = fn;
+
+		if (hooks.componentDestroyed !== null) {
+			track_component(component_context);
+		}
+
+		if (hooks.componentCreated !== null) {
+			emit('componentCreated', component_context);
+		}
 	}
 }
 
@@ -201,8 +210,12 @@ export function pop(component) {
 	if (effects !== null) {
 		context.e = null;
 
-		for (var fn of effects) {
-			create_user_effect(fn);
+		// in DEV, each callback is followed by its location
+		for (var i = 0; i < effects.length; i += DEV ? 2 : 1) {
+			create_user_effect(
+				/** @type {() => void | (() => void)} */ (effects[i]),
+				DEV ? /** @type {string | undefined} */ (effects[i + 1]) : undefined
+			);
 		}
 	}
 
@@ -211,6 +224,10 @@ export function pop(component) {
 	}
 
 	context.i = true;
+
+	if (DEV && hooks.componentInitialized !== null) {
+		emit('componentInitialized', context);
+	}
 
 	component_context = context.p;
 

@@ -59,6 +59,7 @@ import { invariant } from '../../shared/dev.js';
 import { OBSOLETE } from './deriveds.js';
 import { is_runes } from '../context.js';
 import { merge_target } from './async.js';
+import { emit, hooks } from '../dev/devtools.js';
 
 /** @type {Batch | null} */
 export let first_batch = null;
@@ -201,6 +202,25 @@ let uid = 1;
 
 /** @type {number | null} */
 let last_processed = null;
+
+/**
+ * Dev only: batches whose end was already reported to devtools
+ * @type {WeakSet<Batch>}
+ */
+const ended_batches = new WeakSet();
+
+/**
+ * Dev only: report the end of a batch to devtools, once
+ * @param {Batch} batch
+ * @param {'batchCommitted' | 'batchDiscarded'} event
+ */
+function batch_ended(batch, event) {
+	if (hooks.batchCommitted === null && hooks.batchDiscarded === null) return;
+	if (ended_batches.has(batch)) return;
+
+	ended_batches.add(batch);
+	if (hooks[event] !== null) emit(event, batch);
+}
 
 export class Batch {
 	id = uid++;
@@ -718,7 +738,9 @@ export class Batch {
 
 		var next_batch = /** @type {Batch | null} */ (/** @type {unknown} */ (current_batch));
 
-		if (this.#pending.size === 0 && (this.#scheduled.length === 0 || next_batch !== null)) {
+		var done = this.#pending.size === 0 && (this.#scheduled.length === 0 || next_batch !== null);
+
+		if (done) {
 			this.#unlink();
 		}
 
@@ -728,6 +750,10 @@ export class Batch {
 		// TODO fix the underlying cause, otherwise this will likely regress when non-async mode is removed
 		if (async_mode_flag) {
 			this.commit_writes();
+		}
+
+		if (DEV && done) {
+			batch_ended(this, 'batchCommitted');
 		}
 
 		if (next_batch !== null) {
@@ -937,7 +963,11 @@ export class Batch {
 		// What the merged batch did on its own (e.g. branches it selected) is obsolete once this batch is
 		// done — whether it commits or is discarded (e.g. because of an error)
 		const discard = () => batch.discard();
-		this.oncommit(discard);
+		this.oncommit(() => {
+			// its changes were committed along with this batch
+			if (DEV) batch_ended(batch, 'batchCommitted');
+			discard();
+		});
 		this.ondiscard(discard);
 		batch.merged = this;
 		batch.#unlink();
@@ -1065,6 +1095,10 @@ export class Batch {
 	}
 
 	flush() {
+		if (DEV && hooks.flushStart !== null) {
+			emit('flushStart', this);
+		}
+
 		// flushes can be nested, e.g. if an effect calls `flushSync`
 		var context = push_teardown_context(this.previous);
 
@@ -1083,6 +1117,10 @@ export class Batch {
 				}
 			}
 		} finally {
+			if (DEV && hooks.flushEnd !== null) {
+				emit('flushEnd', this);
+			}
+
 			flush_count = 0;
 			last_scheduled_effect = null;
 			collected_effects = null;
@@ -1102,6 +1140,10 @@ export class Batch {
 	}
 
 	discard() {
+		if (DEV) {
+			batch_ended(this, 'batchDiscarded');
+		}
+
 		this.#run_callbacks(this.#discard_callbacks);
 
 		for (const deferred of this.async_deriveds.values()) {

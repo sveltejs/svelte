@@ -4,7 +4,7 @@
 import { dev } from '../../../../state.js';
 import { extract_identifiers } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { create_derived } from '../utils.js';
+import { create_derived, dev_location } from '../utils.js';
 import { get_value } from './shared/declarations.js';
 import { build_expression } from './shared/utils.js';
 import { add_async_declaration } from './DeclarationTag.js';
@@ -22,7 +22,12 @@ export function ConstTag(node, context) {
 		let expression = create_derived(context.state, init, node.metadata.expression);
 
 		if (dev) {
-			expression = b.call('$.tag', expression, b.literal(declaration.id.name));
+			expression = b.call(
+				'$.tag',
+				expression,
+				b.literal(declaration.id.name),
+				dev_location(declaration.id)
+			);
 		}
 
 		context.state.transform[declaration.id.name] = { read: get_value };
@@ -72,7 +77,7 @@ export function ConstTag(node, context) {
 		let expression = create_derived(context.state, block, node.metadata.expression);
 
 		if (dev) {
-			expression = b.call('$.tag', expression, b.literal('[@const]'));
+			expression = b.call('$.tag', expression, b.literal('[@const]'), dev_location(declaration.id));
 		}
 
 		add_const_declaration(context, tmp, expression, node.metadata);

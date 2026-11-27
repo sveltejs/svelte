@@ -5,6 +5,7 @@ import * as b from '#compiler/builders';
 import { dev } from '../../../../state.js';
 import { get_parent } from '../../../../utils/ast.js';
 import { get_name } from '../../../nodes.js';
+import { dev_location } from '../utils.js';
 
 /**
  * @param {ClassBody} node
@@ -79,7 +80,12 @@ export function ClassBody(node, context) {
 				: undefined;
 
 			if (dev && field.node === definition) {
-				value = b.call('$.tag', value, b.literal(`${declaration.id?.name ?? '[class]'}.${name}`));
+				value = b.call(
+					'$.tag',
+					value,
+					b.literal(`${declaration.id?.name ?? '[class]'}.${name}`),
+					dev_location(definition)
+				);
 			}
 
 			body.push(b.prop_def(definition.key, value));
@@ -87,7 +93,12 @@ export function ClassBody(node, context) {
 			let call = /** @type {CallExpression} */ (context.visit(field.value, child_state));
 
 			if (dev) {
-				call = b.call('$.tag', call, b.literal(`${declaration.id?.name ?? '[class]'}.${name}`));
+				call = b.call(
+					'$.tag',
+					call,
+					b.literal(`${declaration.id?.name ?? '[class]'}.${name}`),
+					dev_location(definition)
+				);
 			}
 			const member = b.member(b.this, field.key);
 			const should_proxy = field.type === '$state' && true; // TODO

@@ -1,0 +1,131 @@
+// NOTE: this is an internal, DEV-only, observe-only channel for the official Svelte devtools.
+// It has no stability guarantee and can change in any release.
+
+declare const signal_brand: unique symbol;
+declare const reaction_brand: unique symbol;
+declare const effect_brand: unique symbol;
+declare const component_brand: unique symbol;
+declare const batch_brand: unique symbol;
+
+/** A reactive value: `$state`, `$derived`, a property of a `$state` proxy, … */
+export interface Signal {
+	readonly [signal_brand]: true;
+}
+
+/** Something that reads signals and re-runs: an effect or a derived */
+export interface Reaction {
+	readonly [reaction_brand]: true;
+}
+
+/** A derived is both a signal and a reaction */
+export interface Derived extends Signal, Reaction {}
+
+export interface Effect extends Reaction {
+	readonly [effect_brand]: true;
+}
+
+/** The context of a component instance (`$.push(...)`) */
+export interface ComponentContext {
+	readonly [component_brand]: true;
+}
+
+/** A batch of state changes, possibly a fork */
+export interface Batch {
+	readonly [batch_brand]: true;
+}
+
+export type SignalKind = 'state' | 'derived' | 'async-derived' | 'proxy-prop' | 'proxy-version';
+
+export type EffectKind =
+	| 'root'
+	| 'branch'
+	| 'block'
+	| 'render'
+	| 'effect'
+	| 'effectPre'
+	| 'managed'
+	| 'async'
+	| 'eager';
+
+export interface SignalCreatedInfo {
+	kind: SignalKind;
+	/** e.g. `count` for `let count = $state(0)`, or `todos[0].text` for a proxy property */
+	label: string | undefined;
+	/**
+	 * `file:line:column` of the declaration, if known. For `proxy-prop` and `proxy-version`
+	 * signals, that of the `$state` holding the proxy
+	 */
+	location: string | undefined;
+	/**
+	 * The component context active when the signal was created. For `proxy-prop` and
+	 * `proxy-version` signals, the one where the `$state` at `location` was declared, even if the
+	 * signal is created later. It can already be destroyed
+	 */
+	ctx: ComponentContext | null;
+	/** The effect active when the signal was created */
+	effect: Effect | null;
+	/** For `proxy-prop` and `proxy-version` signals: the `$state` proxy owning this signal */
+	proxy?: object;
+	/** For `proxy-prop` signals: the property of `proxy` this signal stores */
+	key?: PropertyKey;
+}
+
+export interface SignalWrittenInfo {
+	/** The value before the write. Inside a fork, this is the committed value */
+	old: unknown;
+	value: unknown;
+	/** The batch this write belongs to */
+	batch: Batch;
+}
+
+/**
+ * A devtools plugin. Every method is optional, is called synchronously and untracked,
+ * and must not write state. Return values are ignored.
+ */
+export interface DevtoolsHooks {
+	/** Subscribing with the name of an existing plugin replaces it */
+	name: string;
+
+	// components
+	componentCreated?(ctx: ComponentContext): void;
+	componentInitialized?(ctx: ComponentContext): void;
+	componentDestroyed?(ctx: ComponentContext): void;
+
+	// signals
+	signalCreated?(signal: Signal, info: SignalCreatedInfo): void;
+	signalWritten?(signal: Signal, info: SignalWrittenInfo): void;
+
+	// effects and deriveds
+	effectCreated?(effect: Effect): void;
+	effectDestroyed?(effect: Effect): void;
+	reactionRunStart?(reaction: Reaction): void;
+	reactionRunEnd?(reaction: Reaction): void;
+
+	// batches
+	/**
+	 * A flush started. `batch` is the batch that started it. Other batches can be processed in the
+	 * same flush, e.g. new batches for writes made by effects. A batch can be flushed more than once
+	 * before it ends, e.g. while it waits for async work or is a fork, and flushes can nest
+	 */
+	flushStart?(batch: Batch): void;
+	/** The flush ended. `batch` is the same batch as in the matching `flushStart` */
+	flushEnd?(batch: Batch): void;
+	/**
+	 * A batch ended and its changes were applied. Always called during a flush, but not
+	 * necessarily one started by this batch. A batch gets at most one of `batchCommitted` and
+	 * `batchDiscarded`, or neither if it never ends
+	 */
+	batchCommitted?(batch: Batch): void;
+	/**
+	 * A batch ended without its changes being applied, e.g. a fork that was discarded or replaced
+	 * by a later change. Can be called outside a flush
+	 */
+	batchDiscarded?(batch: Batch): void;
+
+	// misc
+	hmrUpdateStart?(filename: string | undefined): void;
+	hmrUpdateEnd?(filename: string | undefined): void;
+	warningEmitted?(code: string, args: unknown[]): void;
+}
+
+export * from './index.js';

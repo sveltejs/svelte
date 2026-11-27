@@ -250,6 +250,23 @@ export interface ModuleCompileOptions {
 		 * A custom renderer module's default export must be an object created with `createRenderer`.
 		 */
 		customRenderer?: true | string | ((options: { filename: string }) => string | null);
+		/**
+		 * Internal: a list of devtools plugin browser runtimes (module specifiers, e.g. `'my-devtools/runtime'`).
+		 * In dev, every compiled client component and module imports each of them before anything else.
+		 * Ignored unless `dev` is `true` and `generate` is `'client'`.
+		 * Specifiers must resolve to files, not virtual modules.
+		 *
+		 * A runtime can be evaluated more than once on the same page. For example, Vite bundles a copy
+		 * of it into the pre-bundled dependencies that contain Svelte files, while the app's own files
+		 * import the original. Each copy has its own module state, and `listen` replaces a plugin with
+		 * the same name, so the copy evaluated last receives all events. Keep the runtime's state on
+		 * `globalThis` and only subscribe from the first copy. With Vite, you can also pass a bare
+		 * specifier and add it to `optimizeDeps.include`, so that the app and the pre-bundled
+		 * dependencies share one copy.
+		 *
+		 * This is an internal option for the official Svelte devtools and has no stability guarantee.
+		 */
+		devtools?: string[];
 	};
 }
 

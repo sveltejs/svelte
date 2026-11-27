@@ -4,6 +4,7 @@ import { dev, is_ignored } from '../../../../state.js';
 import * as b from '#compiler/builders';
 import { get_rune, should_proxy } from '../../../scope.js';
 import { get_inspect_args } from '../../utils.js';
+import { dev_location } from '../utils.js';
 
 /**
  * @param {CallExpression} node
@@ -67,7 +68,7 @@ export function CallExpression(node, context) {
 			const callee = rune === '$effect' ? '$.user_effect' : '$.user_pre_effect';
 			const func = /** @type {Expression} */ (context.visit(node.arguments[0]));
 
-			const expr = b.call(callee, /** @type {Expression} */ (func));
+			const expr = b.call(callee, /** @type {Expression} */ (func), dev && dev_location(node));
 			expr.callee.loc = node.callee.loc; // ensure correct mapping
 
 			return expr;

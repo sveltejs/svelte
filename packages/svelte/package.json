@@ -57,6 +57,10 @@
     "./internal/client": {
       "default": "./src/internal/client/index.js"
     },
+    "./internal/devtools": {
+      "types": "./types/index.d.ts",
+      "default": "./src/internal/devtools/index.js"
+    },
     "./internal/disclose-version": {
       "default": "./src/internal/disclose-version.js"
     },

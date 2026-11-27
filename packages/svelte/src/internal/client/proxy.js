@@ -1,4 +1,4 @@
-/** @import { Source } from '#client' */
+/** @import { ComponentContext, Source } from '#client' */
 import { DEV } from 'esm-env';
 import {
 	get,
@@ -23,12 +23,18 @@ import {
 	flush_eager_effects,
 	set_eager_effects_deferred
 } from './reactivity/sources.js';
-import { COMPONENT_SYMBOL, PROXY_PATH_SYMBOL, STATE_SYMBOL } from '#client/constants';
+import {
+	COMPONENT_SYMBOL,
+	PROXY_PATH_SYMBOL,
+	PROXY_SOURCES_SYMBOL,
+	STATE_SYMBOL
+} from '#client/constants';
 import { UNINITIALIZED } from '../../constants.js';
 import * as e from './errors.js';
-import { tag } from './dev/tracing.js';
+import { label_source, tag_proxy } from './dev/tracing.js';
 import { get_error } from '../shared/dev.js';
 import { tracing_mode_flag } from '../flags/index.js';
+import { devtools_depth, devtools_state_write } from './dev/devtools.js';
 
 // TODO move all regexes into shared module?
 const regex_is_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
@@ -100,24 +106,53 @@ export function proxy(value) {
 
 	/** Used in dev for $inspect.trace() */
 	var path = '';
+	/** Used in dev for devtools: where the (root) state was declared */
+	/** @type {string | undefined} */
+	var location = undefined;
+	/** Used in dev for devtools: the component the (root) state was declared in */
+	/** @type {ComponentContext | null | undefined} */
+	var owner = undefined;
 	let updating = false;
-	/** @param {string} new_path */
-	function update_path(new_path) {
+	/**
+	 * @param {string} new_path
+	 * @param {string} [new_location]
+	 * @param {ComponentContext | null} [new_owner]
+	 */
+	function update_path(new_path, new_location, new_owner) {
 		if (updating) return;
 		updating = true;
 		path = new_path;
+		if (new_location !== undefined) {
+			location = new_location;
+			owner = new_owner;
+		}
 
-		tag(version, `${path} version`);
+		label_source(version, `${path} version`, location, proxied, undefined, owner);
 
 		// rename all child sources and child proxies
 		for (const [prop, source] of sources) {
-			tag(source, get_label(path, prop));
+			tag_child(source, prop);
 		}
 		updating = false;
 	}
 
-	return new Proxy(/** @type {any} */ (value), {
+	/**
+	 * Dev only: label a child source, and announce it to devtools as belonging to this proxy
+	 * @param {Source} source
+	 * @param {string | symbol} prop
+	 */
+	function tag_child(source, prop) {
+		label_source(source, get_label(path, prop), location, proxied, prop, owner);
+		tag_proxy(source.v, get_label(path, prop), location, owner);
+	}
+
+	/** @type {any} */
+	var proxied = new Proxy(/** @type {any} */ (value), {
 		defineProperty(_, prop, descriptor) {
+			if (DEV && devtools_depth > 0) {
+				devtools_state_write();
+			}
+
 			if (
 				!('value' in descriptor) ||
 				descriptor.configurable === false ||
@@ -139,7 +174,7 @@ export function proxy(value) {
 					var s = source(descriptor.value, stack);
 					sources.set(prop, s);
 					if (DEV && typeof prop === 'string') {
-						tag(s, get_label(path, prop));
+						tag_child(s, prop);
 					}
 					return s;
 				});
@@ -151,6 +186,10 @@ export function proxy(value) {
 		},
 
 		deleteProperty(target, prop) {
+			if (DEV && devtools_depth > 0) {
+				devtools_state_write();
+			}
+
 			check_mutation(version);
 
 			var s = sources.get(prop);
@@ -162,7 +201,7 @@ export function proxy(value) {
 					unchecked_increment(version);
 
 					if (DEV) {
-						tag(s, get_label(path, prop));
+						tag_child(s, prop);
 					}
 				}
 			} else {
@@ -182,6 +221,10 @@ export function proxy(value) {
 				return update_path;
 			}
 
+			if (DEV && prop === PROXY_SOURCES_SYMBOL) {
+				return sources;
+			}
+
 			var s = sources.get(prop);
 			var exists = prop in target;
 
@@ -192,7 +235,7 @@ export function proxy(value) {
 					var s = source(p, stack);
 
 					if (DEV) {
-						tag(s, get_label(path, prop));
+						tag_child(s, prop);
 					}
 
 					return s;
@@ -256,7 +299,7 @@ export function proxy(value) {
 						var s = source(p, stack);
 
 						if (DEV) {
-							tag(s, get_label(path, prop));
+							tag_child(s, prop);
 						}
 
 						return s;
@@ -275,6 +318,10 @@ export function proxy(value) {
 		},
 
 		set(target, prop, value, receiver) {
+			if (DEV && devtools_depth > 0) {
+				devtools_state_write();
+			}
+
 			check_mutation(version);
 
 			var s = sources.get(prop);
@@ -294,7 +341,7 @@ export function proxy(value) {
 						sources.set(i + '', other_s);
 
 						if (DEV) {
-							tag(other_s, get_label(path, i));
+							tag_child(other_s, i + '');
 						}
 					}
 				}
@@ -309,7 +356,7 @@ export function proxy(value) {
 					s = with_parent(() => source(undefined, stack));
 
 					if (DEV) {
-						tag(s, get_label(path, prop));
+						tag_child(s, prop);
 					}
 					unchecked_set(s, proxy(value));
 
@@ -370,6 +417,8 @@ export function proxy(value) {
 			e.state_prototype_fixed();
 		}
 	});
+
+	return proxied;
 }
 
 /**
