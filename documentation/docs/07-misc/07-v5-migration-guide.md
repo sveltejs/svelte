@@ -510,6 +510,51 @@ Event modifiers are not applicable to event attributes (e.g. you can't do `oncli
 </button>
 ```
 
+The migration script uses wrappers from `svelte/legacy` for modifiers that do not have a direct event-attribute equivalent. It maps `capture` to an event attribute and uses actions for `passive` and `nonpassive`:
+
+- `on:click|once={handler}` → `onclick={once(handler)}`
+- `on:click|self={handler}` → `onclick={self(handler)}`
+- `on:click|stopPropagation={handler}` → `onclick={stopPropagation(handler)}`
+- `on:click|stopImmediatePropagation={handler}` → `onclick={stopImmediatePropagation(handler)}`
+- `on:click|trusted={handler}` → `onclick={trusted(handler)}`
+- `on:click|preventDefault={handler}` → `onclick={preventDefault(handler)}`
+- `on:click|capture={handler}` → `onclickcapture={handler}`
+- `on:scroll|passive={handler}` → `use:passive={['scroll', () => handler]}`
+- `on:scroll|nonpassive={handler}` → `use:nonpassive={['scroll', () => handler]}`
+
+The migration script nests the helpers in Svelte 4's modifier order, so `on:click|once|self={handler}` becomes `onclick={once(self(handler))}`. Used directly:
+
+```svelte
+<script>
+	import { once, self } from 'svelte/legacy';
+
+	function handleClick() {
+		// ...
+	}
+</script>
+
+<button onclick={once(handleClick)}>Only fires once</button>
+<button onclick={self(handleClick)}>Only fires when the button itself is clicked</button>
+```
+
+`passive` and `nonpassive` are actions rather than handler wrappers, because the listener has to be registered with the right options:
+
+```svelte
+<script>
+	import { passive } from 'svelte/legacy';
+
+	function handleWheel(event) {
+		// ...
+	}
+</script>
+
+<div use:passive={['wheel', () => handleWheel]}>...</div>
+```
+
+A passive listener cannot call `event.preventDefault()`.
+
+> [!NOTE] These helpers are temporary migration aids. Where practical, write the equivalent logic directly in the handler — for example, call `event.preventDefault()` instead of wrapping the handler with `preventDefault`.
+
 ### Things that are not automigrated
 
 The migration script does not convert `createEventDispatcher`. You need to adjust those parts manually. It doesn't do it because it's too risky because it could result in breakage for users of the component, which the migration script cannot find out.
