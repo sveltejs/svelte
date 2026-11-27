@@ -22,7 +22,7 @@ import {
 import type { Derived, Effect, Source, Value } from '../../src/internal/client/types';
 import { proxy } from '../../src/internal/client/proxy';
 import { derived } from '../../src/internal/client/reactivity/deriveds';
-import { source_stacks } from '../../src/internal/client/reactivity/batch';
+import { Batch, source_stacks } from '../../src/internal/client/reactivity/batch';
 import { snapshot } from '../../src/internal/shared/clone.js';
 import { SvelteSet } from '../../src/reactivity/set';
 import { CLEAN, CONNECTED, DESTROYED } from '../../src/internal/client/constants';
@@ -115,6 +115,117 @@ function count_dependency_checks(values: Derived<number>[], oncheck?: () => void
 }
 
 describe('signals', () => {
+	for (const [async, render] of [
+		[false, false],
+		[true, false],
+		[true, true]
+	]) {
+		test(`flushing writing ${render ? 'render' : 'user'} effects does linear work (async: ${async})`, () => {
+			if (async) enable_async_mode_flag();
+			const count = 100;
+			const trigger = state(0);
+			const create = render ? render_effect : effect;
+			const values = Array.from({ length: count }, () => state(0));
+			let visited = 0;
+
+			for (const [i, value] of values.entries()) {
+				create(() => {
+					if ($.get(trigger) === 0) return;
+					set(value, 1);
+					if (i === 0) {
+						// Count visits to batch writes, rather than asserting wall-clock timings.
+						const writes = Batch.ensure().current;
+						const iterate = writes[Symbol.iterator].bind(writes);
+						Object.defineProperty(writes, Symbol.iterator, {
+							value: function* () {
+								for (const entry of iterate()) {
+									visited++;
+									yield entry;
+								}
+							}
+						});
+					}
+				});
+			}
+
+			return () => {
+				try {
+					flushSync();
+					flushSync(() => set(trigger, 1));
+					assert.deepEqual(
+						values.map((value) => $.get(value)),
+						Array(count).fill(1)
+					);
+					assert.isAtMost(visited, count * 4);
+				} finally {
+					if (async) disable_async_mode_flag();
+				}
+			};
+		});
+	}
+
+	test('eager block teardowns retain the last write of an earlier effect', () => {
+		const trigger = state(0);
+		const earlier = state(0);
+		const show = state(true);
+		const log: string[] = [];
+
+		block(() => {
+			$.get(show);
+			return () => log.push(`${$.get(earlier)}:${$.get(show)}`);
+		});
+
+		effect(() => {
+			if ($.get(trigger) === 1) {
+				set(earlier, 1);
+				set(earlier, 2);
+			}
+		});
+
+		effect(() => {
+			if ($.get(trigger) === 1) set(show, false);
+		});
+
+		return () => {
+			flushSync();
+			flushSync(() => set(trigger, 1));
+			assert.deepEqual(log, ['2:true']);
+		};
+	});
+
+	it('invalidates batch view entries after their derived disconnects', () => {
+		enable_async_mode_flag();
+		try {
+			const input = source(0);
+			const value = derived(() => $.get(input) + 1);
+			const f = fork(() => {
+				const destroy = effect_root(() => {
+					render_effect(() => {
+						$.get(value);
+					});
+				});
+				assert.equal($.get(value), 1);
+				destroy();
+				assert.equal(input.reactions, null);
+
+				// The old cache entry relied on subscriptions. Subsequent reads must not.
+				assert.equal($.get(value), 1);
+				set(input, 1);
+				assert.equal($.get(value), 2);
+				set(input, 2);
+				assert.equal($.get(value), 3);
+
+				set(value, 10);
+				assert.equal($.get(value), 10);
+				set(input, 3);
+				assert.equal($.get(value), 4);
+			});
+			f.discard();
+		} finally {
+			disable_async_mode_flag();
+		}
+	});
+
 	test('nested commit retains latest block dependencies', () => {
 		const trigger = state(0);
 		const mode = state(0);
@@ -779,6 +890,40 @@ describe('signals', () => {
 		}
 	});
 
+	it.each([false, true])(
+		'processes successive batches without growing the stack (async: %s)',
+		(async_mode) => {
+			if (async_mode) enable_async_mode_flag();
+			push({}, true);
+			const value = state(0);
+			const depths: number[] = [];
+			const limit = Error.stackTraceLimit;
+			const destroy = effect_root(() => {
+				user_effect(() => {
+					const n = $.get(value);
+					if (n === 0 || n === 20) {
+						depths.push(new Error().stack!.split('\n').length);
+					}
+					if (n < 20) set(value, n + 1);
+				});
+			});
+
+			try {
+				// The default limit hides the recursive batch-processing frames.
+				Error.stackTraceLimit = Infinity;
+				flushSync();
+				assert.equal($.get(value), 20);
+				assert.lengthOf(depths, 2);
+				assert.equal(depths[1], depths[0]);
+			} finally {
+				Error.stackTraceLimit = limit;
+				destroy();
+				pop();
+				if (async_mode) disable_async_mode_flag();
+			}
+		}
+	);
+
 	test('schedules rerun when writing to signal before reading it', (runes) => {
 		if (!runes) return () => {};
 
@@ -803,7 +948,7 @@ describe('signals', () => {
 				console.error = error;
 			}
 		};
-	}, 60_000);
+	});
 
 	test('schedules rerun when updating deeply nested value', (runes) => {
 		if (!runes) return () => {};
@@ -2349,6 +2494,91 @@ describe('signals', () => {
 		} finally {
 			destroy();
 			pop();
+		}
+	});
+
+	for (const async of [false, true]) {
+		for (const pre of [false, true]) {
+			test(`prunes obsolete global derived edges with a writing ${pre ? 'pre' : 'user'} effect (async: ${async})`, () => {
+				if (async) enable_async_mode_flag();
+				const host = proxy({ data: { items: [0] } });
+				const writes = state(0);
+				const first = derived(() => host.data.items[0]);
+				let value = -1;
+				(pre ? user_pre_effect : effect)(() => {
+					host.data;
+					$.untrack(() => update(writes));
+				});
+				effect(() => {
+					value = $.get(first);
+				});
+
+				return () => {
+					try {
+						for (let i = 1; i <= 5; i++) {
+							host.data = { items: [i] };
+							flushSync();
+							assert.equal(value, i);
+							assert.equal(first.deps?.length, 3);
+							// The latest global run and the previous run kept by the writing batch.
+							assert.isAtMost(first.edges?.length ?? 0, 5);
+						}
+					} finally {
+						if (async) disable_async_mode_flag();
+					}
+				};
+			});
+		}
+	}
+
+	it('retains derived edges needed by forks while pruning obsolete global reads', () => {
+		enable_async_mode_flag();
+		push({}, true);
+		const index = state(0);
+		const trigger = state(0);
+		const items = Array.from({ length: 6 }, (_, i) => state(i));
+		const first = derived(() => $.get(items[$.get(index)]));
+		const log: number[] = [];
+		const destroy = effect_root(() => {
+			block(() => {
+				$.get(trigger);
+				log.push($.get(first));
+			});
+		});
+		pop();
+		flushSync();
+		const pending = fork(() => set(trigger, 1));
+		flushSync(() => set(index, 1));
+		const later = fork(() => set(trigger, 2));
+
+		try {
+			for (let i = 2; i < items.length; i++) {
+				flushSync(() => set(index, i));
+				assert.include(items[0].reactions ?? [], first);
+				assert.include(items[1].reactions ?? [], first);
+				assert.include(items[i].reactions ?? [], first);
+				assert.isAtMost(first.edges?.length ?? 0, 4);
+				for (let j = 2; j < i; j++) assert.equal(items[j].reactions, null);
+			}
+			assert.equal(log.at(-1), 5);
+			later.discard();
+			flushSync(() => set(index, 4));
+			assert.include(items[0].reactions ?? [], first);
+			assert.equal(items[1].reactions, null);
+			assert.equal(items[5].reactions, null);
+
+			pending.discard();
+			flushSync(() => set(index, 3));
+			assert.equal(items[0].reactions, null);
+			assert.equal(items[4].reactions, null);
+			assert.include(items[3].reactions ?? [], first);
+			assert.equal(log.at(-1), 3);
+		} finally {
+			later.discard();
+			pending.discard();
+			destroy();
+			flushSync();
+			disable_async_mode_flag();
 		}
 	});
 

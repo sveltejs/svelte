@@ -1,10 +1,10 @@
+/** @import { Renderer } from '../../custom-renderer/types.js' */
 /** @import { Snippet } from 'svelte' */
 /** @import { TemplateNode } from '#client' */
 /** @import { Getters } from '#shared' */
 import { EFFECT_TRANSPARENT, ELEMENT_NODE } from '#client/constants';
 import { block, teardown } from '../../reactivity/effects.js';
 import {
-	component_context,
 	dev_current_component_function,
 	dev_stack,
 	set_dev_current_component_function
@@ -15,9 +15,13 @@ import { assign_nodes } from '../template.js';
 import * as w from '../../warnings.js';
 import * as e from '../../errors.js';
 import { DEV } from 'esm-env';
-import { get_first_child, get_next_sibling } from '../operations.js';
+import { get_first_child, get_next_sibling, insert_before, node_type } from '../operations.js';
 import { prevent_snippet_stringification } from '../../../shared/validate.js';
 import { BranchManager } from './branches.js';
+import { set_dev_metadata } from '../../dev/elements.js';
+import { current_renderer } from '../../custom-renderer/state.js';
+import { cross, is_crossing } from '../../custom-renderer/cross.js';
+import { has_own_property } from '../../../shared/utils.js';
 
 /**
  * @template {(node: TemplateNode, ...args: any[]) => void} SnippetFn
@@ -64,6 +68,48 @@ export function wrap_snippet(component, fn) {
 }
 
 /**
+ * Wraps a snippet function so that it remembers which renderer it was compiled for
+ * (`null` for DOM). If it is rendered by a different renderer, the snippet content
+ * is rendered across a renderer boundary (see `cross`).
+ * @template {(...args: any[]) => any} T
+ * @param {Renderer | null} renderer
+ * @param {T} fn
+ * @returns {T}
+ */
+export function renderer_snippet(renderer, fn) {
+	var wrapped = /** @type {T} */ (
+		(/** @type {TemplateNode} */ anchor, /** @type {any[]} */ ...args) => {
+			if (is_crossing(renderer)) {
+				return cross(renderer, anchor, (anchor) => fn(anchor, ...args));
+			}
+
+			return fn(anchor, ...args);
+		}
+	);
+
+	/** @type {any} */ (wrapped).__renderer = renderer;
+
+	return wrapped;
+}
+
+/**
+ * Validates that a snippet can be rendered by a custom renderer. Snippets compiled with
+ * custom renderer support know which renderer they belong to and can cross renderer
+ * boundaries; anything else (e.g. snippets from components compiled without the
+ * `experimental.customRenderer` option) can only be rendered by the DOM.
+ * @template {((...args: any[]) => void) | null | undefined} T
+ * @param {T} fn
+ * @returns {T}
+ */
+export function validate_snippet_renderer(fn) {
+	if (fn != null && !has_own_property.call(fn, '__renderer')) {
+		e.snippet_renderer_mismatch();
+	}
+
+	return fn;
+}
+
+/**
  * Create a snippet programmatically
  * @template {unknown[]} Params
  * @param {(...params: Getters<Params>) => {
@@ -75,6 +121,9 @@ export function wrap_snippet(component, fn) {
 export function createRawSnippet(fn) {
 	// @ts-expect-error the types are a lie
 	return (/** @type {TemplateNode} */ anchor, /** @type {Getters<Params>} */ ...params) => {
+		if (current_renderer != null) {
+			e.invalid_snippet_in_custom_renderer();
+		}
 		var snippet = fn(...params);
 
 		/** @type {Element} */
@@ -88,22 +137,21 @@ export function createRawSnippet(fn) {
 			var fragment = create_fragment_from_html(html);
 			element = /** @type {Element} */ (get_first_child(fragment));
 
-			if (DEV && (get_next_sibling(element) !== null || element.nodeType !== ELEMENT_NODE)) {
+			if (DEV && (get_next_sibling(element) !== null || node_type(element) !== ELEMENT_NODE)) {
 				w.invalid_raw_snippet_render();
 			}
 
-			anchor.before(element);
+			insert_before(anchor, element);
 		}
 
 		if (DEV && dev_stack !== null) {
 			// Raw snippets have no template locations, so use the render callsite.
 			// This also keeps the surrounding template from claiming their root.
-			// @ts-expect-error
-			element.__svelte_meta = {
-				parent: dev_stack,
-				loc: { file: dev_stack.file, line: dev_stack.line, column: dev_stack.column },
-				component: component_context
-			};
+			set_dev_metadata(element, {
+				file: dev_stack.file,
+				line: dev_stack.line,
+				column: dev_stack.column
+			});
 		}
 
 		const result = snippet.setup?.(element);

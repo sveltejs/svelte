@@ -1,5 +1,99 @@
 # svelte
 
+## 5.59.2
+
+### Patch Changes
+
+- fix: catch errors in deferred await block branches with error boundaries ([#19028](https://github.com/sveltejs/svelte/pull/19028))
+
+- chore: bump devalue to 6.0.4 ([#18857](https://github.com/sveltejs/svelte/pull/18857))
+
+- fix: don't keep a stale value for a derived that disconnects while another batch is pending ([#19426](https://github.com/sveltejs/svelte/pull/19426))
+
+- fix: treat `<!--` and `-->` in `<style>` as CSS tokens, not as a comment ([#19370](https://github.com/sveltejs/svelte/pull/19370))
+
+- fix: exclude comments after the initializer from the `{@const}` declarator range ([#19394](https://github.com/sveltejs/svelte/pull/19394))
+
+- fix: object props on a custom element are set as properties even after spreading onto an unregistered element with the same tag ([#19441](https://github.com/sveltejs/svelte/pull/19441))
+
+- fix: avoid naming a component after a reserved `$`-prefixed binding when its filename starts with `$` ([#19414](https://github.com/sveltejs/svelte/pull/19414))
+
+- perf: process successive batches iteratively instead of recursively, avoiding slow stack capture in dev ([#19391](https://github.com/sveltejs/svelte/pull/19391))
+
+- fix: correctly apply styles to elements with `duration: 0` transitions ([#19444](https://github.com/sveltejs/svelte/pull/19444))
+
+- fix: hint at missing `lang="ts"` when TypeScript syntax fails to parse ([#19428](https://github.com/sveltejs/svelte/pull/19428))
+
+- fix: use comments instead of text for custom renderers ([#19376](https://github.com/sveltejs/svelte/pull/19376))
+
+- fix: handle `?.` in directive names like `use:a?.b` ([#19404](https://github.com/sveltejs/svelte/pull/19404))
+
+- fix: keep the comments around a parenthesized template expression in its `leadingComments` and `trailingComments` ([#19389](https://github.com/sveltejs/svelte/pull/19389))
+
+- fix: avoid quadratic work when flushing effects that write state ([#19395](https://github.com/sveltejs/svelte/pull/19395))
+
+- fix: escape comment terminators in all commented-out CSS ([#19380](https://github.com/sveltejs/svelte/pull/19380))
+
+- fix: handle attribute name casing consistently between server and client ([`9672188`](https://github.com/sveltejs/svelte/commit/967218863c0565f7677cb86c55efad1a20a732da))
+
+- fix: respect length bound when destructuring array-like values ([`dba8d14`](https://github.com/sveltejs/svelte/commit/dba8d14bfa2b26e0fdbb03b31f967e37ac185f59))
+
+- fix: leave reactive classes and `$state` proxies unchanged when a write is refused with `state_unsafe_mutation` ([#19405](https://github.com/sveltejs/svelte/pull/19405))
+
+- fix: remove `{#each}` items when outros of zero and non-zero duration run together ([#19042](https://github.com/sveltejs/svelte/pull/19042))
+
+- fix: prevent `hydratable` promise placeholders from colliding with serialized strings ([#19406](https://github.com/sveltejs/svelte/pull/19406))
+
+- fix: give class static blocks their own scope ([#19335](https://github.com/sveltejs/svelte/pull/19335))
+
+- fix: make dev element metadata non-enumerable to avoid traversing component graphs during structural comparisons ([#19316](https://github.com/sveltejs/svelte/pull/19316))
+
+- fix: escape double quotes in attribute values when printing ([#19365](https://github.com/sveltejs/svelte/pull/19365))
+
+- fix: ignore commas in comments when removing unused CSS selectors ([#19382](https://github.com/sveltejs/svelte/pull/19382))
+
+## 5.59.1
+
+### Patch Changes
+
+- fix: keep `hydrate` and `mount` type parameters in sync so a union of them is callable ([#19357](https://github.com/sveltejs/svelte/pull/19357))
+
+## 5.59.0
+
+### Minor Changes
+
+- feat: custom renderer api ([#18042](https://github.com/sveltejs/svelte/pull/18042))
+
+## 5.58.1
+
+### Patch Changes
+
+- fix: don't throw when committing a fork whose changes were all superseded by other updates ([#19030](https://github.com/sveltejs/svelte/pull/19030))
+
+- fix: apply the branch changes of blocks that re-run while effects are flushed when the batch with the effects' writes commits ([#19030](https://github.com/sveltejs/svelte/pull/19030))
+
+- fix: keep values computed in a batch's view of the world local to that batch, and don't needlessly re-run deriveds while several batches are pending ([#19030](https://github.com/sveltejs/svelte/pull/19030))
+
+- fix: don't skip sibling listeners added with `on()` when an earlier one calls `stopPropagation()` ([#19317](https://github.com/sveltejs/svelte/pull/19317))
+
+- fix: update `bind:files` when the form is reset ([#19298](https://github.com/sveltejs/svelte/pull/19298))
+
+- fix: restore teardown context when destroying effects after outros ([#19030](https://github.com/sveltejs/svelte/pull/19030))
+
+- fix: print raw input text unchanged, respect whitespace rules ([#19292](https://github.com/sveltejs/svelte/pull/19292))
+
+- breaking: in experimental async mode, `getAbortSignal()` must be called before an `await` ([#19030](https://github.com/sveltejs/svelte/pull/19030))
+
+- fix: remove related comments when effects are removed from server rune modules. ([#19289](https://github.com/sveltejs/svelte/pull/19289))
+
+- fix: commit the state that hydration ran with, so that updates while hydration is pending don't undo it ([#19347](https://github.com/sveltejs/svelte/pull/19347))
+
+- fix: don't run `$inspect` and `$state.eager` with the values of a fork before it is committed ([#19030](https://github.com/sveltejs/svelte/pull/19030))
+
+- fix: read a never-reassigned `$state.raw` declaration tag directly when it shadows reassigned state ([#19294](https://github.com/sveltejs/svelte/pull/19294))
+
+- fix: revert state changes in effect teardowns based on the currently committing batch ([#19030](https://github.com/sveltejs/svelte/pull/19030))
+
 ## 5.58.0
 
 ### Minor Changes
@@ -3493,7 +3587,7 @@ Not published due to CI issue
 
 - fix: ensure onMount correctly fires when new expressions are used ([#14049](https://github.com/sveltejs/svelte/pull/14049))
 
-- fix: wrap `:id`, `:where``:not` and `:has` with `:global` during migration ([#13850](https://github.com/sveltejs/svelte/pull/13850))
+- fix: wrap `:id`, ` :where``:not ` and `:has` with `:global` during migration ([#13850](https://github.com/sveltejs/svelte/pull/13850))
 
 - fix: ensure custom element attribute/prop changes are in their own context ([#14016](https://github.com/sveltejs/svelte/pull/14016))
 

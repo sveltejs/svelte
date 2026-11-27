@@ -81,6 +81,35 @@ export { test };
 
 await run(__dirname);
 
+it.each(['{x as number}', '{x as number}<div>'])(
+	'does not repeat warnings during the TypeScript retry: %s',
+	(template) => {
+		const warnings: string[] = [];
+		const options = {
+			warningFilter: (warning: { code: string }) => {
+				warnings.push(warning.code);
+				return true;
+			}
+		};
+		const script = '<script unknown></script>';
+
+		try {
+			compile(script + template, options);
+			expect.fail('Expected an error');
+		} catch (error: any) {
+			expect(error.message.includes('did you forget')).toBe(!template.includes('<div>'));
+			expect(error.toJSON().message).toBe(error.message);
+			expect(error.toString()).toContain(error.message);
+		}
+
+		expect(warnings).toEqual(['script_unknown_attribute']);
+
+		// Warning suppression must be undone whether the retry succeeds or fails.
+		compile(script, options);
+		expect(warnings).toEqual(['script_unknown_attribute', 'script_unknown_attribute']);
+	}
+);
+
 it('resets the compiler state including filename', () => {
 	// start with something that succeeds
 	compile('<div>hello</div>', { filename: 'foo.svelte' });

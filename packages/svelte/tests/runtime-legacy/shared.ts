@@ -58,8 +58,9 @@ Promise.withResolvers = () => {
 	return { promise, resolve, reject };
 };
 
-export interface RuntimeTest<Props extends Record<string, any> = Record<string, any>>
-	extends BaseTest {
+export interface RuntimeTest<
+	Props extends Record<string, any> = Record<string, any>
+> extends BaseTest {
 	/** Use e.g. `mode: ['client']` to indicate that this test should never run in server/hydrate modes */
 	mode?: Array<'server' | 'async-server' | 'client' | 'hydrate'>;
 	/** Temporarily skip specific modes, without skipping the entire test */
@@ -531,14 +532,16 @@ async function run_test_variant(
 					};
 				} else {
 					run_hydratables_init();
-					const render = variant === 'hydrate' ? hydrate : mount;
-					instance = render(mod.default, {
+					const options = {
 						target,
 						props,
 						intro: config.intro,
 						recover: config.recover ?? false,
 						transformError: config.transformError
-					});
+					};
+
+					instance =
+						variant === 'hydrate' ? hydrate(mod.default, options) : mount(mod.default, options);
 				}
 			} else {
 				run_hydratables_init();

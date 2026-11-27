@@ -36,7 +36,7 @@ import {
 	update_derived,
 	get_view
 } from './reactivity/deriveds.js';
-import { async_mode_flag, tracing_mode_flag } from '../flags/index.js';
+import { async_mode_flag, tracing_mode_flag, custom_renderers_flag } from '../flags/index.js';
 import { tracing_expressions } from './dev/tracing.js';
 import { get_error } from '../shared/dev.js';
 import {
@@ -67,6 +67,7 @@ import { set_signal_status, update_derived_status } from './reactivity/status.js
 import { merge_target } from './reactivity/async.js';
 import * as e from './errors.js';
 import * as w from './warnings.js';
+import { push_renderer, pop_renderer } from './custom-renderer/state.js';
 
 export let is_destroying_effect = false;
 
@@ -135,6 +136,15 @@ export function push_reaction_value(value) {
 export let new_deps = null;
 
 export let skipped_deps = 0;
+
+/**
+ * The versions of the disconnected deriveds that the current reaction's run read while a view of the world was
+ * active, as `get_view` returned them. The view's cache doesn't hold disconnected deriveds, so it can't tell
+ * afterwards which version the run saw (see `seen_version`), but the run itself knows. `-1` if it read different
+ * versions of the same derived
+ * @type {Map<Derived, number> | null}
+ */
+let view_read_versions = null;
 
 /**
  * Tracks writes that the effect it's executed in doesn't listen to yet,
@@ -567,6 +577,7 @@ export function update_reaction(reaction) {
 	const batch = current_batch;
 	var previous_deps = new_deps;
 	var previous_skipped_deps = skipped_deps;
+	var previous_view_read_versions = view_read_versions;
 	var previous_untracked_writes = untracked_writes;
 	var previous_reaction = active_reaction;
 	var previous_sources = current_sources;
@@ -578,6 +589,7 @@ export function update_reaction(reaction) {
 
 	new_deps = /** @type {null | Value[]} */ (null);
 	skipped_deps = 0;
+	view_read_versions = null;
 	untracked_writes = null;
 	active_reaction = (flags & (BRANCH_EFFECT | ROOT_EFFECT)) === 0 ? reaction : null;
 
@@ -683,6 +695,7 @@ export function update_reaction(reaction) {
 		reaction.f ^= REACTION_IS_UPDATING;
 		new_deps = previous_deps;
 		skipped_deps = previous_skipped_deps;
+		view_read_versions = previous_view_read_versions;
 		untracked_writes = previous_untracked_writes;
 		active_reaction = previous_reaction;
 		current_sources = previous_sources;
@@ -705,7 +718,7 @@ export function update_reaction(reaction) {
  *
  * The edges of the graph (`reaction.edges` and the `reactions` of its dependencies) are a
  * superset of the dependencies of every live record, so that changes to any of them reach
- * the reaction. They are only pruned when a global run happens and no batch holds a record.
+ * the reaction. Global runs prune edges that neither the new run nor any batch record needs.
  * @param {Reaction} reaction
  * @param {number} flags the flags of the reaction before the run
  * @param {any} value the value of the run (only relevant for deriveds)
@@ -870,13 +883,13 @@ function update_record(reaction, flags, length, value, error) {
 
 	// The edges — `reaction.edges`, and `reaction` in the `reactions` of each of them — must cover what every
 	// live run of the reaction read (its global run, and the records batches hold of it), so that a change to
-	// any of those values reaches it. So unless this is a global run and no batch holds a record, edges are
-	// only added (and pruned by a later global run). Their order is independent of the run's reads
+	// any of those values reaches it. A batch-local run only adds edges; a global run replaces the previous
+	// global dependencies, retaining those that batches still need. Their order is independent of the run's reads
 	var keep = should_record || has_batch_record(reaction);
 	var tracking = effect_tracking() && (reaction.f & CONNECTED) !== 0;
 	var edges = reaction.edges;
 
-	if (keep && edges !== null) {
+	if (should_record && edges !== null) {
 		if (new_deps !== null) {
 			// the edges may be a run's `deps` as well, see `update_dependencies`
 			reaction.edges = edges = edges.slice();
@@ -887,30 +900,39 @@ function update_record(reaction, flags, length, value, error) {
 				}
 			}
 		}
-	} else {
-		if (edges === deps) {
-			// The edges are exactly what the previous global run read (if anything), so — as on `main` —
-			// the values this run read again, in the same order, stay connected, and the rest is replaced
-			if (edges !== null) {
-				for (i = skipped_deps; i < edges.length; i++) remove_reaction(reaction, edges[i]);
-			}
+	} else if (!keep && edges === deps) {
+		// The edges are exactly what the previous global run read (if anything), so — as on `main` —
+		// the values this run read again, in the same order, stay connected, and the rest is replaced
+		if (edges !== null) {
+			for (i = skipped_deps; i < edges.length; i++) remove_reaction(reaction, edges[i]);
+		}
 
-			if (tracking && new_deps !== null) {
-				for (dep of new_deps) (dep.reactions ??= []).push(reaction);
-			}
-		} else {
-			// The edges can include some that were retained for runs no batch holds anymore
-			var added = new Set(read);
-			for (dep of /** @type {Value[]} */ (edges)) {
-				if (!added.delete(dep)) remove_reaction(reaction, dep);
-			}
-
-			if (tracking) {
-				for (dep of added) (dep.reactions ??= []).push(reaction);
-			}
+		if (tracking && new_deps !== null) {
+			for (dep of new_deps) (dep.reactions ??= []).push(reaction);
 		}
 
 		reaction.edges = read;
+	} else {
+		// The edges can include some that were retained for runs no batch holds anymore:
+		// only those that this run or a record that a batch holds read remain
+		var added = new Set(read);
+		if (keep) {
+			for (var b = first_batch; b !== null; b = b.next) {
+				for (dep of b.records?.get(reaction)?.deps ?? []) added.add(dep);
+			}
+		}
+
+		var next = keep ? Array.from(added) : read;
+
+		for (dep of edges ?? []) {
+			if (!added.delete(dep)) remove_reaction(reaction, dep);
+		}
+
+		if (tracking) {
+			for (dep of added) (dep.reactions ??= []).push(reaction);
+		}
+
+		reaction.edges = next;
 	}
 
 	if (should_record) {
@@ -1013,10 +1035,11 @@ function keep_global_run(derived, flags) {
 }
 
 /**
- * The version of `signal` that the current run saw. Recording it never evaluates anything: a derived that
- * isn't in the view's cache (anymore) was invalidated by a write during the run, or can't be cached —
- * the run then doesn't count as having seen its current version, just like in the real world, where
- * a derived that changes during the run gets a new version only once it is evaluated again
+ * The version of `signal` that the current run saw. Recording it never evaluates anything. A derived that
+ * isn't in the view's cache anymore was invalidated by a write during the run — the run then doesn't count
+ * as having seen its current version, just like in the real world, where a derived that changes during the
+ * run gets a new version only once it is evaluated again. A derived that was disconnected when the run read
+ * it can't be cached: the run remembers the version it read instead (see `view_read_versions`)
  * @param {Value} signal
  */
 function seen_version(signal) {
@@ -1024,7 +1047,12 @@ function seen_version(signal) {
 
 	if ((signal.f & DERIVED) !== 0) {
 		var cache = /** @type {Map<Derived, Derived | DerivedRecord | BatchValue>} */ (view_cache);
-		return cache.get(/** @type {Derived} */ (signal))?.wv ?? -1;
+		var cached = cache.get(/** @type {Derived} */ (signal));
+		if (cached !== undefined) return cached.wv;
+
+		// the version the run read, if the derived was disconnected then: if a write invalidated it
+		// since, it gets a new version when it's evaluated again, and the run is stale
+		return view_read_versions?.get(/** @type {Derived} */ (signal)) ?? -1;
 	}
 
 	return (batch_values.get(signal) ?? signal).wv;
@@ -1090,8 +1118,8 @@ function has_batch_record(reaction) {
 /**
  * Remove the edges of an effect that only runs no batch holds anymore needed (because the batch committed and
  * its record was promoted, or because it was dropped), once no batch holds a record of it, so that its edges are
- * what its global run read again. `update_record` only prunes edges in a global run that happens while no batch
- * holds a record, which block and async effects hardly ever have: they run in batches.
+ * what its global run read again. `update_record` only prunes edges in global runs,
+ * which block and async effects hardly ever have: they run in batches.
  * (Not for deriveds: their edges also notify the reactions that read the value of a record that was dropped. They
  * are pruned by their next global run)
  * @param {Reaction} effect
@@ -1156,6 +1184,9 @@ function remove_reaction(signal, dependency) {
 
 		if ((derived.f & CONNECTED) !== 0) {
 			derived.f ^= CONNECTED;
+
+			// `mark` no longer reaches the derived, so nothing would remove its view from the cache when it becomes stale
+			view_cache?.delete(derived);
 		}
 
 		// In a fork it's possible that a derived is executed and gets reactions, then commits, but is
@@ -1218,6 +1249,8 @@ export function update_effect(effect) {
 
 	active_effect = effect;
 
+	var previous_renderer = custom_renderers_flag ? push_renderer(effect.r) : null;
+
 	if (DEV) {
 		var previous_component_fn = dev_current_component_function;
 		set_dev_current_component_function(effect.component_function);
@@ -1253,6 +1286,8 @@ export function update_effect(effect) {
 		}
 	} finally {
 		active_effect = previous_effect;
+
+		if (custom_renderers_flag) pop_renderer(previous_renderer);
 
 		if (DEV) {
 			set_dev_current_component_function(previous_component_fn);
@@ -1440,6 +1475,18 @@ export function get(signal) {
 
 		if (batch_values !== null) {
 			view = get_view(derived);
+
+			// the view doesn't cache a disconnected derived, so the run that reads it
+			// remembers which version it saw (see `seen_version`)
+			if (
+				(derived.f & CONNECTED) === 0 &&
+				active_reaction !== null &&
+				!untracking &&
+				(active_reaction.f & REACTION_IS_UPDATING) !== 0
+			) {
+				var seen = (view_read_versions ??= new Map()).get(derived);
+				view_read_versions.set(derived, seen === undefined || seen === view.wv ? view.wv : -1);
+			}
 		} else if (!is_new && checked_deps === 0 && !current_batch?.is_fork) {
 			// Untracked reads need the same deduplication as reads that reconnect the graph.
 			checked_deps = 1;

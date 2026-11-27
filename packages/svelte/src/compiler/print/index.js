@@ -538,6 +538,17 @@ function css_visitors(comments, js_comments) {
 }
 
 /**
+ * Attribute values are printed inside double quotes, but the raw text is
+ * preserved as written — and can contain `"` if the source used single quotes.
+ * @param {AST.Text} node
+ * @returns {AST.Text}
+ */
+function escape_attribute_text(node) {
+	if (!node.raw.includes('"')) return node;
+	return { ...node, raw: node.raw.replaceAll('"', '&quot;') };
+}
+
+/**
  * @param {AST.JSComment[]} comments
  * @param {{ preserve_whitespace: number }} state
  * @returns {Visitors<AST.SvelteNode>}
@@ -720,7 +731,7 @@ const svelte_visitors = (comments, state) => ({
 			}
 
 			for (const chunk of node.value) {
-				context.visit(chunk);
+				context.visit(chunk.type === 'Text' ? escape_attribute_text(chunk) : chunk);
 			}
 
 			if (node.value.length > 1 || node.value[0].type === 'Text') {
@@ -934,13 +945,11 @@ const svelte_visitors = (comments, state) => ({
 		}
 
 		if (node.alternate !== null) {
-			if (
-				!(
-					node.alternate.nodes.length === 1 &&
-					node.alternate.nodes[0].type === 'IfBlock' &&
-					node.alternate.nodes[0].elseif
-				)
-			) {
+			if (!(
+				node.alternate.nodes.length === 1 &&
+				node.alternate.nodes[0].type === 'IfBlock' &&
+				node.alternate.nodes[0].elseif
+			)) {
 				context.write('{:else}');
 				block(context, node.alternate, state.preserve_whitespace > 0);
 			} else {
@@ -1041,7 +1050,7 @@ const svelte_visitors = (comments, state) => ({
 			context.write('"');
 
 			for (const tag of node.value) {
-				context.visit(tag);
+				context.visit(tag.type === 'Text' ? escape_attribute_text(tag) : tag);
 			}
 
 			context.write('"');

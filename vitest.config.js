@@ -20,39 +20,61 @@ const sharded_suites = {
 	'packages/svelte/tests/runtime-legacy/test.ts': { count: 3, isolate: [] }
 };
 
-export default defineConfig({
-	resolve: {
-		alias: [
-			{
-				find: /^svelte\/?/,
-				customResolver: (id, importer) => {
-					// For some reason this turns up as "undefined" instead of "svelte/"
-					const exported = pkg.exports[id === 'undefined' ? '.' : id.replace('undefined', './')];
-					if (!exported) return;
+/**
+ * Resolves `svelte` / `svelte/*` imports against the package's `exports` map.
+ *
+ * @param {boolean} force_server When `true`, always resolve to the server
+ *   (`default`) condition. This is used by the `custom-renderer-server` project
+ *   to simulate running in Node *without* the `custom-renderer`/`browser`
+ *   resolve condition. Otherwise the client (`browser`) build is preferred,
+ *   except for compiled SSR output (`_output/server`).
+ */
+function svelte_alias(force_server = false) {
+	return [
+		{
+			find: /^svelte\/?/,
+			/**
+			 * @param {string} id
+			 * @param {string | undefined} importer
+			 */
+			customResolver: (id, importer) => {
+				// For some reason this turns up as "undefined" instead of "svelte/"
+				const exported = pkg.exports[id === 'undefined' ? '.' : id.replace('undefined', './')];
+				if (!exported) return;
 
-					// When running the server version of the Svelte files,
-					// we also want to use the server export of the Svelte package
-					return path.resolve(
-						'packages/svelte',
-						importer?.includes('_output/server')
-							? exported.default
-							: exported.browser ?? exported.default
-					);
-				}
+				// When running the server version of the Svelte files,
+				// we also want to use the server export of the Svelte package
+				const use_server = force_server || importer?.includes('_output/server');
+
+				return path.resolve(
+					'packages/svelte',
+					use_server ? exported.default : (exported.browser ?? exported.default)
+				);
 			}
-		]
-	},
+		}
+	];
+}
+
+export default defineConfig({
 	test: {
 		dir: '.',
-		reporters: process.env.GITHUB_ACTIONS === 'true' ? ['minimal'] : ['dot'],
+		reporters: './vitest-reporter.js',
 		// A handful of dev-mode tests trigger Svelte's `effect_update_depth_exceeded`
 		// guard, which involves ~1000 Error objects per flush for stack tracking —
 		// slow enough under vitest 4's deeper async stacks (and CI's slower workers)
 		// to overrun the 5s default.
 		testTimeout: 30_000,
+		coverage: {
+			provider: 'v8',
+			reporter: ['lcov', 'html'],
+			include: ['packages/svelte/src/**'],
+			reportsDirectory: 'coverage',
+			reportOnFailure: true
+		},
 		projects: [
 			{
 				extends: true,
+				resolve: { alias: svelte_alias() },
 				test: {
 					name: 'svelte',
 					include: [
@@ -60,7 +82,13 @@ export default defineConfig({
 						'packages/svelte/tests/*/test.ts',
 						'packages/svelte/tests/runtime-browser/test-ssr.ts'
 					],
-					exclude: [...configDefaults.exclude, '**/samples/**', ...Object.keys(sharded_suites)]
+					exclude: [
+						...configDefaults.exclude,
+						'**/samples/**',
+						...Object.keys(sharded_suites),
+						// runs in its own project with the server resolve condition
+						'packages/svelte/tests/custom-renderers-server/**'
+					]
 				}
 			},
 			...Object.entries(sharded_suites).flatMap(([file, { count, isolate }]) => {
@@ -72,6 +100,7 @@ export default defineConfig({
 				 */
 				const project = (name, shard) => ({
 					extends: /** @type {const} */ (true),
+					resolve: { alias: svelte_alias() },
 					test: { name: `${suite} (${name})`, include: [file], provide: { shard } }
 				});
 
@@ -81,14 +110,17 @@ export default defineConfig({
 					),
 					...isolate.map((prefix) => project(prefix, { index: 0, count: 1, include: prefix }))
 				];
-			})
-		],
-		coverage: {
-			provider: 'v8',
-			reporter: ['lcov', 'html'],
-			include: ['packages/svelte/src/**'],
-			reportsDirectory: 'coverage',
-			reportOnFailure: true
-		}
+			}),
+			{
+				extends: true,
+				// resolve `svelte` as if no `custom-renderer`/`browser` condition was set
+				resolve: { alias: svelte_alias(true) },
+				test: {
+					name: { label: 'custom-renderer-server', color: 'red' },
+					environment: 'node',
+					include: ['packages/svelte/tests/custom-renderers-server/test.ts']
+				}
+			}
+		]
 	}
 });

@@ -111,6 +111,23 @@ export function component_api_invalid_new(component, name) {
 }
 
 /**
+ * `%operation%` is not supported when rendering with a custom renderer
+ * @param {string} operation
+ * @returns {never}
+ */
+export function custom_renderer_unsupported_operation(operation) {
+	if (DEV) {
+		const error = new Error(`custom_renderer_unsupported_operation\n\`${operation}\` is not supported when rendering with a custom renderer\nhttps://svelte.dev/e/custom_renderer_unsupported_operation`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/custom_renderer_unsupported_operation`);
+	}
+}
+
+/**
  * A derived value cannot reference itself recursively
  * @returns {never}
  */
@@ -378,6 +395,22 @@ export function invalid_snippet() {
 }
 
 /**
+ * `createRawSnippet` cannot be used with a custom renderer
+ * @returns {never}
+ */
+export function invalid_snippet_in_custom_renderer() {
+	if (DEV) {
+		const error = new Error(`invalid_snippet_in_custom_renderer\n\`createRawSnippet\` cannot be used with a custom renderer\nhttps://svelte.dev/e/invalid_snippet_in_custom_renderer`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/invalid_snippet_in_custom_renderer`);
+	}
+}
+
+/**
  * `%name%(...)` cannot be used in runes mode
  * @param {string} name
  * @returns {never}
@@ -429,6 +462,24 @@ export function props_rest_readonly(property) {
 }
 
 /**
+ * Cannot render content belonging to %guest% inside %host%. A custom renderer must define `embed` or `host` to be combined with another renderer
+ * @param {string} guest
+ * @param {string} host
+ * @returns {never}
+ */
+export function renderer_cannot_cross(guest, host) {
+	if (DEV) {
+		const error = new Error(`renderer_cannot_cross\nCannot render content belonging to ${guest} inside ${host}. A custom renderer must define \`embed\` or \`host\` to be combined with another renderer\nhttps://svelte.dev/e/renderer_cannot_cross`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/renderer_cannot_cross`);
+	}
+}
+
+/**
  * The `%rune%` rune is only available inside `.svelte` and `.svelte.js/ts` files
  * @param {string} rune
  * @returns {never}
@@ -442,6 +493,22 @@ export function rune_outside_svelte(rune) {
 		throw error;
 	} else {
 		throw new Error(`https://svelte.dev/e/rune_outside_svelte`);
+	}
+}
+
+/**
+ * A snippet created in a component that was compiled without `experimental.customRenderer` cannot be rendered by a custom renderer
+ * @returns {never}
+ */
+export function snippet_renderer_mismatch() {
+	if (DEV) {
+		const error = new Error(`snippet_renderer_mismatch\nA snippet created in a component that was compiled without \`experimental.customRenderer\` cannot be rendered by a custom renderer\nhttps://svelte.dev/e/snippet_renderer_mismatch`);
+
+		error.name = 'Svelte error';
+
+		throw error;
+	} else {
+		throw new Error(`https://svelte.dev/e/snippet_renderer_mismatch`);
 	}
 }
 

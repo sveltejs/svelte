@@ -105,6 +105,8 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 * This is always `'injected'` when compiling with `customElement` mode.
 	 *
 	 * You can also pass a function that receives `{ filename }` and returns either `'injected'` or `'external'`.
+	 *
+	 * @default 'external'
 	 */
 	css?: 'injected' | 'external' | ((options: { filename: string }) => 'injected' | 'external');
 	/**
@@ -148,7 +150,7 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 */
 	runes?: boolean | undefined | ((options: { filename: string }) => boolean | undefined);
 	/**
-	 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `window.__svelte.v`.
+	 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `globalThis.__svelte.v`.
 	 *
 	 * @default true
 	 */
@@ -238,13 +240,29 @@ export interface ModuleCompileOptions {
 		 * @since 5.36
 		 */
 		async?: boolean;
+		/**
+		 * Enables custom renderers to be specified with `<svelte:options customRenderer="path/to/renderer/module" />`. Can be:
+		 *
+		 * - `true`, allowing components to individually opt in
+		 * - a string that points to a default custom renderer module: a package name, an alias or an absolute path (not a relative path, since every component imports it). Individual components can override the default, or opt out with `<svelte:options customRenderer={null} />`
+		 * - a function that receives a `{ filename }` object and returns a custom renderer module path (resolved relative to that component, if relative), or `null` if the component should use the DOM
+		 *
+		 * A custom renderer module's default export must be an object created with `createRenderer`.
+		 */
+		customRenderer?: true | string | ((options: { filename: string }) => string | null);
 	};
 }
 
 // The following two somewhat scary looking types ensure that certain types are required but can be undefined still
 
-export type ValidatedModuleCompileOptions = Omit<Required<ModuleCompileOptions>, 'rootDir'> & {
+export type ValidatedModuleCompileOptions = Omit<
+	Required<ModuleCompileOptions>,
+	'rootDir' | 'experimental'
+> & {
 	rootDir: ModuleCompileOptions['rootDir'];
+	experimental: Required<Omit<Required<ModuleCompileOptions>['experimental'], 'customRenderer'>> & {
+		customRenderer: (options: { filename: string }) => string | null | undefined;
+	};
 };
 
 export type ValidatedCompileOptions = ValidatedModuleCompileOptions &

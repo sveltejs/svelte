@@ -26,7 +26,7 @@ export default test({
 
 		// reset original styles
 		assert.equal(div.style.scale, '0');
-		assert.equal(div.style.opacity, '1');
-		assert.equal(div.style.rotate, '360deg');
+		assert.equal(div.style.opacity, '');
+		assert.equal(div.style.rotate, '');
 	}
 });

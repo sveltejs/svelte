@@ -36,7 +36,8 @@ import {
 	next,
 	read_hydration_instruction,
 	skip_nodes,
-	set_hydrate_node
+	set_hydrate_node,
+	set_hydrating
 } from '../hydration.js';
 import { queue_micro_task } from '../task.js';
 import * as e from '../../errors.js';
@@ -46,8 +47,10 @@ import { Batch, current_batch } from '../../reactivity/batch.js';
 import { internal_set, source } from '../../reactivity/sources.js';
 import { tag } from '../../dev/tracing.js';
 import { createSubscriber } from '../../../../reactivity/create-subscriber.js';
-import { create_text } from '../operations.js';
+import { create_anchor, create_fragment, append_child, insert_before } from '../operations.js';
 import { set_signal_status } from '../../reactivity/status.js';
+import { push_renderer, pop_renderer } from '../../custom-renderer/state.js';
+import { async_mode_flag, custom_renderers_flag } from '../../../flags/index.js';
 
 /**
  * @typedef {{
@@ -202,9 +205,13 @@ export class Boundary {
 	}
 
 	#hydrate_resolved_content() {
+		var was_hydrating = hydrating;
+
 		try {
 			this.#main_effect = branch(() => this.#children(this.#anchor));
 		} catch (error) {
+			// a block with a hydration mismatch may have turned hydration off before throwing
+			if (was_hydrating) set_hydrating(true);
 			this.error(error);
 		}
 	}
@@ -294,33 +301,39 @@ export class Boundary {
 		queue_micro_task(() => {
 			if (this.#is_destroyed()) return;
 
-			var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
-			var anchor = create_text();
+			var previous_renderer = custom_renderers_flag ? push_renderer(this.#effect.r) : null;
 
-			fragment.append(anchor);
+			try {
+				var fragment = (this.#offscreen_fragment = create_fragment());
+				var anchor = create_anchor();
 
-			this.#main_effect = this.#run(() => {
-				try {
-					return branch(() => this.#children(anchor));
-				} catch (error) {
+				append_child(fragment, anchor);
+
+				this.#main_effect = this.#run(() => {
 					try {
-						this.error(error);
+						return branch(() => this.#children(anchor));
 					} catch (error) {
-						invoke_error_boundary(error, this.#effect.parent);
+						try {
+							this.error(error);
+						} catch (error) {
+							invoke_error_boundary(error, this.#effect.parent);
+						}
+
+						return null;
 					}
-
-					return null;
-				}
-			});
-
-			if (this.#main_effect !== null && this.#pending.size === 0) {
-				this.is_pending = false;
-				this.#anchor.before(fragment);
-				this.#offscreen_fragment = null;
-
-				pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
-					this.#pending_effect = null;
 				});
+
+				if (this.#main_effect !== null && this.#pending.size === 0) {
+					this.is_pending = false;
+					insert_before(this.#anchor, fragment);
+					this.#offscreen_fragment = null;
+
+					pause_effect(/** @type {Effect} */ (this.#pending_effect), () => {
+						this.#pending_effect = null;
+					});
+				}
+			} finally {
+				if (custom_renderers_flag) pop_renderer(previous_renderer);
 			}
 		});
 	}
@@ -334,13 +347,13 @@ export class Boundary {
 				this.#children(this.#anchor);
 			});
 
-			if (this.#pending.size === 0) {
+			if (!async_mode_flag || this.#pending.size === 0) {
 				this.is_pending = false;
 			} else {
 				const pending = this.#props.pending;
 
 				if (pending) {
-					var fragment = (this.#offscreen_fragment = document.createDocumentFragment());
+					var fragment = (this.#offscreen_fragment = create_fragment());
 					move_effect(this.#main_effect, fragment);
 
 					this.#pending_effect = branch(() => pending(this.#anchor));
@@ -376,6 +389,8 @@ export class Boundary {
 		set_active_reaction(this.#effect);
 		set_component_context(this.#effect.ctx);
 
+		var previous_renderer = custom_renderers_flag ? push_renderer(this.#effect.r) : null;
+
 		try {
 			Batch.ensure();
 			return fn();
@@ -383,6 +398,7 @@ export class Boundary {
 			set_active_effect(previous_effect);
 			set_active_reaction(previous_reaction);
 			set_component_context(previous_ctx);
+			if (custom_renderers_flag) pop_renderer(previous_renderer);
 		}
 	}
 
@@ -390,6 +406,8 @@ export class Boundary {
 	 * @param {Batch} batch
 	 */
 	is_ready(batch) {
+		if (!async_mode_flag) return true;
+
 		if (batch.is_fork && this.#pending.size > 0) {
 			return false;
 		}
@@ -428,8 +446,14 @@ export class Boundary {
 		}
 
 		if (this.#offscreen_fragment) {
-			this.#anchor.before(this.#offscreen_fragment);
-			this.#offscreen_fragment = null;
+			var previous_renderer = custom_renderers_flag ? push_renderer(this.#effect.r) : null;
+
+			try {
+				insert_before(this.#anchor, this.#offscreen_fragment);
+				this.#offscreen_fragment = null;
+			} finally {
+				if (custom_renderers_flag) pop_renderer(previous_renderer);
+			}
 		}
 	}
 
@@ -438,6 +462,8 @@ export class Boundary {
 	 * @param {Batch} batch
 	 */
 	increment(effect, batch) {
+		if (!async_mode_flag) return;
+
 		var pending = this.#pending.get(batch);
 
 		if (pending === undefined) {
@@ -453,6 +479,8 @@ export class Boundary {
 	 * @param {Batch} batch
 	 */
 	decrement(effect, batch) {
+		if (!async_mode_flag) return;
+
 		var pending = /** @type {Map<Effect, number>} */ (this.#pending.get(batch));
 		var count = /** @type {number} */ (pending.get(effect));
 
@@ -482,6 +510,8 @@ export class Boundary {
 	 * @param {1 | -1} d
 	 */
 	update_effect_pending(d) {
+		if (!async_mode_flag) return;
+
 		this.#local_pending_count += d;
 
 		if (!this.#effect_pending || this.#pending_count_update_queued) return;
@@ -512,7 +542,7 @@ export class Boundary {
 			throw error;
 		}
 
-		if (current_batch?.is_fork) {
+		if (async_mode_flag && current_batch?.is_fork) {
 			if (this.#main_effect) current_batch.skip_effect(this.#main_effect);
 			if (this.#pending_effect) current_batch.skip_effect(this.#pending_effect);
 			if (this.#failed_effect) current_batch.skip_effect(this.#failed_effect);

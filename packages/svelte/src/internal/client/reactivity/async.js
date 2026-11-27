@@ -9,6 +9,8 @@ import {
 	set_component_context,
 	set_dev_stack
 } from '../context.js';
+import { current_renderer, set_renderer } from '../custom-renderer/state.js';
+import { async_mode_flag, custom_renderers_flag } from '../../flags/index.js';
 import { invoke_error_boundary } from '../error-handling.js';
 import {
 	active_effect,
@@ -48,6 +50,11 @@ export function flatten(blockers, sync, async, fn) {
 				.replaceAll('$.eager(() => ', '$state.eager(')
 				.replace(/\$\.get\((.+?)\)/g, (_, id) => id);
 		});
+	}
+
+	if (!async_mode_flag) {
+		fn(deriveds);
+		return;
 	}
 
 	// Filter out already-settled blockers - no need to wait for them
@@ -132,6 +139,7 @@ export function capture() {
 	var previous_reaction = active_reaction;
 	var previous_component_context = component_context;
 	var previous_batch = /** @type {Batch} */ (current_batch);
+	var previous_renderer = custom_renderers_flag ? current_renderer : null;
 
 	if (DEV) {
 		var previous_dev_stack = dev_stack;
@@ -144,6 +152,10 @@ export function capture() {
 		set_active_effect(previous_effect);
 		set_active_reaction(previous_reaction);
 		set_component_context(previous_component_context);
+
+		if (custom_renderers_flag) {
+			set_renderer(previous_renderer);
+		}
 
 		if (batch !== null && (previous_effect.f & DESTROYED) === 0) {
 			// A batch that was merged into another one continues as that one.
@@ -297,6 +309,9 @@ export function unset_context(deactivate_batch = true) {
 	set_active_effect(null);
 	set_active_reaction(null);
 	set_component_context(null);
+	if (custom_renderers_flag) {
+		set_renderer(null);
+	}
 	if (deactivate_batch) current_batch?.deactivate();
 
 	if (DEV) {
