@@ -1,0 +1,29 @@
+
+	.a.svelte-xyz {
+		color: red;;
+		animation: svelte-xyz-spin 1s;;
+		.nested:where(.svelte-xyz) {
+			color: green;
+		};
+		background: blue;
+	}
+
+	.b.svelte-xyz {
+		;
+		animation-name: svelte-xyz-spin;
+	}
+
+	.c.svelte-xyz {
+		color: red; /* comment */ ;
+	}
+
+	/* (empty) .d {;;}*/
+
+	@keyframes svelte-xyz-spin {
+		from {
+			opacity: 0;;
+		}
+		to {
+			opacity: 1;
+		}
+	}
