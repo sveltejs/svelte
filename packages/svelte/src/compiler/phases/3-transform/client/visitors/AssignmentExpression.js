@@ -14,6 +14,7 @@ import { should_proxy, get_rune } from '../../../scope.js';
 import { visit_assignment_expression } from '../../shared/assignments.js';
 import { validate_mutation } from './shared/utils.js';
 import { get_name } from '../../../nodes.js';
+import { is_custom_element_binding } from '../../../bindings.js';
 
 /**
  * @param {AssignmentExpression} node
@@ -129,8 +130,14 @@ function build_assignment(operator, left, right, context) {
 	// reassignment
 	if (object === left && transform?.assign) {
 		// special case — if an element binding, we know it's a primitive
-
-		const is_primitive = path.at(-1) === 'BindDirective' && path.at(-2) === 'RegularElement';
+		// (unless it's a binding to an arbitrary custom element property, which could be anything)
+		const is_primitive =
+			path.at(-1) === 'BindDirective' &&
+			path.at(-2) === 'RegularElement' &&
+			!is_custom_element_binding(
+				/** @type {AST.BindDirective} */ (context.path.at(-1)).name,
+				context.path.at(-2)
+			);
 
 		let value = /** @type {Expression} */ (
 			context.visit(build_assignment_value(operator, left, right))

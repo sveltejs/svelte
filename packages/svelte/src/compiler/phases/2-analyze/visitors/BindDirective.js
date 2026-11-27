@@ -8,7 +8,7 @@ import {
 import { validate_assignment } from './shared/utils.js';
 import * as e from '../../../errors.js';
 import * as w from '../../../warnings.js';
-import { binding_properties } from '../../bindings.js';
+import { binding_properties, is_custom_element_binding } from '../../bindings.js';
 import fuzzymatch from '../../../utils/fuzzymatch.js';
 import { is_content_editable_binding, is_svg } from '../../../../utils.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
@@ -21,7 +21,14 @@ import { custom_renderer } from '../../../state.js';
 export function BindDirective(node, context) {
 	const parent = context.path.at(-1);
 
-	if (
+	// `bind:foo` on a custom element is sugar for `foo={...} onfoochange={...}`
+	const is_custom_element_property = is_custom_element_binding(node.name, parent);
+
+	if (is_custom_element_property) {
+		if (custom_renderer) {
+			e.incompatible_with_custom_renderer(node, '`bind:`');
+		}
+	} else if (
 		parent?.type === 'RegularElement' ||
 		parent?.type === 'SvelteElement' ||
 		parent?.type === 'SvelteWindow' ||
@@ -135,7 +142,7 @@ export function BindDirective(node, context) {
 	// Group bindings aren't supported for getter/setters so we don't need to handle
 	// the metadata
 	if (node.expression.type === 'SequenceExpression') {
-		if (node.name === 'group') {
+		if (node.name === 'group' && !is_custom_element_property) {
 			e.bind_group_invalid_expression(node);
 		}
 
@@ -207,7 +214,7 @@ export function BindDirective(node, context) {
 		}
 	}
 
-	if (node.name === 'group') {
+	if (node.name === 'group' && !is_custom_element_property) {
 		if (!binding) {
 			throw new Error('Cannot find declaration for bind:group');
 		}

@@ -1,3 +1,6 @@
+/** @import { AST } from '#compiler' */
+import { is_custom_element_node } from './nodes.js';
+
 /**
  * @typedef BindingProperty
  * @property {string} [event] This is set if the binding corresponds to the property name on the dom element it's bound to
@@ -227,3 +230,24 @@ export const binding_properties = {
 		bidirectional: true
 	}
 };
+
+/**
+ * Returns `true` if `bind:name` on the given element is a binding to a property of a custom element
+ * rather than one of the built-in bindings — i.e. `bind:foo={x}` is sugar for
+ * `foo={x} onfoochange={() => x = element.foo}`.
+ * Built-in bindings that are valid on any element (such as `bind:this` or `bind:clientWidth`) take precedence.
+ * @param {string} name
+ * @param {AST.SvelteNode | undefined} element
+ */
+export function is_custom_element_binding(name, element) {
+	if (element?.type !== 'RegularElement' || !is_custom_element_node(element)) {
+		return false;
+	}
+
+	const property = Object.hasOwn(binding_properties, name) ? binding_properties[name] : undefined;
+
+	if (!property) return true;
+	if (property.valid_elements) return !property.valid_elements.includes(element.name);
+
+	return !!property.invalid_elements?.includes(element.name);
+}

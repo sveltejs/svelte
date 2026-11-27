@@ -103,9 +103,25 @@ export function Program(node, context) {
 
 		if (binding.kind === 'prop' || binding.kind === 'bindable_prop') {
 			if (is_prop_source(binding, context.state)) {
+				const key = binding.prop_alias ?? name;
+
+				/**
+				 * In components compiled to custom elements, assigning to a `$bindable()` prop dispatches a
+				 * `<name>change` event on the host element, which is what makes `bind:name` work on it.
+				 * The result of the assignment is passed through, so that the expression's value doesn't change
+				 * @param {Expression} expression
+				 */
+				const notify =
+					binding.kind === 'bindable_prop' &&
+					context.state.analysis.runes &&
+					context.state.analysis.custom_element
+						? (/** @type {Expression} */ expression) =>
+								b.call('$.dispatch_custom_event', b.id('$$props'), b.literal(key), expression)
+						: (/** @type {Expression} */ expression) => expression;
+
 				context.state.transform[name] = {
 					read: b.call,
-					assign: (node, value) => b.call(node, value),
+					assign: (node, value) => notify(b.call(node, value)),
 					mutate: (node, value) => {
 						if (binding.kind === 'bindable_prop') {
 							// only necessary for interop with legacy parent bindings
@@ -115,10 +131,12 @@ export function Program(node, context) {
 						return value;
 					},
 					update: (node) => {
-						return b.call(
-							node.prefix ? '$.update_pre_prop' : '$.update_prop',
-							node.argument,
-							node.operator === '--' && b.literal(-1)
+						return notify(
+							b.call(
+								node.prefix ? '$.update_pre_prop' : '$.update_prop',
+								node.argument,
+								node.operator === '--' && b.literal(-1)
+							)
 						);
 					}
 				};

@@ -4,7 +4,7 @@
 import { dev, ignore_map, is_ignored } from '../../../../state.js';
 import { is_text_attribute } from '../../../../utils/ast.js';
 import * as b from '#compiler/builders';
-import { binding_properties } from '../../../bindings.js';
+import { binding_properties, is_custom_element_binding } from '../../../bindings.js';
 import { build_attribute_value } from './shared/element.js';
 import { build_bind_this, validate_binding } from './shared/utils.js';
 
@@ -75,7 +75,16 @@ export function BindDirective(node, context) {
 	/** @type {CallExpression} */
 	let call;
 
-	if (property?.event) {
+	if (is_custom_element_binding(node.name, parent)) {
+		// `bind:foo={x}` on a custom element is sugar for `foo={x} onfoochange={() => x = element.foo}`
+		call = b.call(
+			'$.bind_custom_element_property',
+			context.state.node,
+			b.literal(node.name),
+			get,
+			set
+		);
+	} else if (property?.event) {
 		call = b.call(
 			'$.bind_property',
 			b.literal(node.name),

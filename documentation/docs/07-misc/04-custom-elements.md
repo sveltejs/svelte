@@ -51,6 +51,67 @@ el.name = 'everybody';
 
 Note that you need to list out all properties explicitly, i.e. doing `let props = $props()` without declaring `props` in the [component options](#Component-options) means that Svelte can't know which props to expose as properties on the DOM element.
 
+## Two way bindings
+
+You can use `bind:` on custom elements. `bind:foo={value}` is sugar for passing `value` as the `foo` property, plus listening to the `foochange` event and reading the `foo` property back from the element whenever that event is dispatched:
+
+```svelte
+<my-element bind:foo={value}></my-element>
+
+<!-- is equivalent to -->
+<my-element
+	foo={value}
+	onfoochange={(event) => (value = event.currentTarget.foo)}
+></my-element>
+```
+
+The casing of the property name is preserved, so `bind:selectedIndex` listens to the `selectedIndexchange` event (i.e. it's equivalent to `selectedIndex={value} onselectedIndexchange={...}`).
+
+This works with any custom element that follows this convention, not just ones created with Svelte. Built-in bindings that are valid on every element, such as [`bind:this`](bind#bind:this) or [`bind:clientWidth`](bind#Dimensions), keep their usual meaning.
+
+On the other side, when a component that is compiled to a custom element assigns a new value to a [`$bindable`]($bindable) prop, it dispatches the corresponding `<name>change` event (e.g. `countchange` for `count`) on the host element. This means that bindings work across custom elements just like they do across components:
+
+```svelte
+<!--- file: Counter.svelte --->
+<svelte:options customElement="my-counter" />
+
+<script>
+	let { count = $bindable(0) } = $props();
+</script>
+
+<button onclick={() => count++}>clicks: {count}</button>
+```
+
+```svelte
+<!--- file: App.svelte --->
+<script>
+	import './Counter.svelte';
+
+	let count = $state(0);
+</script>
+
+<my-counter bind:count></my-counter>
+<p>the counter was clicked {count} times</p>
+```
+
+The event is a non-bubbling `CustomEvent` with the new value as its `detail`, so consumers that don't use Svelte can listen to it as well:
+
+```js
+// @noErrors
+const counter = document.querySelector('my-counter');
+
+counter.addEventListener('countchange', (event) => {
+	console.log(event.detail); // same as counter.count
+});
+```
+
+Some details to be aware of:
+
+- Only changes that originate from inside the component dispatch an event. Setting the property or attribute from the outside doesn't, similar to how setting `input.value` doesn't fire an `input` event
+- Only reassignments (including updates through `bind:` inside the component, like `<input bind:value={foo}>`) dispatch an event — mutations like `items.push(...)` don't
+- The event is dispatched synchronously, right after the assignment. Every assignment dispatches an event, even if the value didn't change
+- Fallback values don't dispatch an event. Assignments while the component is being created (for example at the top level of its `<script>`) do, but the event is dispatched once the component has been created, so that the element's property already reflects the new value
+
 ## Component lifecycle
 
 Custom elements are created from Svelte components using a wrapper approach. This means the inner Svelte component has no knowledge that it is a custom element. The custom element wrapper takes care of handling its lifecycle appropriately.
@@ -134,4 +195,5 @@ Custom elements can be a useful way to package components for consumption in a n
 - The deprecated `let:` directive has no effect, because custom elements do not have a way to pass data to the parent component that fills the slot
 - Polyfills are required to support older browsers
 - You can use Svelte's context feature between regular Svelte components within a custom element, but you can't use them across custom elements. In other words, you can't use `setContext` on a parent custom element and read that with `getContext` in a child custom element.
+- Since [bindings](#Bindings) listen to a `<name>change` event, avoid `$bindable` props for which that event already exists for other reasons. For example, a `selection` prop would listen to `selectionchange`, which is also a built-in DOM event
 - Don't declare properties or attributes starting with `on`, as their usage will be interpreted as an event listener. In other words, Svelte treats `<custom-element oneworld={true}></custom-element>` as `customElement.addEventListener('eworld', true)` (and not as `customElement.oneworld = true`)
