@@ -661,7 +661,7 @@ export function update_reaction(reaction) {
  *
  * The edges of the graph (`reaction.edges` and the `reactions` of its dependencies) are a
  * superset of the dependencies of every live record, so that changes to any of them reach
- * the reaction. They are only pruned when a global run happens and no batch holds a record.
+ * the reaction. Global runs prune edges that neither the new run nor any batch record needs.
  * @param {Reaction} reaction
  * @param {number} flags the flags of the reaction before the run
  * @param {any} value the value of the run (only relevant for deriveds)
@@ -826,13 +826,13 @@ function update_record(reaction, flags, length, value, error) {
 
 	// The edges — `reaction.edges`, and `reaction` in the `reactions` of each of them — must cover what every
 	// live run of the reaction read (its global run, and the records batches hold of it), so that a change to
-	// any of those values reaches it. So unless this is a global run and no batch holds a record, edges are
-	// only added (and pruned by a later global run). Their order is independent of the run's reads
+	// any of those values reaches it. A batch-local run only adds edges; a global run replaces the previous
+	// global dependencies, retaining those that batches still need. Their order is independent of the run's reads
 	var keep = should_record || has_batch_record(reaction);
 	var tracking = effect_tracking() && (reaction.f & CONNECTED) !== 0;
 	var edges = reaction.edges;
 
-	if (keep && edges !== null) {
+	if (should_record && edges !== null) {
 		if (new_deps !== null) {
 			// the edges may be a run's `deps` as well, see `update_dependencies`
 			reaction.edges = edges = edges.slice();
@@ -843,30 +843,39 @@ function update_record(reaction, flags, length, value, error) {
 				}
 			}
 		}
-	} else {
-		if (edges === deps) {
-			// The edges are exactly what the previous global run read (if anything), so — as on `main` —
-			// the values this run read again, in the same order, stay connected, and the rest is replaced
-			if (edges !== null) {
-				for (i = skipped_deps; i < edges.length; i++) remove_reaction(reaction, edges[i]);
-			}
+	} else if (!keep && edges === deps) {
+		// The edges are exactly what the previous global run read (if anything), so — as on `main` —
+		// the values this run read again, in the same order, stay connected, and the rest is replaced
+		if (edges !== null) {
+			for (i = skipped_deps; i < edges.length; i++) remove_reaction(reaction, edges[i]);
+		}
 
-			if (tracking && new_deps !== null) {
-				for (dep of new_deps) (dep.reactions ??= []).push(reaction);
-			}
-		} else {
-			// The edges can include some that were retained for runs no batch holds anymore
-			var added = new Set(read);
-			for (dep of /** @type {Value[]} */ (edges)) {
-				if (!added.delete(dep)) remove_reaction(reaction, dep);
-			}
-
-			if (tracking) {
-				for (dep of added) (dep.reactions ??= []).push(reaction);
-			}
+		if (tracking && new_deps !== null) {
+			for (dep of new_deps) (dep.reactions ??= []).push(reaction);
 		}
 
 		reaction.edges = read;
+	} else {
+		// The edges can include some that were retained for runs no batch holds anymore:
+		// only those that this run or a record that a batch holds read remain
+		var added = new Set(read);
+		if (keep) {
+			for (var b = first_batch; b !== null; b = b.next) {
+				for (dep of b.records?.get(reaction)?.deps ?? []) added.add(dep);
+			}
+		}
+
+		var next = keep ? Array.from(added) : read;
+
+		for (dep of edges ?? []) {
+			if (!added.delete(dep)) remove_reaction(reaction, dep);
+		}
+
+		if (tracking) {
+			for (dep of added) (dep.reactions ??= []).push(reaction);
+		}
+
+		reaction.edges = next;
 	}
 
 	if (should_record) {
@@ -1046,8 +1055,8 @@ function has_batch_record(reaction) {
 /**
  * Remove the edges of an effect that only runs no batch holds anymore needed (because the batch committed and
  * its record was promoted, or because it was dropped), once no batch holds a record of it, so that its edges are
- * what its global run read again. `update_record` only prunes edges in a global run that happens while no batch
- * holds a record, which block and async effects hardly ever have: they run in batches.
+ * what its global run read again. `update_record` only prunes edges in global runs,
+ * which block and async effects hardly ever have: they run in batches.
  * (Not for deriveds: their edges also notify the reactions that read the value of a record that was dropped. They
  * are pruned by their next global run)
  * @param {Reaction} effect

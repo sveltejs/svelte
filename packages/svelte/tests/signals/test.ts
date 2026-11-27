@@ -2122,6 +2122,91 @@ describe('signals', () => {
 		}
 	});
 
+	for (const async of [false, true]) {
+		for (const pre of [false, true]) {
+			test(`prunes obsolete global derived edges with a writing ${pre ? 'pre' : 'user'} effect (async: ${async})`, () => {
+				if (async) enable_async_mode_flag();
+				const host = proxy({ data: { items: [0] } });
+				const writes = state(0);
+				const first = derived(() => host.data.items[0]);
+				let value = -1;
+				(pre ? user_pre_effect : effect)(() => {
+					host.data;
+					$.untrack(() => update(writes));
+				});
+				effect(() => {
+					value = $.get(first);
+				});
+
+				return () => {
+					try {
+						for (let i = 1; i <= 5; i++) {
+							host.data = { items: [i] };
+							flushSync();
+							assert.equal(value, i);
+							assert.equal(first.deps?.length, 3);
+							// The latest global run and the previous run kept by the writing batch.
+							assert.isAtMost(first.edges?.length ?? 0, 5);
+						}
+					} finally {
+						if (async) disable_async_mode_flag();
+					}
+				};
+			});
+		}
+	}
+
+	it('retains derived edges needed by forks while pruning obsolete global reads', () => {
+		enable_async_mode_flag();
+		push({}, true);
+		const index = state(0);
+		const trigger = state(0);
+		const items = Array.from({ length: 6 }, (_, i) => state(i));
+		const first = derived(() => $.get(items[$.get(index)]));
+		const log: number[] = [];
+		const destroy = effect_root(() => {
+			block(() => {
+				$.get(trigger);
+				log.push($.get(first));
+			});
+		});
+		pop();
+		flushSync();
+		const pending = fork(() => set(trigger, 1));
+		flushSync(() => set(index, 1));
+		const later = fork(() => set(trigger, 2));
+
+		try {
+			for (let i = 2; i < items.length; i++) {
+				flushSync(() => set(index, i));
+				assert.include(items[0].reactions ?? [], first);
+				assert.include(items[1].reactions ?? [], first);
+				assert.include(items[i].reactions ?? [], first);
+				assert.isAtMost(first.edges?.length ?? 0, 4);
+				for (let j = 2; j < i; j++) assert.equal(items[j].reactions, null);
+			}
+			assert.equal(log.at(-1), 5);
+			later.discard();
+			flushSync(() => set(index, 4));
+			assert.include(items[0].reactions ?? [], first);
+			assert.equal(items[1].reactions, null);
+			assert.equal(items[5].reactions, null);
+
+			pending.discard();
+			flushSync(() => set(index, 3));
+			assert.equal(items[0].reactions, null);
+			assert.equal(items[4].reactions, null);
+			assert.include(items[3].reactions ?? [], first);
+			assert.equal(log.at(-1), 3);
+		} finally {
+			later.discard();
+			pending.discard();
+			destroy();
+			flushSync();
+			disable_async_mode_flag();
+		}
+	});
+
 	it('prunes the edges of a block effect once the batches that ran it commit', () => {
 		enable_async_mode_flag();
 		push({}, true);
