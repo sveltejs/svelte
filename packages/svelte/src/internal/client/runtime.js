@@ -843,39 +843,39 @@ function update_record(reaction, flags, length, value, error) {
 				}
 			}
 		}
+	} else if (!keep && edges === deps) {
+		// The edges are exactly what the previous global run read (if anything), so — as on `main` —
+		// the values this run read again, in the same order, stay connected, and the rest is replaced
+		if (edges !== null) {
+			for (i = skipped_deps; i < edges.length; i++) remove_reaction(reaction, edges[i]);
+		}
+
+		if (tracking && new_deps !== null) {
+			for (dep of new_deps) (dep.reactions ??= []).push(reaction);
+		}
+
+		reaction.edges = read;
 	} else {
-		var next_edges = read;
+		// The edges can include some that were retained for runs no batch holds anymore:
+		// only those that this run or a record that a batch holds read remain
+		var added = new Set(read);
 		if (keep) {
-			var needed = new Set(read);
 			for (var b = first_batch; b !== null; b = b.next) {
-				for (dep of b.records?.get(reaction)?.deps ?? []) needed.add(dep);
-			}
-			next_edges = Array.from(needed);
-		}
-
-		if (!keep && edges === deps) {
-			// The edges are exactly what the previous global run read (if anything), so — as on `main` —
-			// the values this run read again, in the same order, stay connected, and the rest is replaced
-			if (edges !== null) {
-				for (i = skipped_deps; i < edges.length; i++) remove_reaction(reaction, edges[i]);
-			}
-
-			if (tracking && new_deps !== null) {
-				for (dep of new_deps) (dep.reactions ??= []).push(reaction);
-			}
-		} else {
-			// The edges can include some that were retained for runs no batch holds anymore
-			var added = new Set(next_edges);
-			for (dep of edges ?? []) {
-				if (!added.delete(dep)) remove_reaction(reaction, dep);
-			}
-
-			if (tracking) {
-				for (dep of added) (dep.reactions ??= []).push(reaction);
+				for (dep of b.records?.get(reaction)?.deps ?? []) added.add(dep);
 			}
 		}
 
-		reaction.edges = next_edges;
+		var next = keep ? Array.from(added) : read;
+
+		for (dep of edges ?? []) {
+			if (!added.delete(dep)) remove_reaction(reaction, dep);
+		}
+
+		if (tracking) {
+			for (dep of added) (dep.reactions ??= []).push(reaction);
+		}
+
+		reaction.edges = next;
 	}
 
 	if (should_record) {
