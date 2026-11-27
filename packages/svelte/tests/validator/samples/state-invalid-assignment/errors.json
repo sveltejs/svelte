@@ -1,0 +1,8 @@
+[
+	{
+		"code": "state_invalid_assignment",
+		"message": "Cannot assign to state inside a template expression",
+		"start": { "line": 5, "column": 1 },
+		"end": { "line": 5, "column": 14 }
+	}
+]
