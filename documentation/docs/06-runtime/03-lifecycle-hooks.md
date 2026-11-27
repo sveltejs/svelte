@@ -59,6 +59,8 @@ Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the onl
 </script>
 ```
 
+When one component replaces another, for example inside a [`{#key}`](key) block or when the value of `Thing` in `<Thing />` changes, the new component is created before the old one is destroyed. The new component's `<script>` therefore runs before the old component's `onDestroy` callbacks. Those callbacks run before the new component's `onMount` callbacks, unless the old component plays an outro [transition](transition), in which case they run when the transition ends.
+
 ## `tick`
 
 While there's no "after update" hook, you can use `tick` to ensure that the UI is updated before continuing. `tick` returns a promise that resolves once any pending state changes have been applied, or in the next microtask if there are none.
