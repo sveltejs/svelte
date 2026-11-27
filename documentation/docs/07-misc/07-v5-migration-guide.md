@@ -899,6 +899,40 @@ The `foreign` namespace was only useful for Svelte Native, which we're planning 
 
 Both functions are disallowed in runes mode — use `$effect.pre(...)` and `$effect(...)` instead.
 
+### `$:` statements can see bound values before `onMount`
+
+In Svelte 4, if a child component set a bound prop during initialisation (for example through a default value like `export let foo = true`), the parent's `$:` statements only saw that value after `onMount` had run. In Svelte 5, they see it before `onMount`:
+
+```svelte
+<!--- file: App.svelte --->
+<script>
+	import { onMount } from 'svelte';
+	import Child from './Child.svelte';
+
+	let foo;
+
+	onMount(() => {
+		foo = false;
+	});
+
+	$: if (foo) {
+		// runs in Svelte 5, but not in Svelte 4
+		console.log('foo is true');
+	}
+</script>
+
+<Child bind:foo />
+```
+
+```svelte
+<!--- file: Child.svelte --->
+<script>
+	export let foo = true;
+</script>
+```
+
+If the parent should decide the initial value, initialise it where it's declared (`let foo = false`) instead of in `onMount`.
+
 ### `contenteditable` behavior change
 
 If you have a `contenteditable` node with a corresponding binding _and_ a reactive value inside it (example: `<div contenteditable=true bind:textContent>count is {count}</div>`), then the value inside the contenteditable will not be updated by updates to `count` because the binding takes full control over the content immediately and it should only be updated through it.
