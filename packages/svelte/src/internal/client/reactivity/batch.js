@@ -426,7 +426,7 @@ export class Batch {
 			this.#skipped_branches.delete(effect) ||
 			(!this.#unskipped_branches.has(effect) &&
 				((effect.f & EFFECT_OFFSCREEN) !== 0 ||
-					this.folded.some((batch) => batch.#skipped_branches.has(effect))))
+					(async_mode_flag && this.folded.some((batch) => batch.#skipped_branches.has(effect)))))
 		) {
 			// This batch adopts a branch that it skipped (whose effects may have been reset, see `reset_branch`),
 			// that so far only existed offscreen (possibly for another batch, whose view of the world its
@@ -656,7 +656,7 @@ export class Batch {
 		}
 
 		// if the batch has outstanding pending work, stash effects and bail
-		if (this.#is_deferred()) {
+		if (async_mode_flag && this.#is_deferred()) {
 			this.#defer_effects(render_effects);
 			this.#defer_effects(effects);
 
@@ -891,12 +891,14 @@ export class Batch {
 			this.current.set(source, entry);
 		}
 
-		for (const [effect, deferred] of batch.async_deriveds) {
-			const d = this.async_deriveds.get(effect);
-			if (d && d !== deferred) deferred.promise.then(d.resolve, d.reject);
-			// The incoming run can still be pending. A subsequent replacement must reach
-			// this deferred too, not just the older waiters to which it forwards its result.
-			this.async_deriveds.set(effect, deferred);
+		if (async_mode_flag) {
+			for (const [effect, deferred] of batch.async_deriveds) {
+				const d = this.async_deriveds.get(effect);
+				if (d && d !== deferred) deferred.promise.then(d.resolve, d.reject);
+				// The incoming run can still be pending. A subsequent replacement must reach
+				// this deferred too, not just the older waiters to which it forwards its result.
+				this.async_deriveds.set(effect, deferred);
+			}
 		}
 
 		for (const [reaction, record] of batch.records ?? []) {
@@ -914,11 +916,11 @@ export class Batch {
 
 		// Clear them or else those that are still pending might get rejected on discard (after merged-into batch is done).
 		// This can happen when batch Y merged into X and Y has a pending boundary and therefore still-pending async deriveds inside.
-		batch.async_deriveds.clear();
+		if (async_mode_flag) batch.async_deriveds.clear();
 
 		// That pending work is this batch's from now on: it decrements this batch's counts (see `increment_pending`),
 		// so this batch stays linked until the work is done, and receives the effects that a boundary defers until then
-		if (batch.#pending.size > 0) {
+		if (async_mode_flag && batch.#pending.size > 0) {
 			for (const [effect, count] of batch.#pending) {
 				this.#pending.set(effect, (this.#pending.get(effect) ?? 0) + count);
 			}
@@ -1072,7 +1074,7 @@ export class Batch {
 			this.#process();
 
 			// (the size check avoids allocating an iterator in the common case)
-			if (rebases.size > 0) {
+			if (async_mode_flag && rebases.size > 0) {
 				for (const batch of rebases) {
 					rebases.delete(batch);
 
@@ -1104,8 +1106,10 @@ export class Batch {
 	discard() {
 		this.#run_callbacks(this.#discard_callbacks);
 
-		for (const deferred of this.async_deriveds.values()) {
-			deferred.reject(OBSOLETE);
+		if (async_mode_flag) {
+			for (const deferred of this.async_deriveds.values()) {
+				deferred.reject(OBSOLETE);
+			}
 		}
 
 		this.#unlink();
@@ -1356,6 +1360,8 @@ export class Batch {
 	 */
 	get_record(reaction) {
 		var record = this.records?.get(reaction);
+		if (!async_mode_flag) return record;
+
 		var i = this.folded.length;
 
 		while (record === undefined && i--) {
@@ -1507,7 +1513,9 @@ export class Batch {
 			if ((reaction.f & (DERIVED | DESTROYED)) === 0) {
 				// Keep a newer committed async run instead of promoting an outdated record.
 				// Otherwise, the effect would rerun and restart its async work in every batch.
-				var replaced = (reaction.f & ASYNC) !== 0 && is_outdated(record) && !is_outdated(reaction);
+				var replaced = async_mode_flag
+					? (reaction.f & ASYNC) !== 0 && is_outdated(record) && !is_outdated(reaction)
+					: false;
 
 				if (commit && !replaced) {
 					promote_record(reaction, record);
@@ -1519,7 +1527,7 @@ export class Batch {
 					// means "this would re-use the real world result, i.e. the one we just committed, so we can reject this old run".
 					// This can reject runs too early in pending batches. The superseding batch eventually settles them,
 					// but async/if blocks inside pending boundaries should be excluded.
-					if ((reaction.f & ASYNC) !== 0) {
+					if (async_mode_flag && (reaction.f & ASYNC) !== 0) {
 						for (let b = first_batch; b !== null; b = b.next) {
 							if (b !== this && !b.records?.has(reaction)) {
 								b.async_deriveds.get(/** @type {Effect} */ (reaction))?.reject(OBSOLETE);

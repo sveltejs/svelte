@@ -160,6 +160,11 @@ check_bundle(
 	'Async-only code',
 	'function async_expression',
 	'function increment_pending',
+	'batch.get_record(derived)',
+	'deferred.reject(OBSOLETE)',
+	'deferred.promise.then(d.resolve, d.reject)',
+	'rebases.delete(batch)',
+	'forks.set(batch, run)',
 	'rebases.add(',
 	'#decrement_queued = true',
 	'this.#local_pending_count += d'
