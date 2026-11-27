@@ -210,11 +210,14 @@ export function BindDirective(node, context) {
 
 			case 'group': {
 				const indexes = node.metadata.parent_each_blocks.map((each) => {
-					// if we have a keyed block with an index, the index is wrapped in a source
-					return each.metadata.keyed && each.index
-						? b.call('$.get', each.metadata.index)
-						: each.metadata.index;
+					// a keyed block wraps its index in a source, which changes as its items move
+					return each.metadata.keyed ? b.call('$.get', each.metadata.index) : each.metadata.index;
 				});
+
+				// if one of them can change, they are read again and the input follows them
+				const group_index = node.metadata.parent_each_blocks.some((each) => each.metadata.keyed)
+					? b.thunk(b.array(indexes))
+					: b.array(indexes);
 
 				// We need to additionally invoke the value attribute signal to register it as a dependency,
 				// so that when the value is updated, the group binding is updated
@@ -243,7 +246,7 @@ export function BindDirective(node, context) {
 				call = b.call(
 					'$.bind_group',
 					node.metadata.binding_group_name,
-					b.array(indexes),
+					group_index,
 					context.state.node,
 					group_getter,
 					set ?? get
