@@ -195,6 +195,14 @@ async function run_test(
 
 	try {
 		const page = await browser.newPage();
+
+		if (config.real_click) {
+			// Expose a way to perform a real (trusted) mouse click from inside the page.
+			// Trusted events (`event.isTrusted === true`) cannot be synthesized from
+			// inside the page, so tests covering trusted-only behavior need this.
+			await page.exposeFunction('__real_click', (x: number, y: number) => page.mouse.click(x, y));
+		}
+
 		page.on('console', (message) => {
 			let method = message.type();
 			// @ts-ignore
