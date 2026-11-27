@@ -91,9 +91,7 @@ export function SvelteBoundary(node, context) {
 		const failed_callee = build_attribute_value(
 			failed_attribute.value,
 			context,
-			(expression) => expression,
-			false,
-			true
+			(expression) => expression
 		);
 
 		props.properties.push(b.init('failed', failed_callee));
@@ -114,13 +112,7 @@ export function SvelteBoundary(node, context) {
  * @param {ComponentContext} context
  */
 function build_pending_attribute_block(attribute, context) {
-	const callee = build_attribute_value(
-		attribute.value,
-		context,
-		(expression) => expression,
-		false,
-		true
-	);
+	const callee = build_attribute_value(attribute.value, context, (expression) => expression);
 	const pending = b.call(callee, b.id('$$renderer'));
 
 	return {
