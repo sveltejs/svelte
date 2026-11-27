@@ -59,6 +59,7 @@ for (const key in pkg.exports) {
 	if (key === './internal/disclose-version') continue;
 	if (key === './internal/flags/legacy') continue;
 	if (key === './internal/flags/tracing') continue;
+	if (key === './register') continue; // only used for its side effects, in Node
 	if (key === './internal/flags/custom-renderer') continue;
 	if (key === './internal/init-operations') continue;
 
