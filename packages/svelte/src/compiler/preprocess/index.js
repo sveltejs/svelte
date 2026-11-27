@@ -7,7 +7,8 @@ import {
 	parse_attached_sourcemap,
 	sourcemap_add_offset,
 	combine_sourcemaps,
-	get_basename
+	get_basename,
+	normalize_source_names
 } from '../utils/mapped_code.js';
 import { decode_map } from './decode_sourcemap.js';
 import { replace_in_code, slice_source } from './replace_in_code.js';
@@ -115,6 +116,7 @@ function processed_content_to_code(processed, location, file_basename) {
 		decoded_map = decode_map(processed);
 		// decoded map may not have sources for empty maps like `{ mappings: '' }`
 		if (decoded_map?.sources) {
+			decoded_map.sources = normalize_source_names(decoded_map.sources, file_basename);
 			// offset only segments pointing at original component source
 			const source_index = decoded_map.sources.indexOf(file_basename);
 			if (source_index !== -1) {
@@ -311,14 +313,19 @@ async function process_markup(process, source) {
 		filename: source.filename
 	});
 	if (processed) {
+		/** @type {any} */
+		let map = undefined;
+		if (processed.map) {
+			// TODO: can we use decode_sourcemap?
+			map = typeof processed.map === 'string' ? JSON.parse(processed.map) : processed.map;
+			if (source.file_basename && map.sources) {
+				const sources = normalize_source_names(map.sources, source.file_basename);
+				if (sources !== map.sources) map = { ...map, sources };
+			}
+		}
 		return {
 			string: processed.code,
-			map: processed.map
-				? // TODO: can we use decode_sourcemap?
-					typeof processed.map === 'string'
-					? JSON.parse(processed.map)
-					: processed.map
-				: undefined,
+			map,
 			dependencies: processed.dependencies
 		};
 	} else {

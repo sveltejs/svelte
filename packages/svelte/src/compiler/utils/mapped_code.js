@@ -312,14 +312,12 @@ function apply_preprocessor_sourcemap(filename, svelte_map, preprocessor_map_inp
 		typeof preprocessor_map_input === 'string'
 			? JSON.parse(preprocessor_map_input)
 			: preprocessor_map_input;
-	// A preprocessor map with a missing/empty `sources[0]` (e.g. from a MagicString transform
-	// created without a `source` option) can't be matched against `filename` during combination,
-	// which silently drops the chain instead of erroring. Normalize it to `filename` first, the
-	// same way Vite treats an empty `sources[0]` as referring to the file being transformed.
-	if (preprocessor_map.sources?.length === 1 && !preprocessor_map.sources[0]) {
-		preprocessor_map.sources = [filename];
-	}
-	const result_map = combine_sourcemaps(filename, [svelte_map, preprocessor_map]);
+	const sources = normalize_source_names(preprocessor_map.sources, filename);
+	const result_map = combine_sourcemaps(filename, [
+		svelte_map,
+		// copy-on-write: the caller's map may be shared with the compiler's `options`
+		sources === preprocessor_map.sources ? preprocessor_map : { ...preprocessor_map, sources }
+	]);
 	// Svelte expects a SourceMap which includes toUrl and toString. Instead of wrapping our output in a class,
 	// we just tack on the extra properties.
 	Object.defineProperties(result_map, {
@@ -450,6 +448,35 @@ function get_relative_path(from, to) {
  */
 export function get_basename(filename) {
 	return /** @type {string} */ (filename.split(/[/\\]/).pop());
+}
+
+/**
+ * Rewrite the `sources` of an upstream map so the entry that refers to the file being compiled
+ * matches `file_basename`, the name svelte uses in its own map. `@jridgewell/remapping` matches
+ * sources by exact string, so without this an upstream map keyed by a full or relative path
+ * (e.g. `generateMap({ source: id })` with an absolute Vite module id) is treated as a leaf and
+ * the chain is silently dropped.
+ *
+ * The rewrite only happens when exactly one entry refers to this file. Several entries can share
+ * the basename while being different files (a component and a vendored module both named
+ * `input.svelte`); collapsing them would make the two sources indistinguishable and `remapping`
+ * throws on the duplicate. An empty entry means "this file", matching how Vite treats a map from
+ * `new MagicString(code).generateMap()`.
+ *
+ * @param {(string | null)[]} sources
+ * @param {string} file_basename
+ * @returns {(string | null)[]} the original array if no entry needed rewriting
+ */
+export function normalize_source_names(sources, file_basename) {
+	let candidates = 0;
+	for (const source of sources) {
+		if (!source || get_basename(source) === file_basename) candidates++;
+	}
+	if (candidates !== 1) return sources;
+	const normalized = sources.map((source) =>
+		!source || get_basename(source) === file_basename ? file_basename : source
+	);
+	return normalized.every((source, i) => source === sources[i]) ? sources : normalized;
 }
 
 /**
