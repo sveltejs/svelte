@@ -48,6 +48,8 @@ A `<script>` tag with a `module` attribute runs once when the module first evalu
 </script>
 ```
 
+State declared in `<script module>` is shared across all instances of the component and lasts for the lifetime of the page, even after every instance is unmounted — in the example above, `total` keeps counting across mounts and unmounts until a full page reload.
+
 You can `export` bindings from this block, and they will become exports of the compiled module. You cannot `export default`, since the default export is the component itself.
 
 > [!NOTE] If you are using TypeScript and import such exports from a `module` block into a `.ts` file, make sure to have your editor setup so that TypeScript knows about them. This is the case for our VS Code extension and the IntelliJ plugin, but in other cases you might need to setup our [TypeScript editor plugin](https://www.npmjs.com/package/typescript-svelte-plugin).
