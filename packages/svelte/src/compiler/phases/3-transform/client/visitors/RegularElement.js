@@ -190,7 +190,28 @@ export function RegularElement(node, context) {
 				// remove_input_defaults will be called inside set_attributes
 				should_remove_defaults = true;
 			} else {
-				context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
+				// A static `checked` attribute is part of the template, i.e. it is the genuine
+				// default (`defaultChecked`) on the client too. It only needs to be preserved
+				// when nothing else controls the checked state
+				const preserve_checked =
+					!bindings.has('checked') &&
+					!bindings.has('group') &&
+					attributes.some(
+						(attribute) =>
+							attribute.type === 'Attribute' &&
+							attribute.name === 'checked' &&
+							(attribute.value === true || is_text_attribute(attribute))
+					);
+
+				context.state.init.push(
+					b.stmt(
+						b.call(
+							'$.remove_input_defaults',
+							context.state.node,
+							preserve_checked ? b.true : undefined
+						)
+					)
+				);
 			}
 		}
 	}
