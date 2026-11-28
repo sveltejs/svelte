@@ -1,0 +1,10 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		// make sure the public types also work in projects that don't use `strict`
+		"strict": false,
+		// the source files aren't meant to be checked without `strict`, only the public types are
+		"checkJs": false
+	},
+	"include": ["./non-strict.ts"]
+}
