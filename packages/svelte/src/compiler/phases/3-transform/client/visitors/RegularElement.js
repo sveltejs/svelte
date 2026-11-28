@@ -166,12 +166,12 @@ export function RegularElement(node, context) {
 		}
 	}
 
-	if (name === 'input') {
+	if (is_html && name === 'input') {
 		const has_value_attribute = attributes.some(
 			(attribute) =>
 				attribute.type === 'Attribute' &&
-				(attribute.name === 'value' || attribute.name === 'checked') &&
-				!is_text_attribute(attribute)
+				((attribute.name === 'value' && attribute.value !== true) ||
+					(attribute.name === 'checked' && !is_text_attribute(attribute)))
 		);
 		const has_default_value_attribute = attributes.some(
 			(attribute) =>
@@ -190,7 +190,28 @@ export function RegularElement(node, context) {
 				// remove_input_defaults will be called inside set_attributes
 				should_remove_defaults = true;
 			} else {
-				context.state.init.push(b.stmt(b.call('$.remove_input_defaults', context.state.node)));
+				// A static `checked` attribute is part of the template, i.e. it is the genuine
+				// default (`defaultChecked`) on the client too. It only needs to be preserved
+				// when nothing else controls the checked state
+				const preserve_checked =
+					!bindings.has('checked') &&
+					!bindings.has('group') &&
+					attributes.some(
+						(attribute) =>
+							attribute.type === 'Attribute' &&
+							attribute.name === 'checked' &&
+							(attribute.value === true || is_text_attribute(attribute))
+					);
+
+				context.state.init.push(
+					b.stmt(
+						b.call(
+							'$.remove_input_defaults',
+							context.state.node,
+							preserve_checked ? b.true : undefined
+						)
+					)
+				);
 			}
 		}
 	}
@@ -250,6 +271,7 @@ export function RegularElement(node, context) {
 			if (
 				!is_custom_element &&
 				!cannot_be_set_statically(attribute.name) &&
+				!(is_html && name === 'value' && node.name === 'input' && is_text_attribute(attribute)) &&
 				(name !== 'value' || node.name !== 'textarea') &&
 				(attribute.value === true || is_text_attribute(attribute)) &&
 				(name !== 'class' || class_directives.length === 0) &&
@@ -661,10 +683,10 @@ function build_element_attribute_update(element, node_id, name, value, attribute
 	}
 
 	if (
-		// If we would just set the defaultValue property, it would override the value property,
-		// because it is set in the template which implicitly means it's also setting the default value,
-		// and if one updates the default value while the input is pristine it will also update the
-		// current value, which is not what we want, which is why we need to do some extra work.
+		// If we were to assign the defaultValue property directly, it would also change the
+		// current value while the input is pristine — for example after a form reset —,
+		// clobbering the current value applied through the static `value` attribute or
+		// the textarea content, so we apply it without influencing the current value.
 		name === 'defaultValue' &&
 		(attributes.some(
 			(attr) => attr.type === 'Attribute' && attr.name === 'value' && is_text_attribute(attr)

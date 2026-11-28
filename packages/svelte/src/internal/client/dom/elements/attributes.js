@@ -64,9 +64,11 @@ const PROGRESS_TAG = IS_XHTML ? 'progress' : 'PROGRESS';
  * The value/checked attribute in the template actually corresponds to the defaultValue property, so we need
  * to remove it upon hydration to avoid a bug when someone resets the form value.
  * @param {HTMLInputElement} input
+ * @param {boolean} [preserve_checked] whether the `checked` attribute is static and therefore
+ * a genuine default that must survive hydration (it is also part of the client template)
  * @returns {void}
  */
-export function remove_input_defaults(input) {
+export function remove_input_defaults(input, preserve_checked = false) {
 	if (!hydrating) return;
 
 	// we should be safe here from custom renderers as this only run during hydration
@@ -88,7 +90,7 @@ export function remove_input_defaults(input) {
 			input.value = value;
 		}
 
-		if (has_attribute(input, 'checked')) {
+		if (!preserve_checked && has_attribute(input, 'checked')) {
 			var checked = input.checked;
 			set_attribute(input, 'checked', null);
 			input.checked = checked;
@@ -514,6 +516,17 @@ function set_attributes(
 							element.__value = null;
 						}
 					}
+				} else if (name === 'defaultValue' && !is_custom_element && current_renderer == null) {
+					if (prev === undefined) {
+						// On initialization, defaultValue also initializes the current value
+						// @ts-expect-error
+						element.defaultValue = value;
+					} else {
+						// Setting defaultValue directly also changes the current value if the input is pristine
+						set_element_default_value(element, value);
+					}
+					// remove it from attributes's cache
+					if (name in attributes) attributes[name] = UNINITIALIZED;
 				} else if (is_default && current_renderer != null) {
 					// Route through the renderer-aware abstraction so custom renderers
 					// see defaultValue/defaultChecked as proper attributes

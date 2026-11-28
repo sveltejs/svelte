@@ -17,6 +17,7 @@ import { check_element } from './shared/a11y/index.js';
 import { validate_element } from './shared/element.js';
 import { mark_subtree_dynamic } from './shared/fragment.js';
 import { object } from '../../../utils/ast.js';
+import { is_text_attribute } from '../../../utils/ast.js';
 import { runes, custom_renderer } from '../../../state.js';
 
 /**
@@ -120,6 +121,24 @@ export function RegularElement(node, context) {
 		// Mark the element's own fragment as dynamic so it's not treated as static
 		node.fragment.metadata.dynamic = true;
 		// Also mark ancestor fragments so parents properly include the child init code
+		mark_subtree_dynamic(context.path);
+	}
+
+	// Special case: an <input> with a static `value` attribute is not baked into the
+	// template (the value is applied as the current value at runtime, so that form
+	// resets don't implicitly restore it as the default value). The element therefore
+	// needs runtime initialization code: mark ancestor fragments as dynamic so parent
+	// elements properly include the child init code.
+	if (
+		node.name === 'input' &&
+		!custom_renderer &&
+		node.attributes.some(
+			(attribute) =>
+				attribute.type === 'Attribute' &&
+				attribute.name === 'value' &&
+				is_text_attribute(attribute)
+		)
+	) {
 		mark_subtree_dynamic(context.path);
 	}
 
